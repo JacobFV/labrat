@@ -43,6 +43,32 @@ def main(argv=None):
         else:
             calibrate(a.device, a.port, mock=a.port is None)
         return
+    if argv and argv[0] == "teleop":
+        ap = argparse.ArgumentParser(prog="labrat_bridge teleop", description="Leader arm (moved by hand) drives the follower.")
+        ap.add_argument("--leader", default="so_b")
+        ap.add_argument("--follower", default="so_a")
+        ap.add_argument("--leader-port", required=True)
+        ap.add_argument("--follower-port", required=True)
+        ap.add_argument("--hz", type=float, default=30.0)
+        ap.add_argument("--seconds", type=float, default=0, help="stop after N seconds (0 = until Ctrl-C)")
+        a = ap.parse_args(argv[1:])
+        import time as _t
+        from .so101 import So101
+
+        lead = So101(a.leader, port=a.leader_port)
+        fol = So101(a.follower, port=a.follower_port)
+        print(fol.a_teleop(leader=a.leader, on=True, hz=a.hz), flush=True)
+        try:
+            t_end = _t.time() + a.seconds if a.seconds else None
+            while t_end is None or _t.time() < t_end:
+                _t.sleep(1.0)
+                print("samples", fol.teleop["samples"], {k: round(v) for k, v in fol.q.items()}, flush=True)
+        except KeyboardInterrupt:
+            pass
+        print(fol.a_teleop(on=False))
+        fol.set_torque(False)
+        lead.close(); fol.close()
+        return
     if argv and argv[0] == "scan":
         found = discover(argv[1] if len(argv) > 1 else "auto")
         print_table("Serial ports", [(f["device"], f["kind"], str(f["detail"]), f.get("serial") or "") for f in found],

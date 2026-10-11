@@ -308,6 +308,24 @@ async def teach(body: TeachIn):
     return out
 
 
+class DeviceIn(BaseModel):
+    device: str
+    action: str
+    args: dict = {}
+    timeout: float = 30.0
+
+
+@app.post("/api/device")
+async def device_cmd(body: DeviceIn):
+    """Send one action to a bridge device (e.g. so_a teleop {leader:"so_b", on:true}).
+    The bridge still enforces its own limits; motion goes through each driver's clamps."""
+    try:
+        r = await hub.cmd(body.device, body.action, body.args, timeout=min(body.timeout, 120))
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(400, f"{body.device}.{body.action} failed: {e}") from e
+    return {"ok": True, "data": r}
+
+
 @app.post("/api/jog")
 async def jog(body: JogIn):
     if body.device != "cnc":

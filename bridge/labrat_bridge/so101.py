@@ -151,6 +151,9 @@ def probe_feetech(port: str) -> list[int]:
 
 
 # ---------------------------------------------------------------------------- arm
+PEERS: dict = {}  # dev_id -> live So101 (for leader/follower teleop)
+
+
 class So101(Device):
     kind = "so101"
     unlocked = ("read",)
@@ -159,6 +162,10 @@ class So101(Device):
         super().__init__(dev_id, mock, info)
         self.calib = load_json(f"{dev_id}.json", DEFAULT_CALIB)
         self.bus = MockFeetechBus() if mock or not port else FeetechBus(port)
+        PEERS[dev_id] = self
+        self._tele_stop = threading.Event()
+        self._tele_thread = None
+        self.teleop = None
         self.info.setdefault("port", port or "mock")
         if mock:  # start the mock at home
             for j, d in self.calib["poses"]["home"].items():
@@ -228,6 +235,7 @@ class So101(Device):
         return {"q": self.q, "stopped": self._stop.is_set()}
 
     def hold(self):
+        self._tele_stop.set()
         self._stop.set()
         time.sleep(0.05)
         try:
@@ -261,6 +269,56 @@ class So101(Device):
         self.set_torque(bool(on))
         return {"torque": self.torque_on}
 
+    def a_teleop(self, leader: str = "so_b", on: bool = True, hz: float = 30.0, record: bool = True):
+        """Mirror a hand-moved LEADER arm (torque off) onto this FOLLOWER arm, in calibrated degrees.
+        Each arm's own calibration maps its ticks to the shared joint convention, so poses correspond 1:1."""
+        if not on:
+            self._tele_stop.set()
+            if self._tele_thread:
+                self._tele_thread.join(timeout=2)
+            return {"teleop": False, **(self.teleop or {})}
+        lead = PEERS.get(leader)
+        if lead is None or lead is self:
+            raise DeviceError(f"leader arm '{leader}' not available")
+        if self._tele_thread and self._tele_thread.is_alive():
+            return {"teleop": True, "leader": leader, "already": True}
+        lead.set_torque(False)          # leader is moved by hand
+        if not self.torque_on:
+            self.q = self._read_q_safe()
+            self.set_torque(True)
+        self._tele_stop.clear()
+        period = 1.0 / max(5.0, min(60.0, float(hz)))
+        self.teleop = {"leader": leader, "hz": round(1 / period), "samples": 0, "started": time.time(), "path": None}
+        traj: list = []
+
+        def loop():
+            try:
+                while not self._tele_stop.is_set():
+                    t0 = time.monotonic()
+                    with lead.bus.lock:
+                        lq = lead._read_q_safe()
+                    goal = {j: self.clamp(j, lq[j]) for j in JOINTS}
+                    with self.bus.lock:
+                        self.bus.write_goals({IDS[j]: self.deg_to_ticks(j, goal[j]) for j in JOINTS})
+                    self.q, lead.q = {j: round(v, 2) for j, v in goal.items()}, lq
+                    self.teleop["samples"] += 1
+                    if record:
+                        traj.append([round(time.time(), 3)] + [round(goal[j], 2) for j in JOINTS])
+                    dt = period - (time.monotonic() - t0)
+                    if dt > 0:
+                        time.sleep(dt)
+            except Exception as e:  # never leave the follower thrashing
+                log.warning("%s teleop stopped: %s", self.id, e)
+            finally:
+                if record and traj:
+                    self.teleop["path"] = str(save_json(f"teleop_{self.id}_{int(time.time())}.json",
+                                                        {"leader": leader, "follower": self.id, "joints": JOINTS, "samples": traj}))
+                self.teleop["ended"] = time.time()
+
+        self._tele_thread = threading.Thread(target=loop, name=f"teleop-{self.id}", daemon=True)
+        self._tele_thread.start()
+        return {"teleop": True, "leader": leader, "hz": self.teleop["hz"]}
+
     def a_read(self):
         with self.bus.lock:
             if not self.moving:
@@ -272,7 +330,9 @@ class So101(Device):
         return {"q": self.q}
 
     def state(self):
-        return {"q": self.q, "moving": self.moving, "torque": self.torque_on}
+        tele = bool(self._tele_thread and self._tele_thread.is_alive())
+        return {"q": self.q, "moving": self.moving or tele, "torque": self.torque_on,
+                "teleop": {"on": tele, **(self.teleop or {})} if self.teleop else {"on": False}}
 
     def safe_stop(self):
         self.hold()
