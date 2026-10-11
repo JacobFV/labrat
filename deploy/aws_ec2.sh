@@ -23,7 +23,8 @@ echo "==> account $ACCOUNT region $REGION"
 existing=$($AWS ec2 describe-instances --filters "Name=tag:Name,Values=$NAME" "Name=instance-state-name,Values=pending,running" \
   --query 'Reservations[].Instances[].InstanceId' --output text)
 if [[ -n "$existing" && "${REDEPLOY:-0}" != "1" ]]; then
-  ip=$($AWS ec2 describe-instances --instance-ids $existing --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+  ip=$($AWS ec2 describe-addresses --filters "Name=tag:Name,Values=labrat-eip" --query 'Addresses[0].PublicIp' --output text 2>/dev/null)
+  [[ -z "$ip" || "$ip" == "None" ]] && ip=$($AWS ec2 describe-instances --instance-ids $existing --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
   echo "==> instance already running: $existing"
   echo "URL: https://${ip//./-}.sslip.io   (phone: /phone)"
   exit 0
@@ -33,6 +34,14 @@ if [[ -n "$existing" ]]; then
   $AWS ec2 terminate-instances --instance-ids $existing >/dev/null
   $AWS ec2 wait instance-terminated --instance-ids $existing
 fi
+
+# --- stable public address (Elastic IP, reused across redeploys so the phone URL never changes) ---
+EIP_ALLOC=$($AWS ec2 describe-addresses --filters "Name=tag:Name,Values=labrat-eip" --query 'Addresses[0].AllocationId' --output text 2>/dev/null)
+if [[ -z "$EIP_ALLOC" || "$EIP_ALLOC" == "None" ]]; then
+  EIP_ALLOC=$($AWS ec2 allocate-address --domain vpc --tag-specifications 'ResourceType=elastic-ip,Tags=[{Key=Name,Value=labrat-eip}]' --query AllocationId --output text)
+fi
+EIP=$($AWS ec2 describe-addresses --allocation-ids "$EIP_ALLOC" --query 'Addresses[0].PublicIp' --output text)
+echo "==> elastic IP $EIP ($EIP_ALLOC)"
 
 # --- bucket + code tarball ---
 if ! $AWS s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
@@ -87,7 +96,7 @@ docker run -d --name labrat --restart unless-stopped --env-file labrat.env -p 12
 curl -fsSL "https://caddyserver.com/api/download?os=linux&arch=amd64" -o /usr/local/bin/caddy
 chmod +x /usr/local/bin/caddy
 TOKEN=\$(curl -sX PUT http://169.254.169.254/latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 300")
-IP=\$(curl -s -H "X-aws-ec2-metadata-token: \$TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
+IP=${EIP}
 HOST="\$(echo \$IP | tr . -).sslip.io"
 mkdir -p /etc/caddy
 cat > /etc/caddy/Caddyfile <<CF
@@ -120,7 +129,8 @@ IID=$($AWS ec2 run-instances --image-id "$AMI" --instance-type "$TYPE" --securit
   --query 'Instances[0].InstanceId' --output text)
 echo "==> launched $IID; waiting for it to run"
 $AWS ec2 wait instance-running --instance-ids "$IID"
-IP=$($AWS ec2 describe-instances --instance-ids "$IID" --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+$AWS ec2 associate-address --instance-id "$IID" --allocation-id "$EIP_ALLOC" >/dev/null
+IP="$EIP"
 rm -rf "$TMP"
 echo "==> instance $IID at $IP (docker build + TLS take ~3-5 min)"
 echo "URL: https://${IP//./-}.sslip.io   (phone: /phone, health: /healthz)"
