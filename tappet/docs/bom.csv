@@ -1,0 +1,31 @@
+id,category,item,spec,qty,unit_proto_usd,unit_1k_usd,ext_proto_usd,ext_1k_usd,sku,source_notes
+E01,electronics,ESP32-S3 dev board,ESP32-S3-DevKitC-1 N8R2 (or N16R8); native USB OTG on GPIO19/20,1,9.00,5.20,9.00,5.20,both,"Official board ~$15, compatible clones ~$7-9; v1 carrier PCB uses ESP32-S3-WROOM-1 module (~$3.10 @1k)"
+E02,electronics,PWM driver,PCA9685 16-ch 12-bit; I2C 0x40; OE on GPIO10,1,3.50,1.40,3.50,1.40,both,Breakout in v0; bare TSSOP-28 (~$0.90) on v1 PCB
+E03,electronics,USB-C PD trigger,CH224K set to 9 V request,1,1.50,0.45,1.50,0.45,both,Breakout in v0; IC ~$0.25 on v1 PCB
+E04,electronics,Buck A (servo rail),9 V -> 5.0 V 5 A synchronous buck,1,2.80,1.10,2.80,1.10,both,e.g. XL4015/SY8205-class module; feeds V+ servo rail
+E05,electronics,Buck B (logic + head),9 V -> 5.0 V 3 A buck,1,1.30,0.55,1.30,0.55,both,MP1584/MP2315-class; feeds ESP32 + head VBUS switch
+E06,electronics,Head VBUS power switch,1.5 A current-limited load switch with FLT (e.g. SY6280/TPS2553 class),1,1.00,0.30,1.00,0.30,both,EN=GPIO7; FLT=GPIO15
+E07,electronics,USB-C receptacles,16-pin USB-C (PD input + HEAD port),2,0.45,0.14,0.90,0.28,both,HEAD port: CC1/CC2 each 22 kOhm Rp to 5 V (1.5 A advert)
+E08,electronics,Resettable fuse,PTC 3 A hold on 9 V input,1,0.30,0.06,0.30,0.06,both,
+E09,electronics,Servo rail bulk cap,1000 uF 10 V low-ESR electrolytic,1,0.40,0.08,0.40,0.08,both,At PCA9685 V+ terminal
+E10,electronics,Passives + LED + button,"Dividers 10k/10k (VSERVO), 100k/22k (VIN), 22k Rp x2, decoupling",1,1.00,0.25,1.00,0.25,both,DevKit RGB LED on GPIO48 used as status; BOOT=GPIO0
+E11,electronics,Carrier board,v0: 70x90 mm perfboard; v1: 2-layer carrier PCB,1,3.00,0.75,3.00,0.75,both,v1 PCB merges E02-E10
+E12,electronics,Wiring harness,"Servo extensions (3 x 150 mm), Dupont/JST leads, 22 AWG power",1,2.50,0.60,2.50,0.60,both,
+S01,servos,SG90 positional servo,"9 g, 1.8 kg*cm, plastic gears; L_YAW, R_YAW, NECK_PAN",3,2.00,0.85,6.00,2.55,both,Buy +10% QC overage at 1k (included in unit cost)
+S02,servos,MG90S positional servo,"13.4 g, 2.2 kg*cm, metal gears; L/R_SHOULDER, L/R_ELBOW, NECK_TILT",5,3.50,1.55,17.50,7.75,both,Tilt holds the head phone (<=220 g)
+M01,mechanical,Printed parts set,"PETG/PLA+, ~330 g: base, bay lid, turrets(30T), servo gears(20T), upper arms, forearms, drive links, wrist links, stylus holders, neck column, pan/tilt brackets, phone clamp, tray, shims, gauges",1,7.00,11.50,7.00,11.50,both,Proto = filament only (~$21/kg); 1k = print-farm quote incl. machine time + QC (~$0.035/g)
+M02,mechanical,Ball bearings,608ZZ (8x22x7) for yaw turrets x2 and neck pan x1,3,0.50,0.14,1.50,0.42,both,
+M03,mechanical,Fasteners kit,"M2/M3 screws, nuts, M3 shoulder screws for linkage pivots",1,3.00,1.10,3.00,1.10,both,~60 pcs
+M04,mechanical,Heat-set inserts,M3 brass,16,0.06,0.02,0.96,0.32,both,
+M05,mechanical,Stylus tip,6 mm conductive rubber/fiber-mesh tip,2,1.00,0.22,2.00,0.44,both,
+M06,mechanical,Stylus shaft,4 mm OD brass/aluminium tube 40 mm,2,0.40,0.08,0.80,0.16,both,Conductive path tip -> ground lead
+M07,mechanical,Stylus spring,"Compression spring, ~0.15 N/mm, 6 mm travel",2,0.15,0.03,0.30,0.06,both,0.4 N at default 2.5 mm press
+M08,mechanical,Ground lead,30 AWG silicone wire 300 mm + ring lug,2,0.20,0.05,0.40,0.10,both,Stylus shaft -> circuit GND
+M09,mechanical,Base ballast,Steel plate 120x80x4 mm (~300 g),1,1.20,0.55,1.20,0.55,both,Prevents tipping with head on neck
+M10,mechanical,Rubber feet + pads,"4 feet, silicone pads for phone clamp and tray",1,0.50,0.12,0.50,0.12,both,
+C01,cables,Head cable,USB-C to USB-C 0.3 m (USB 2.0),1,2.00,0.55,2.00,0.55,both,HEAD port -> Android phone
+C02,cables,Power cable,USB-C to USB-C 1 m 3 A,1,2.00,0.60,2.00,0.60,both,Charger not included in kit
+P01,packaging,Retail box + insert,"Kraft mailer box, molded pulp insert",1,6.00,1.90,6.00,1.90,both,
+P02,packaging,Quick-start card,Printed card with QR to docs,1,0.50,0.08,0.50,0.08,both,
+A01,assembly,Final assembly + calibration + test,"~25 min at CM incl. servo trim, taptest smoke",1,0.00,4.50,0.00,4.50,assembled,Proto = founder time (not costed)
+A02,accessory,USB-C PD charger,"20 W, 9 V/2.22 A PD",1,6.00,2.60,6.00,2.60,assembled,Included only in Assembled SKU

@@ -1,0 +1,4 @@
+-keep class com.hoho.android.usbserial.** { *; }
+-keep class fi.iki.elonen.** { *; }
+-keepattributes *Annotation*, InnerClasses
+-dontwarn org.slf4j.**

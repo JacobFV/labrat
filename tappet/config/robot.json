@@ -1,0 +1,117 @@
+{
+  "name": "tappet",
+  "version": "0.1.0",
+  "units": "mm, degrees, milliseconds",
+
+  "frames": {
+    "world": "Origin on the desk surface directly below the neck pan axis. +y points forward from the robot toward the user and the target-phone tray. +z up. +x is the robot's right (right-handed: x = y cross z). Arm 'L' is the robot's left arm at x<0, arm 'R' at x>0.",
+    "yaw": "Arm yaw psi is an absolute world heading measured from +y, counter-clockwise (seen from above) positive. Tool radial direction = (-sin psi, cos psi).",
+    "shoulder": "theta1 = upper-arm elevation above horizontal.",
+    "elbow": "theta2 = ABSOLUTE forearm angle above horizontal (MeArm/uArm-style parallel linkage: elbow servo sits at the shoulder). A wrist parallelogram keeps the stylus vertical."
+  },
+
+  "servo": {
+    "pwm_hz": 50,
+    "us_min": 500,
+    "us_max": 2500,
+    "deg_range": 180,
+    "note": "Positional SG90/MG90S. pulse_us = us_min + s_deg * (us_max - us_min) / deg_range. Joint q maps to servo angle s = s_zero + dir * gear * (q - neutral)."
+  },
+
+  "joints": {
+    "L_YAW":      {"ch": 0, "gear": 1.5, "dir":  1, "s_zero": 90, "neutral": -35, "min": -93, "max":  23, "home": -35, "park":  20, "max_vel": 240},
+    "L_SHOULDER": {"ch": 1, "gear": 1.0, "dir":  1, "s_zero": 90, "neutral":  60, "min":   0, "max": 140, "home": 100, "park": 110, "max_vel": 240},
+    "L_ELBOW":    {"ch": 2, "gear": 1.0, "dir":  1, "s_zero": 90, "neutral": -30, "min": -115, "max": 20, "home": -20, "park": -10, "max_vel": 240},
+    "R_YAW":      {"ch": 3, "gear": 1.5, "dir":  1, "s_zero": 90, "neutral":  35, "min": -23, "max":  93, "home":  35, "park": -20, "max_vel": 240},
+    "R_SHOULDER": {"ch": 4, "gear": 1.0, "dir": -1, "s_zero": 90, "neutral":  60, "min":   0, "max": 140, "home": 100, "park": 110, "max_vel": 240},
+    "R_ELBOW":    {"ch": 5, "gear": 1.0, "dir": -1, "s_zero": 90, "neutral": -30, "min": -115, "max": 20, "home": -20, "park": -10, "max_vel": 240},
+    "NECK_PAN":   {"ch": 6, "gear": 1.0, "dir":  1, "s_zero": 90, "neutral":   0, "min": -80, "max":  80, "home":   0, "park":   0, "max_vel": 180},
+    "NECK_TILT":  {"ch": 7, "gear": 1.0, "dir":  1, "s_zero": 90, "neutral": -20, "min": -70, "max":  30, "home":   0, "park": -10, "max_vel": 180}
+  },
+
+  "linkage": {
+    "rel_min": 20,
+    "rel_max": 160,
+    "note": "Parallel-linkage interference limit on (theta1 - theta2)."
+  },
+
+  "arms": {
+    "L": {"base_x": -85, "base_y": 40, "shoulder_h": 70, "r0": 12, "L1": 100, "L2": 110, "tool_dx": 15, "tool_dz": 35},
+    "R": {"base_x":  85, "base_y": 40, "shoulder_h": 70, "r0": 12, "L1": 100, "L2": 110, "tool_dx": 15, "tool_dz": 35}
+  },
+
+  "tool": {
+    "stylus_travel": 6.0,
+    "default_press_mm": 2.5,
+    "default_approach_mm": 8.0,
+    "default_hold_ms": 60,
+    "tip_diameter": 6.0
+  },
+
+  "tray": {
+    "floor_z": 6.0,
+    "center_x": 0,
+    "center_y": 160,
+    "pocket_w": 80,
+    "pocket_l": 165,
+    "note": "Target phone lies screen-up, portrait, top edge toward +y (toward the user is the phone's top). Shims adapt the pocket to specific phones."
+  },
+
+  "default_device": {
+    "name": "iPhone 15 / 15 Pro / 16 (6.1in)",
+    "body_w": 71.6,
+    "body_l": 147.6,
+    "body_t": 7.8,
+    "screen_w": 65.1,
+    "screen_l": 141.1,
+    "screen_px_w": 1179,
+    "screen_px_h": 2556,
+    "surface_z": 13.8
+  },
+
+  "neck": {
+    "pan_axis_x": 0,
+    "pan_axis_y": -10,
+    "column_top_z": 210,
+    "tilt_axis_z": 232,
+    "look_at_tray": {"pan": 0, "tilt": -50},
+    "look_at_user": {"pan": 0, "tilt": 0}
+  },
+
+  "electronics": {
+    "mcu": "ESP32-S3-DevKitC-1 (N8R2 or N16R8)",
+    "pwm": "PCA9685 16-ch 12-bit PWM, I2C 0x40, 25 MHz osc",
+    "pins": {
+      "I2C_SDA": 8,
+      "I2C_SCL": 9,
+      "PCA_OE": 10,
+      "USB_DN": 19,
+      "USB_DP": 20,
+      "PHONE_VBUS_EN": 7,
+      "PHONE_VBUS_FLT": 15,
+      "VSERVO_SENSE": 4,
+      "VIN_SENSE": 5,
+      "STATUS_LED": 48,
+      "USER_BUTTON": 0
+    },
+    "dividers": {
+      "VSERVO_SENSE": {"r_top": 10000, "r_bot": 10000},
+      "VIN_SENSE": {"r_top": 100000, "r_bot": 22000}
+    }
+  },
+
+  "link": {
+    "uart_baud": 115200,
+    "aoa": {
+      "manufacturer": "Tappet",
+      "model": "TappetBody",
+      "description": "Tappet desktop robot body",
+      "version": "1.0",
+      "uri": "https://github.com/JacobFV/tappet",
+      "serial": "0001"
+    },
+    "sim_tcp_port": 7777,
+    "web_port": 8080,
+    "watchdog_ms": 5000
+  }
+}
