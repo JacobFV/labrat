@@ -145,7 +145,7 @@ def probe_feetech(port: str) -> list[int]:
     except Exception:
         return []
     try:
-        return [i for i in range(1, 7) if bus.ping(i)]
+        return [i for i in range(1, 7) if any(bus.ping(i) for _ in range(3))]
     finally:
         bus.close()
 
