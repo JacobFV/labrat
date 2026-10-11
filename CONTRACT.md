@@ -16,8 +16,8 @@ An action named `X` is dispatched to the driver method `a_X` (`common.py: Device
 
 | id | kind | driver | actions (args) |
 |---|---|---|---|
-| `so_a`, `so_b` | so101 | `so101.py` | `joints {q:{shoulder_pan,shoulder_lift,elbow_flex,wrist_flex,wrist_roll,gripper} deg, ms}`, `pose {name: home\|look_deck\|look_user\|look_plate, ms}`, `gripper {open 0..1, ms}`, `torque {on}`, `read {}`, `stop {}` |
-| `tap_a`, `tap_b` | tappet | `tappet.py` | `raw {cmd, ...}`: passthrough of the Tappet JSON-lines protocol ([tappet/docs/SPEC.md](tappet/docs/SPEC.md)) through the vendored client `tappet_client.py` (copied from [tappet/host/tappet/client.py](tappet/host/tappet/client.py)) |
+| `so_a`, `so_b` | so101 | `so101.py` | `joints {q:{shoulder_pan,shoulder_lift,elbow_flex,wrist_flex,wrist_roll,gripper} deg, ms}`, `pose {name: home\|ready\|rest, ms}` (legacy `look_deck\|look_user\|look_plate` are aliases for `ready`), `gripper {open 0..1, ms}`, `torque {on}`, `read {}`, `stop {}` |
+| `tap_a` (`tap_b` optional) | tappet | `tappet.py` | ESP32-S3 + PCA9685 board; in the demo setup `tap_a` only drives the pipette servo (ch 8) and its arms are unused. `raw {cmd, ...}`: passthrough of the Tappet JSON-lines protocol ([tappet/docs/SPEC.md](tappet/docs/SPEC.md)) through the vendored client `tappet_client.py` (copied from [tappet/host/tappet/client.py](tappet/host/tappet/client.py)) |
 | `cnc` | grbl | `grbl.py` | `home {}`, `move {x,y,z,f}` (absolute mm), `jog {dx,dy,dz,f}`, `gcode {lines:[...]}` (validated), `status {}` → `{pos/wpos,...}`, `stop {}` (feed hold + soft reset), `zero {}` (real hardware only) |
 | `pipette` | servo_pipette | `tappet.py` (PCA9685 **ch 8** via `servo_raw`, `enable` sent first) | `set {frac 0..1}` (0 = rest, 1 = fully pressed), `aspirate {ul}`, `dispense {ul?}`, `blowout {}`, `rest {}`. Tip eject is a CNC move over the eject bar that the server performs (`lab.py: exec_step`) |
 

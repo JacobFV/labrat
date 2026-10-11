@@ -5,6 +5,10 @@ Two estimators:
     Sample a small disk at the projected target-well centre (median), white-balanced against a blank well.
  2. LLM vision: ask Claude for the target well's RGB as JSON.
 Neither available -> skip (operator can still rate/observe manually).
+
+The iPhone sits on a static stand looking down at the CNC bed, so no arm moves for a photo: we just wait for a phone
+frame newer than the moment the CNC finished parking. Set LABRAT_PHOTO_POSE=[device:]pose (device defaults to so_a)
+only if you mount the phone on an arm and want it posed before each photo.
 """
 from __future__ import annotations
 
@@ -182,23 +186,41 @@ async def estimate(run: dict, frame: dict) -> dict | None:
     return None
 
 
-async def auto_observe(run_id: str, pose: bool = True, settle_s: float = 1.0, rating: int | None = None) -> dict:
-    """Pose the phone arm, grab the newest frame, estimate the well RGB and feed learn.observe(source='vision')."""
+async def photo_pose() -> bool:
+    """Optional: pose an arm before a photo (LABRAT_PHOTO_POSE=[device:]pose). Unset (default) -> no arm motion."""
+    spec = (env("LABRAT_PHOTO_POSE", "") or "").strip()
+    if not spec or hub.bridge is None:
+        return False
+    dev, _, name = spec.rpartition(":")
+    dev = dev or "so_a"
+    if dev not in hub.devices:
+        return False
+    try:
+        await hub.cmd(dev, "pose", {"name": name}, timeout=20)
+        return True
+    except Exception as e:  # noqa: BLE001
+        log.warning(f"vision: photo pose {dev}:{name} failed: {e}")
+        return False
+
+
+async def auto_observe(run_id: str, pose: bool = False, settle_s: float = 0.0, rating: int | None = None,
+                       fresh_after: float | None = None, wait_s: float = 3.0) -> dict:
+    """Grab a phone frame (newer than `fresh_after` if given), estimate the well RGB, feed learn.observe(source='vision').
+
+    pose=True runs the optional LABRAT_PHOTO_POSE first (a no-op for the default static phone mount)."""
     from . import learn
 
     run = store.get("runs", run_id)
     if not run:
         raise ValueError(f"no run {run_id}")
     t0 = time.time()
-    if pose and hub.bridge is not None and "so_a" in hub.devices:
-        try:
-            await hub.cmd("so_a", "pose", {"name": "look_plate"}, timeout=20)
-        except Exception as e:  # noqa: BLE001
-            log.warning(f"vision: look_plate failed: {e}")
+    moved = pose and await photo_pose()
     await asyncio.sleep(settle_s)
-    frame = hub.latest_frame
+    if moved and fresh_after is None:
+        fresh_after = time.time()
+    frame = await hub.wait_frame(fresh_after, wait_s) if fresh_after is not None else hub.latest_frame
     if not frame or not frame.get("jpeg"):
-        res = {"ok": False, "skipped": "no phone frame"}
+        res = {"ok": False, "skipped": "no phone frame" if fresh_after is None else "no fresh phone frame"}
     else:
         try:
             est = await estimate(run, frame)

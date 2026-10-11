@@ -9,27 +9,29 @@ This is the single system-design document for LabRat. It was written from the co
 | **LabRat server** | `server/labrat/` (FastAPI + uvicorn, one Python process) | cloud (AWS EC2 via Docker) or laptop | agent, simulator, learning loop, memory, WebSocket hub, REST API. Also serves `web/` at `/` and `phone/` at `/phone` |
 | **Hardware bridge** | `bridge/labrat_bridge/` (`python -m labrat_bridge`) | laptop with the USB devices | dials out to `/ws/bridge`, drives the serial devices, enforces local limits and runs the watchdog. Every device has a mock mode |
 | **Laptop web app** | `web/` (`app.js`, `twin.js` three.js twin, `deck.js` deck calibration, `camera_cal.js`) | browser | chat, experiment gallery, 3D replay, device status, run approval, deck/camera calibration |
-| **Phone SPA** | `phone/` (`phone.js`) | iPhone mounted on the tip of arm `so_a` | camera frames and mic audio go up to the server; animated face and TTS audio come back |
+| **Phone SPA** | `phone/` (`phone.js`) | iPhone on a static stand looking down at the CNC bed | camera frames and mic audio go up to the server; animated face and TTS audio come back |
 | **CLI** | `cli/labrat_cli/` (`uv run labrat --server http://127.0.0.1:8100 --token labrat`) | terminal | REPL over `/ws/ui` and REST |
-| **Tappet firmware/host** | `tappet/firmware`, `tappet/host` | ESP32-S3 + PCA9685 | low-cost arms. The bridge talks to them through the vendored client `bridge/labrat_bridge/tappet_client.py` (copied from `tappet/host/tappet/client.py`) |
+| **Tappet firmware/host** | `tappet/firmware`, `tappet/host` | ESP32-S3 + PCA9685 | in the demo setup, only drives the pipette servo (PCA9685 ch 8); the Tappet arms are optional. The bridge talks to them through the vendored client `bridge/labrat_bridge/tappet_client.py` (copied from `tappet/host/tappet/client.py`) |
+
+Physical layout: the 3018 CNC (carrying the servo pipette) is in the middle, an SO-101 arm stands on each side of it, the iPhone sits on a fixed stand looking straight down at the CNC bed, and the laptop (bridge + console) is off to the side. Nothing moves the camera.
 
 Hardware, as bridge device ids (`bridge/labrat_bridge/bridge.py: ALL_IDS`):
-- `so_a`, `so_b` are SO-101 arms (Feetech STS3215 bus at 1 Mbps). `so_a` carries the iPhone and `so_b` has a gripper.
-- `tap_a`, `tap_b` are Tappet ESP32 arms (JSON lines over UART at 115200).
+- `so_a`, `so_b` are SO-101 arms (Feetech STS3215 bus at 1 Mbps): plain manipulators with the stock gripper, `so_a` on one side of the CNC and `so_b` on the other. Named poses are `home`, `ready` and `rest`; the old `look_deck`/`look_user`/`look_plate` names are accepted as aliases for `ready`.
+- `tap_a` is the ESP32-S3 + PCA9685 Tappet board that drives the pipette servo (JSON lines over UART at 115200). `tap_b` and the Tappet arms are optional and not part of the demo setup.
 - `cnc` is a 3018 CNC running GRBL 1.1 at 115200.
 - `pipette` is a servo pipette on the CNC head. It is driven through PCA9685 **channel 8** of a Tappet board with `servo_raw`.
 
 ## 2. Topology
 
 ```
- iPhone SPA (/phone) ──wss /ws/phone──┐
+ iPhone on stand     ──wss /ws/phone──┐
  Laptop web (/)      ──wss /ws/ui ────┤        ┌──────────── LabRat server (FastAPI) ─────────────┐
  CLI (labrat)        ──wss /ws/ui ────┼──────► │ app.py  hub.py  agent.py  lab.py  sim.py         │
  Laptop bridge       ──wss /ws/bridge─┘        │ learn.py vision.py deck_cal.py store.py          │
    │ USB serial                                 │ voice.py embed.py telemetry.py                    │
-   ├─ so_a (SO-101 + iPhone)                    └───┬──────┬──────┬───────┬────────┬──────────┬───┘
-   ├─ so_b (SO-101 gripper)                         │      │      │       │        │          │
-   ├─ tap_a/tap_b (Tappet ESP32)                Anthropic Mongo  Voyage  ElevenLabs Raindrop  Modelence
+   ├─ so_a (SO-101 gripper, left of CNC)        └───┬──────┬──────┬───────┬────────┬──────────┬───┘
+   ├─ so_b (SO-101 gripper, right of CNC)           │      │      │       │        │          │
+   ├─ tap_a (Tappet ESP32 board)                Anthropic Mongo  Voyage  ElevenLabs Raindrop  Modelence
    │    └─ PCA9685 ch 8 → pipette servo          (LLM +  Atlas   (embed)  (TTS/STT) (events)  Mission Control
    └─ cnc (3018 GRBL) carrying the pipette        vision)                                     (/api/events)
 ```
@@ -47,13 +49,13 @@ voice ─► STT ─► agent ─► recall ─► design ─► simulate ─►
 3. **Agent.** `agent.py:handle` runs one turn at a time under a lock and keeps the last 12 messages of history.
    - It runs an Anthropic tool-use loop (`_anthropic_loop`). The default model is `ANTHROPIC_MODEL=claude-sonnet-5`. Setting `LLM_PROVIDER=fireworks` uses `_fireworks_loop` instead.
    - If there is no LLM key, or the LLM call errors, a rule-based fallback (`_rules`) answers.
-   - Tools: `list_devices`, `look`, `recall`, `design_experiment`, `simulate`, `select_variant`, `run_variant`, `move_arm`, `cnc_move`, `pipette`, `say`, `remember`.
+   - Tools: `list_devices`, `look` (latest frame from the static overhead iPhone; nothing moves), `recall`, `design_experiment`, `simulate`, `select_variant`, `run_variant`, `move_arm`, `cnc_move`, `pipette`, `say`, `remember`.
 4. **Recall.** `store.py:recall` uses Atlas `$vectorSearch` on `memories.embedding`, with an optional `type` filter. If that is unavailable, it falls back to cosine similarity in Python plus a keyword bonus.
 5. **Design.** `lab.py:create_experiment` takes variants from the LLM (`agent._llm_variants`) or from the deterministic generator `sim.generate_variants` (dye ratios × volumes, 12 by default).
 6. **Simulate.** `lab.py:simulate_experiment` runs `sim.simulate` on each variant, ranks the variants that pass by score, sets `best_variant_id`, and broadcasts `{"t":"sim"}` frames for the 3D twin.
 7. **Approve.** `lab.py:request_run` refuses a variant that was not simulated or failed its checks. It then creates a run with status `awaiting_approval`. A human approves it (`/ws/ui {"t":"approve"}` or `POST /api/runs/{id}/approve`) unless `auto=true` or `LABRAT_AUTO_APPROVE=1`.
 8. **Execute.** `lab.py:_execute`/`exec_step` turns each protocol op into bridge commands through `hub.cmd`. The command goes out as `{"t":"cmd",id,device,action,args}`, and a future resolves on `{"t":"result"}` or times out.
-9. **Observe (vision).** If the protocol includes a `photo` step and `LABRAT_AUTO_OBSERVE` is on (the default), `vision.py:auto_observe` takes the latest phone frame and estimates the target well's RGB. It uses the homography method if a camera calibration exists, otherwise Claude vision. A human can also observe manually (`POST /api/runs/{id}/observe` or the UI `observe` message).
+9. **Observe (vision).** The `photo` step lifts the pipette, parks the CNC out of the camera view and waits for a phone frame newer than the park (`hub.wait_frame`). No arm moves, because the iPhone is on a static stand; `LABRAT_PHOTO_POSE=[device:]pose` re-enables an arm pose if the phone is ever arm-mounted. If `LABRAT_AUTO_OBSERVE` is on (the default), `vision.py:auto_observe` then takes that fresh frame (never a frame from before the photo step) and estimates the target well's RGB. It uses the homography method if a camera calibration exists, otherwise Claude vision. A human can also observe manually (`POST /api/runs/{id}/observe` or the UI `observe` message).
 10. **Learn.** `learn.py:observe` refits the simulator parameters and accepts them only if the error improves (see §7).
 11. **Memory.** The server writes typed memories: an *episodic* run summary, a *semantic* "predicted vs observed" fact, and a *procedural* protocol, which is promoted only when it improved. Recall uses these memories on the next goal.
 
@@ -139,7 +141,6 @@ Static mounts: `/phone` → `phone/`, `/` → `web/`. Errors not handled elsewhe
   - reservoir underflow;
   - well overflow;
   - aspirate or dispense without a tip;
-  - `photo` target outside the `so_a` reach (400 mm from its base).
 - **Score:** 1 − (RGB distance to the goal colour) ÷ 441.7, multiplied by 0.1 if the variant failed. The output includes frames for the twin replay.
 - **Deck calibration:** coordinates go through `deck_cal` (taught points take priority over nominal ones).
 
@@ -200,4 +201,4 @@ After each observation:
 - **Local (current).** Run `cd server && uv run uvicorn labrat.app:app --port 8100` (any port works). The bridge runs on the same laptop with `--server ws://localhost:8100`, and the phone opens `http(s)://<host>/phone`.
 - **AWS (scripted, not yet deployed).** `deploy/aws_ec2.sh` provisions one EC2 instance (t3.small, us-west-2 by default) running the `Dockerfile` image (python:3.12-slim, uvicorn on port 8000). Caddy in front provides automatic HTTPS on `https://<ip-dashes>.sslip.io`. The script ships the code as a tarball to a private S3 bucket that the instance fetches through a presigned URL, and uploads `.env` privately as the container `--env-file`. Re-running with `REDEPLOY=1` replaces the instance. The bridge then dials `wss://<ip-dashes>.sslip.io/ws/bridge`.
 - **Modelence Mission Control** is a separate hosted app that receives the event stream (see §10).
-- **Configuration** comes from the environment (`.env`, loaded from the repo root and `server/`): `LABRAT_TOKEN`, `LLM_PROVIDER`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `FIREWORKS_API_KEY`, `FIREWORKS_MODEL`, `MONGODB_URI`, `MONGODB_DB`, `VOYAGE_API_KEY`, `RAINDROP_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `MODELENCE_URL`, `MODELENCE_KEY`, `LABRAT_AUTO_APPROVE`, `LABRAT_AUTO_OBSERVE`, `LABRAT_DECK_CAL`. See `.env.example`.
+- **Configuration** comes from the environment (`.env`, loaded from the repo root and `server/`): `LABRAT_TOKEN`, `LLM_PROVIDER`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `FIREWORKS_API_KEY`, `FIREWORKS_MODEL`, `MONGODB_URI`, `MONGODB_DB`, `VOYAGE_API_KEY`, `RAINDROP_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `MODELENCE_URL`, `MODELENCE_KEY`, `LABRAT_AUTO_APPROVE`, `LABRAT_AUTO_OBSERVE`, `LABRAT_PHOTO_POSE` (unset by default), `LABRAT_PHOTO_WAIT_S` (default 3), `LABRAT_DECK_CAL`. See `.env.example`.

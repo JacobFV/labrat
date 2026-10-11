@@ -13,7 +13,8 @@ from labrat_bridge.grbl import validate_gcode
 from labrat_bridge.common import DeviceError
 
 CMDS = [
-    ("so_a", "pose", {"name": "look_deck", "ms": 200}),
+    ("so_a", "pose", {"name": "ready", "ms": 200}),
+    ("so_b", "pose", {"name": "look_plate", "ms": 200}),  # legacy alias -> ready
     ("so_b", "joints", {"q": {"shoulder_pan": 10, "gripper": 30}, "ms": 200}),
     ("so_b", "gripper", {"open": 1.0, "ms": 100}),
     ("so_a", "read", {}),

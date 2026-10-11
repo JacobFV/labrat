@@ -1,4 +1,7 @@
-"""SO-101 arm: Feetech STS3215 bus servos (SCS/STS protocol) over a USB bus adapter @ 1 Mbps."""
+"""SO-101 arm: Feetech STS3215 bus servos (SCS/STS protocol) over a USB bus adapter @ 1 Mbps.
+
+so_a and so_b are plain manipulators with the stock gripper, one on each side of the 3018 CNC. The iPhone camera is
+on a static stand above the CNC bed, not on an arm, so the named poses are manipulation poses only."""
 from __future__ import annotations
 
 import struct
@@ -16,7 +19,9 @@ REG_TORQUE, REG_ACCEL, REG_GOAL_POS, REG_GOAL_TIME, REG_GOAL_SPEED, REG_PRESENT_
 TICKS_PER_REV, CENTER = 4096, 2048
 RATE_HZ = 50
 
-POSES = ["home", "look_deck", "look_user", "look_plate"]
+POSES = ["home", "ready", "rest"]
+# Old pose names from when the phone rode on so_a. Kept so stale clients/calib files don't crash; they map to `ready`.
+POSE_ALIASES = {"look_deck": "ready", "look_user": "ready", "look_plate": "ready"}
 DEFAULT_CALIB = {
     "joints": {
         "shoulder_pan": {"offset": 0, "sign": 1, "min": -110, "max": 110},
@@ -28,9 +33,10 @@ DEFAULT_CALIB = {
     },
     "poses": {
         "home": {"shoulder_pan": 0, "shoulder_lift": -90, "elbow_flex": 90, "wrist_flex": 45, "wrist_roll": 0, "gripper": 0},
-        "look_deck": {"shoulder_pan": 0, "shoulder_lift": -30, "elbow_flex": 40, "wrist_flex": 60, "wrist_roll": 0, "gripper": 0},
-        "look_user": {"shoulder_pan": 0, "shoulder_lift": -20, "elbow_flex": 30, "wrist_flex": -10, "wrist_roll": 0, "gripper": 0},
-        "look_plate": {"shoulder_pan": 20, "shoulder_lift": -20, "elbow_flex": 50, "wrist_flex": 70, "wrist_roll": 0, "gripper": 0},
+        # gripper up and open above the deck edge, clear of the CNC gantry: start point for a pick
+        "ready": {"shoulder_pan": 0, "shoulder_lift": -30, "elbow_flex": 40, "wrist_flex": 60, "wrist_roll": 0, "gripper": 40},
+        # folded low and out of the CNC envelope and the camera view, gripper closed
+        "rest": {"shoulder_pan": 0, "shoulder_lift": -100, "elbow_flex": 95, "wrist_flex": 50, "wrist_roll": 0, "gripper": 0},
     },
 }
 
@@ -235,6 +241,9 @@ class So101(Device):
 
     def a_pose(self, name: str, ms: float = 1500):
         poses = self.calib.get("poses", {})
+        if name not in poses and POSE_ALIASES.get(name) in poses:
+            log.info("%s: pose '%s' is a legacy alias for '%s'", self.id, name, POSE_ALIASES[name])
+            name = POSE_ALIASES[name]
         if name not in poses:
             raise DeviceError(f"unknown pose '{name}' (have {sorted(poses)})")
         return {"pose": name, **self.move_to(poses[name], ms)}

@@ -25,8 +25,9 @@ FEED_XY, FEED_Z = 3000.0, 600.0  # mm/min
 ACCEL = 400.0  # mm/s^2
 PIPETTE_UL_PER_S = 100.0
 
-# SO-101 reach envelope (base positions in deck coords, mm) – used for photo/arm checks
-SO101_BASES = {"so_a": (150.0, -120.0), "so_b": (330.0, 90.0)}
+# SO-101 reach envelope (base positions in deck coords, mm): one arm on each side of the 3018 CNC (left/right of the bed).
+# The iPhone camera is on a static stand above the bed, so photos need no arm.
+SO101_BASES = {"so_a": (-80.0, 90.0), "so_b": (380.0, 90.0)}
 SO101_REACH = 400.0
 
 # Dye absorbance (per channel R,G,B) at stock concentration (≈ OD per unit path)
@@ -286,11 +287,7 @@ class Sim:
                 self._goto(ex, ey + 8, ez, i, "eject")
                 self.tip = None
                 self._goto(ex, ey + 8, Z_SAFE, i, "eject")
-            elif op == "photo":
-                bx, by = SO101_BASES["so_a"]
-                tx, ty = (190.0, 50.0)
-                if math.hypot(tx - bx, ty - by) > SO101_REACH:
-                    self.errors.append(f"step {i}: photo target out of so_a reach")
+            elif op == "photo":  # static overhead phone: just lift the pipette out of the way and wait for a fresh frame
                 if self.pos[2] < Z_SAFE:
                     self._goto(self.pos[0], self.pos[1], Z_SAFE, i, "photo")
                 self.t += 2.0

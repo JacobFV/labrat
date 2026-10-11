@@ -6,21 +6,21 @@
 Lab automation is either rigid, with scripted liquid handlers that never learn, or unsafe, with LLM agents driving hardware directly. Scientists want to say what they want ("the most orange well from red and yellow") and get a system that plans, checks itself before acting, and gets measurably better with every run.
 
 ## What it does
-1. **Ask** by voice (iPhone on the robot arm, using ElevenLabs STT/TTS) or by chat in the laptop console.
+1. **Ask** by voice (an iPhone on a static stand above the deck, using ElevenLabs STT/TTS) or by chat in the laptop console.
 2. **Recall** relevant typed memories through Voyage embeddings and MongoDB Atlas Vector Search.
 3. **Design** N protocol variants (Claude, or a deterministic generator) and **simulate** each one in the digital twin: CNC timing, pipette volumes, tip reuse, Beer–Lambert dye mixing to RGB, and bounds/collision checks. Then score them.
 4. **Select and approve.** Only a sim-passing variant can be queued, and it waits for human approval.
-5. **Execute** through the USB bridge: 3018 CNC with a servo pipette, plus SO-101 arms.
-6. **Observe automatically.** The phone arm poses at `look_plate` and grabs a frame. A camera→plate homography (from 4 clicked wells) samples the target well, white-balanced against an empty well; Claude vision is the fallback. The result goes into the learning loop.
+5. **Execute** through the USB bridge: 3018 CNC with a servo pipette, plus an SO-101 gripper arm on each side of it.
+6. **Observe automatically.** The CNC parks out of view and the server waits for a fresh frame from the overhead iPhone (no arm moves). A camera→plate homography (from 4 clicked wells) samples the target well, white-balanced against an empty well; Claude vision is the fallback. The result goes into the learning loop.
 7. **Self-improve.** The loop refits the simulator's dye absorbance and pipette gain, adopts the new parameters only if prediction error drops, re-scores past variants, and promotes the protocol to procedural memory.
 
 ## Architecture
 ```mermaid
 flowchart LR
   subgraph Clients
-    P[iPhone SPA on SO-101 arm<br/>camera, mic, eyes, TTS]
+    P[iPhone SPA on a static overhead stand<br/>camera, mic, eyes, TTS]
     W[Laptop console<br/>chat, 3D twin, gallery, Learning, Memory, Calibrate cam]
-    B[USB bridge<br/>SO-101 x2, Tappet ESP32, GRBL CNC, servo pipette<br/>local limits + watchdog]
+    B[USB bridge<br/>SO-101 x2, GRBL CNC, servo pipette via Tappet ESP32 board<br/>local limits + watchdog]
   end
   subgraph Server["LabRat server (FastAPI; laptop today, AWS EC2 script ready)"]
     H[hub.py<br/>WS hubs and cmd futures]
@@ -74,10 +74,12 @@ Each observation goes through these steps: (1) compare predicted with observed R
 Every integration degrades gracefully when its key is missing, so the demo never blocks.
 
 ## Hardware
-- 2× SO-101 arms (Feetech STS3215). `so_a` carries the iPhone (eye, ear and mouth). `so_b` is a gripper.
-- 1–2× Tappet ESP32-S3 + PCA9685 arms (our firmware, in [`tappet/`](tappet/README.md)); PCA9685 channel 8 drives the pipette plunger servo.
+Layout: the CNC in the middle, an SO-101 arm on each side, the iPhone on a fixed stand looking down at the CNC bed, and the laptop off to the side.
 - 3018 CNC (GRBL 1.1) carrying a servo-actuated pipette (CAD in `cad/`) on the spindle mount.
-- iPhone (camera, mic, speaker, animated face), a laptop running the USB bridge, a 96-well plate, a tip rack, and dye reservoirs.
+- The pipette servo is driven by PCA9685 channel 8 on an ESP32-S3 Tappet board (`tap_a`, our firmware in [`tappet/`](tappet/README.md)). The Tappet arms are optional and not part of the demo setup.
+- 2× SO-101 arms (Feetech STS3215), `so_a` and `so_b`: plain manipulators with stock grippers, one on each side of the CNC.
+- iPhone on a static stand (camera, mic, speaker, animated face); it never moves.
+- A laptop running the USB bridge and console, a 96-well plate, a tip rack, and dye reservoirs.
 
 ## Safety and governance
 - **Sim-before-actuation invariant:** `lab.request_run` refuses any variant whose simulation did not pass (volume caps, single-use tips, bounds and reach checks).
@@ -88,7 +90,7 @@ Every integration degrades gracefully when its key is missing, so the demo never
 
 ## Real vs mocked (honest status)
 - **Live integrations verified at 14:59 PDT on 2026-10-11** (each returned HTTP 200): Anthropic LLM, MongoDB Atlas, Raindrop (REST), ElevenLabs TTS, and Modelence (POST to `/api/events`).
-- **Not yet live:** Voyage AI (no key set, so embeddings use the hashed bag-of-words fallback and recall quality is lower); physical hardware (SO-101s, Tappet arm, CNC, pipette) is not yet connected, so the bridge runs with `--mock`; AWS is not yet deployed (the server runs on the laptop).
+- **Not yet live:** Voyage AI (no key set, so embeddings use the hashed bag-of-words fallback and recall quality is lower); physical hardware (SO-101s, CNC, pipette and its Tappet servo board) is not yet connected, so the bridge runs with `--mock`; AWS is not yet deployed (the server runs on the laptop).
 - **Real:** the FastAPI server, agent, digital twin, RSI refit, typed memory, all sponsor clients (when keys are set), the bridge drivers for GRBL, SO-101 and Tappet, the phone SPA, the web console, the vision sampler (homography and white balance, tested on synthetic images) and the AWS deploy script.
 - **Mock or partial:** every device has a `--mock` mode with the same code path, and the demo can run fully mocked. The deck coordinates and camera calibration must be done on site. The vision estimate is only as good as the lighting and calibration, and has not been validated against a spectrophotometer. The Claude vision fallback is untested against real plates. The RSI numbers above come from scripted observations, not a physical-run series.
 - **Tests:** `cd server && uv run --group dev pytest -q` covers the sim, end-to-end (fake bridge and UI), and vision (synthetic plate, homography, white balance, auto-observe into RSI).

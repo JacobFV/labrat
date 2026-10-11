@@ -23,8 +23,8 @@ At startup it probes each USB port in parallel: GRBL banner (115200) -> Tappet `
 ## Wiring
 | Device | Link | Notes |
 |---|---|---|
-| SO-101 `so_a` (phone arm), `so_b` (gripper arm) | Waveshare/Feetech bus adapter USB, 1 Mbps, ids 1..6 | 7.4 V (STS3215 7.4 V version) or 12 V servo supply to adapter; common GND |
-| Tappet ESP32 `tap_a` (`tap_b`) | USB-UART 115200, JSON lines | bridge pings every 1 s (fw watchdog parks after 5 s) |
+| SO-101 `so_a`, `so_b` (gripper arms, one each side of the CNC) | Waveshare/Feetech bus adapter USB, 1 Mbps, ids 1..6 | 7.4 V (STS3215 7.4 V version) or 12 V servo supply to adapter; common GND |
+| Tappet ESP32 board `tap_a` (drives the pipette servo; `tap_b`/arms optional) | USB-UART 115200, JSON lines | bridge pings every 1 s (fw watchdog parks after 5 s) |
 | Pipette plunger servo | ESP32 PCA9685 **ch 8** on `tap_a` | `enable` is sent automatically before the first `servo_raw` (this also energizes ch 0..7) |
 | 3018 CNC | GRBL 1.1 USB 115200 | pipette on spindle mount; work zero = top-left-front, Z0 = safe height |
 
@@ -32,7 +32,7 @@ Arm port mapping: `--so-a/--so-b` override > `calib/ports.json` (USB serial numb
 port order. If the arms swap, run once with `--so-a/--so-b`; the mapping is saved.
 
 ## Actions (per CONTRACT)
-- `so_a/so_b`: `joints {q, ms}`, `pose {name, ms?}`, `gripper {open 0..1}`, `torque {on}`, `read {}`, `stop {}`.
+- `so_a/so_b`: `joints {q, ms}`, `pose {name: home|ready|rest, ms?}` (legacy `look_*` names alias to `ready`), `gripper {open 0..1}`, `torque {on}`, `read {}`, `stop {}`.
   Moves interpolate (smoothstep) at 50 Hz with SYNC_WRITE to goal position (reg 42); targets clamped to calib limits.
 - `tap_a/tap_b`: `raw {cmd, ...}` passthrough (motion cmds wait for the `done` event).
 - `cnc`: `home`, `move {x,y,z,f}` (Z raised first / lowered last), `jog {dx,dy,dz,f}`, `status`, `gcode {lines}`,
@@ -51,7 +51,7 @@ State is sent at 5 Hz (`so*: q/moving/torque`, `cnc: state/wpos/mpos`, `pipette:
 
 ## Calibration
 Files in `bridge/calib/` (defaults used when missing):
-- `so_a.json` / `so_b.json`: `joints.{name}.{offset (ticks), sign (+-1), min, max (deg)}`, `poses.{home,look_deck,look_user,look_plate}`.
+- `so_a.json` / `so_b.json`: `joints.{name}.{offset (ticks), sign (+-1), min, max (deg)}`, `poses.{home,ready,rest}` (legacy `look_deck`/`look_user`/`look_plate` requests fall back to `ready` unless the file defines them).
   deg = sign * (ticks - 2048 - offset) * 360/4096.
 - `pipette.json`: `{rest_us:1000, full_us:2000, first_stop:0.8, max_ul:200, settle_ms:400}`.
 - `cnc.json`: `{zero_after_home:[0,0,0], home_if_enabled:true}`.
@@ -62,7 +62,7 @@ uv run python -m labrat_bridge calibrate --device so_a --port /dev/cu.usbmodemXX
 ```
 1. Put the arm in the centred/zero pose -> Enter (records offsets; `s` skips).
 2. Enter, sweep every joint through its safe range, Enter (records min/max deg).
-3. For each of home, look_deck, look_user, look_plate: pose the arm -> Enter.
+3. For each of home, ready, rest: pose the arm -> Enter.
 If a joint moves the wrong way, flip its `sign` in the JSON (and redo step 2/3).
 
 Pipette: use `set {frac}` from the server (or edit `pipette.json`) to find the µs where the plunger hits the first

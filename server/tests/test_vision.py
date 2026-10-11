@@ -99,3 +99,21 @@ def test_skip_without_frame_or_cal():
         assert not res["ok"] and res["skipped"] == "no phone frame"
 
     asyncio.run(go())
+
+
+def test_requires_fresh_frame_after_photo_step():
+    """Static overhead phone: no arm pose; a frame older than the photo step must not be used."""
+    async def go():
+        exp = await lab.create_experiment("make green from blue and yellow", 2)
+        await lab.simulate_experiment(exp["id"])
+        exp = store.get("experiments", exp["id"])
+        store.put("runs", {"id": "run_vis3", "experiment_id": exp["id"], "variant_id": exp["best_variant_id"], "status": "done", "log": []})
+        hub.latest_frame = {"jpeg": to_b64(synth_plate({})), "w": 640, "h": 480, "ts": 100.0}
+        res = await vision.auto_observe("run_vis3", fresh_after=200.0, wait_s=0.1)
+        assert not res["ok"] and res["skipped"] == "no fresh phone frame"
+        assert await vision.photo_pose() is False  # LABRAT_PHOTO_POSE unset -> no arm motion
+
+    try:
+        asyncio.run(go())
+    finally:
+        hub.latest_frame = None

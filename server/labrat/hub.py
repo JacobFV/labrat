@@ -42,6 +42,17 @@ class Hub:
         for ws in dead:
             self.phones.discard(ws)
 
+    async def wait_frame(self, after: float, timeout: float = 3.0) -> dict | None:
+        """Newest phone frame captured strictly after `after` (server time.time()); None if none arrives within `timeout`."""
+        deadline = time.time() + timeout
+        while True:
+            f = self.latest_frame
+            if f and f.get("jpeg") and float(f.get("ts") or 0) > after:
+                return f
+            if time.time() >= deadline:
+                return None
+            await asyncio.sleep(0.05)
+
     def devices_msg(self) -> dict:
         from .status import services
 

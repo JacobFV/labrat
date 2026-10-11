@@ -3,27 +3,30 @@
 **A voice-operated, simulation-first desk-lab agent with persistent memory that improves itself.**
 Built for the Harness Engineering & Model Wrangling Hackathon (SF, 2026-10-11).
 
-Talk to it through an iPhone mounted on a robot arm (its eyes, ears and voice), or chat with it on the
-laptop. It designs an experiment, **simulates many variants in a 3D digital twin**, picks the best one,
-asks for approval, and then runs it for real. The hardware is two SO-101 arms, Tappet ESP32 arms and a
-3018 CNC carrying a servo pipette. It then compares the result with its prediction, **refits its own
+Talk to it through an iPhone on a static stand looking down at the deck (its eyes, ears and voice), or
+chat with it on the laptop. It designs an experiment, **simulates many variants in a 3D digital twin**,
+picks the best one, asks for approval, and then runs it for real. The hardware is a 3018 CNC carrying a
+servo pipette, with an SO-101 gripper arm on each side. It then compares the result with its prediction, **refits its own
 simulator**, and stores what it learned in typed memory (semantic / episodic / procedural / taxonomic).
 
 ## Hardware
-- **2× SO-101 arms** (Feetech STS3215). `so_a` carries the **iPhone head** (camera, mic, speaker, animated eyes); `so_b` is a gripper.
-- **Tappet ESP32 arm(s)** ([`tappet/`](tappet)): low-cost ESP32-S3 + PCA9685 servo arms with our firmware (JSON lines over USB, 115200). PCA9685 **channel 8 drives the pipette plunger servo**.
+Layout: the 3018 CNC is in the middle, `so_a` and `so_b` stand on either side of it, the iPhone is on a fixed
+stand looking straight down at the CNC bed, and the laptop sits to the side.
 - **3018 CNC** (GRBL 1.1) carrying a **servo-actuated pipette** on the spindle mount (CAD in [`cad/`](cad)).
-- A laptop running the USB bridge, a 96-well plate, a tip rack and dye reservoirs.
+- **Pipette servo driver:** an ESP32-S3 + PCA9685 Tappet board (`tap_a`, firmware in [`tappet/`](tappet), JSON lines over USB at 115200). PCA9685 **channel 8 drives the pipette plunger servo**. The Tappet arms themselves are optional and not part of the demo setup.
+- **2× SO-101 arms** (Feetech STS3215), `so_a` and `so_b`: plain manipulators with the stock gripper, one on each side of the CNC.
+- **iPhone** on a static stand above the CNC bed: camera, mic, speaker and animated eyes. It does not move.
+- A **laptop** to the side running the USB bridge and the console, plus a 96-well plate, a tip rack and dye reservoirs.
 
 ## Architecture
 ```
-iPhone SPA (head on so_a) ──wss /ws/phone──┐                        ┌─ MongoDB Atlas  (typed memory + $vectorSearch)
+iPhone SPA (static stand) ──wss /ws/phone──┐                        ┌─ MongoDB Atlas  (typed memory + $vectorSearch)
 Laptop console (chat/twin) ─wss /ws/ui─────┼── LabRat server ───────┼─ Voyage AI      (embeddings; hashed fallback)
 Terminal CLI (cli/) ───────wss /ws/ui──────┤   FastAPI: agent,      ├─ Anthropic      (agent LLM + vision fallback)
 Laptop USB bridge ─────────wss /ws/bridge──┘   sim twin, lab,       ├─ ElevenLabs     (TTS + STT)
   │                                            vision, learn (RSI)  ├─ Raindrop       (traces, rsi.update events)
-  ├─ SO-101 ×2 (Feetech STS)                                        └─ Modelence      (Mission Control event ingest)
-  ├─ Tappet ESP32 ×1-2 (+ pipette servo, PCA9685 ch 8)
+  ├─ SO-101 ×2 gripper arms (Feetech STS)                           └─ Modelence      (Mission Control event ingest)
+  ├─ Tappet ESP32 board tap_a (pipette servo, PCA9685 ch 8)
   └─ 3018 CNC (GRBL)
 ```
 Full system design (components, endpoints, memory, sim, learning loop, safety, sponsor map):
@@ -48,7 +51,7 @@ Full system design (components, endpoints, memory, sim, learning loop, safety, s
 | [`CONTRACT.md`](CONTRACT.md) | Pointer to ARCHITECTURE.md plus the hardware/bridge protocol tables |
 | [`server/`](server) | FastAPI server: hubs, agent (LLM tool use + rule fallback), simulator, learning loop, vision, sponsor integrations |
 | [`web/`](web) | Laptop console: chat, three.js digital twin, experiment gallery, Learning and Memory tabs, approvals, camera/deck calibration |
-| [`phone/`](phone) | iPhone head: animated eyes, camera frames, push-to-talk / VAD voice, TTS playback |
+| [`phone/`](phone) | Static overhead iPhone: animated eyes, camera frames, push-to-talk / VAD voice, TTS playback |
 | [`cli/`](cli) | Terminal REPL (`labrat`): streams `/ws/ui`, chat, `/sim`, `/run`, `/approve`, `/abort` |
 | [`bridge/`](bridge) | USB bridge: SO-101 (Feetech STS), Tappet ESP32, GRBL CNC, servo pipette, each with a mock |
 | [`tappet/`](tappet) | Tappet hardware (merged from the former `JacobFV/tappet` repo): ESP32 firmware, Python host, Android head app, CAD, web UI, docs |
@@ -65,7 +68,7 @@ cd server && uv run uvicorn labrat.app:app --host 0.0.0.0 --port 8000
 cd bridge && uv run python -m labrat_bridge --server ws://localhost:8000 --token labrat
 # 3. laptop console
 open "http://localhost:8000/?token=labrat"
-# 4. iPhone head: https://<server>/phone/?token=labrat   (HTTPS is required for camera/mic)
+# 4. iPhone on its stand: https://<server>/phone/?token=labrat   (HTTPS is required for camera/mic)
 # 5. terminal CLI
 cd cli && uv run labrat --server http://localhost:8000 --token labrat
 ```

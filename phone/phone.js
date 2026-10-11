@@ -1,4 +1,4 @@
-// LabRat phone head: animated eyes + camera frames + push-to-talk/VAD audio + TTS playback over /ws/phone.
+// LabRat phone (iPhone on a static stand looking down at the CNC bed; it never moves): animated eyes + camera frames + push-to-talk/VAD audio + TTS playback over /ws/phone.
 const $ = (s) => document.querySelector(s);
 const qs = new URLSearchParams(location.search);
 let TOKEN = qs.get('token') || (() => { try { return localStorage.getItem('labrat_token'); } catch { return null; } })() || 'labrat';
@@ -120,6 +120,8 @@ function tts(text, done) {
 }
 
 // ---------------- camera ----------------
+// The phone is fixed on a stand above the CNC bed. Use whichever camera faces the bed: front by default, ?cam=back
+// for the rear camera (or the ⟲ cam button). Frames stream continuously; the server waits for one newer than the photo step.
 const video = $('#cam'); let facing = qs.get('cam') === 'back' ? 'environment' : 'user'; let camStream = null;
 async function startCamera() {
   if (camStream) for (const t of camStream.getTracks()) t.stop();

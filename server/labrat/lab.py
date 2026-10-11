@@ -215,7 +215,7 @@ async def _goto(x, y, z):
     await _mv(z=z, f=F_Z)
 
 
-async def exec_step(s: dict) -> str:
+async def exec_step(s: dict, run: dict | None = None) -> str:
     op = s["op"]
     if op == "pick_tip":
         x, y, zt = sim.well_xyz(s["rack_well"], sim.TIP_RACK, sim.Z_TIP)  # calibrated deck (spindle coords)
@@ -257,12 +257,20 @@ async def exec_step(s: dict) -> str:
         await hub.cmd("pipette", "rest", {}, timeout=10)
         return "ejected tip"
     if op == "photo":
+        # The iPhone is on a static stand above the bed: no arm moves. Park the pipette out of view, then require a
+        # phone frame captured after the park finished (LABRAT_PHOTO_POSE re-enables an arm pose for arm-mounted phones).
+        from . import vision
+
         await _mv(z=sim.Z_SAFE, f=F_Z)
         await _mv(x=290, y=175, f=F_XY)  # park out of camera view
-        if "so_a" in hub.devices:
-            await hub.cmd("so_a", "pose", {"name": "look_plate"}, timeout=20)
-        await asyncio.sleep(1.0)
-        return "photo taken" if hub.latest_frame else "photo requested (no phone frame)"
+        await vision.photo_pose()
+        t_ready = time.time()
+        frame = await hub.wait_frame(t_ready, float(env("LABRAT_PHOTO_WAIT_S", "3") or 3))
+        if run is not None:
+            run["photo_after"] = t_ready
+            if frame:
+                run["photo_ts"] = frame.get("ts")
+        return "photo taken" if frame else "photo requested (no fresh phone frame)"
     if op == "wait":
         await asyncio.sleep(float(s.get("s", 1)))
         return f"waited {s.get('s', 1)} s"
@@ -275,16 +283,17 @@ async def _execute(run: dict) -> None:
     try:
         for i, s in enumerate(v["protocol"]):
             run["step"] = i
-            msg = await exec_step(s)
+            msg = await exec_step(s, run)
             run["log"].append({"i": i, "op": s["op"], "msg": msg, "t": round(time.time() - run["started"], 1)})
             await emit_run(run)
         run["status"] = "done"
-        if hub.latest_frame:
+        if hub.latest_frame and "photo_ts" not in run:
             run["photo_ts"] = hub.latest_frame.get("ts")
         if any(st.get("op") == "photo" for st in v["protocol"]) and env("LABRAT_AUTO_OBSERVE", "1") not in ("0", "false", "no"):
             from . import vision  # auto observation: photo -> well RGB -> learn.observe(source="vision")
 
-            _spawn(vision.auto_observe(run["id"], pose=False, settle_s=0.0))  # photo step already posed + settled
+            # only a frame captured after the photo step's park counts (never a stale pre-run frame)
+            _spawn(vision.auto_observe(run["id"], pose=False, settle_s=0.0, fresh_after=run.get("photo_after")))
         obs = (f"Ran {exp['goal']!r} variant {v['id']} params={v.get('params')} predicted_rgb={v['sim']['predicted_rgb']} "
                f"score={v['sim']['score']} in {round(time.time() - run['started'])} s on real hardware.")
         run["observation"] = obs
