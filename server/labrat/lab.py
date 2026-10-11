@@ -4,7 +4,7 @@ import time
 import uuid
 
 from . import sim
-from .config import AUTO_APPROVE, log
+from .config import AUTO_APPROVE, env, log
 from .hub import BridgeError, hub
 from .store import store
 from .telemetry import track
@@ -189,8 +189,8 @@ async def _goto(x, y, z):
 async def exec_step(s: dict) -> str:
     op = s["op"]
     if op == "pick_tip":
-        x, y = sim.well_xy(s["rack_well"], sim.TIP_RACK)
-        await _goto(x, y, sim.Z_TIP)
+        x, y, zt = sim.well_xyz(s["rack_well"], sim.TIP_RACK, sim.Z_TIP)  # calibrated deck (spindle coords)
+        await _goto(x, y, zt)
         await _mv(z=sim.Z_SAFE, f=F_Z)
         return f"picked tip {s['rack_well']}"
     if op == "aspirate":
@@ -221,8 +221,8 @@ async def exec_step(s: dict) -> str:
         await _mv(z=sim.Z_SAFE, f=F_Z)
         return f"mixed {s['well']}"
     if op == "eject_tip":
-        ex, ey = sim.EJECT_BAR
-        await _goto(ex, ey, -20.0)
+        ex, ey, ez = sim.eject_xyz()
+        await _goto(ex, ey, ez)
         await _mv(y=ey + 8, f=600)
         await _mv(z=sim.Z_SAFE, f=F_Z)
         await hub.cmd("pipette", "rest", {}, timeout=10)
@@ -252,6 +252,10 @@ async def _execute(run: dict) -> None:
         run["status"] = "done"
         if hub.latest_frame:
             run["photo_ts"] = hub.latest_frame.get("ts")
+        if any(st.get("op") == "photo" for st in v["protocol"]) and env("LABRAT_AUTO_OBSERVE", "1") not in ("0", "false", "no"):
+            from . import vision  # auto observation: photo -> well RGB -> learn.observe(source="vision")
+
+            _spawn(vision.auto_observe(run["id"], pose=False, settle_s=0.0))  # photo step already posed + settled
         obs = (f"Ran {exp['goal']!r} variant {v['id']} params={v.get('params')} predicted_rgb={v['sim']['predicted_rgb']} "
                f"score={v['sim']['score']} in {round(time.time() - run['started'])} s on real hardware.")
         run["observation"] = obs

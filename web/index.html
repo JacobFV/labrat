@@ -54,7 +54,7 @@
 
   <section class="pane gallery-pane">
     <div class="pane-head tabs">
-      <button class="tab on" data-tab="exp">Experiments</button><button class="tab" data-tab="learn">Learning</button><button class="tab" data-tab="mem">Memory</button>
+      <button class="tab on" data-tab="exp">Experiments</button><button class="tab" data-tab="learn">Learning</button><button class="tab" data-tab="mem">Memory</button><button class="tab" data-tab="deck">Deck</button>
       <div class="spacer"></div><button id="refreshBtn" class="btn ghost">↻</button></div>
     <div class="tabpane" data-pane="exp">
       <div id="expList" class="exp-list"></div>
@@ -65,9 +65,12 @@
       <form id="memForm" class="mem-form"><input id="memQ" placeholder="search memory… e.g. orange, tip reuse"><button class="btn">Search</button></form>
       <div id="memBox" class="exp-detail"></div>
     </div>
+    <div class="tabpane hidden" data-pane="deck"><div id="deckBox" class="exp-detail deck-cal"></div></div>
   </section>
 </main>
 
 <script type="module" src="app.js"></script>
+<script type="module" src="deck.js"></script>
+<script type="module" src="camera_cal.js"></script>
 </body>
 </html>

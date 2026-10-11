@@ -11,6 +11,7 @@ dependencies = [
   "python-dotenv",
   "numpy",
   "python-multipart",
+  "pillow>=12.3.0",
 ]
 
 [dependency-groups]

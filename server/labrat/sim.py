@@ -8,10 +8,12 @@ from typing import Any
 
 import numpy as np
 
+from . import deck_cal
+
 # ---------------- deck ----------------
 ROWS = "ABCDEFGH"
-TIP_RACK = {"origin": (20.0, 20.0), "pitch": 9.0, "rows": 8, "cols": 12}
-PLATE = {"origin": (140.0, 20.0), "pitch": 9.0, "rows": 8, "cols": 12, "cap_ul": 300.0}
+TIP_RACK = {"name": "tip_rack", "origin": (20.0, 20.0), "pitch": 9.0, "rows": 8, "cols": 12}
+PLATE = {"name": "plate", "origin": (140.0, 20.0), "pitch": 9.0, "rows": 8, "cols": 12, "cap_ul": 300.0}
 RESERVOIRS = {"water": (250.0, 20.0), "red": (250.0, 60.0), "blue": (250.0, 100.0), "yellow": (250.0, 140.0)}
 RES_CAP_UL = 20000.0
 WASTE = (280.0, 170.0)
@@ -67,7 +69,27 @@ def well_xy(name: str, grid: dict) -> tuple[float, float]:
     if not (0 <= c < grid["cols"]):
         raise ValueError(f"bad well {name}")
     ox, oy = grid["origin"]
-    return ox + c * grid["pitch"], oy + r * grid["pitch"]
+    nom = (ox + c * grid["pitch"], oy + r * grid["pitch"])
+    if grid.get("name") in deck_cal.GRIDS:
+        x, y, _ = deck_cal.grid_spindle(grid["name"], r, c, nom, 0.0)
+        return x, y
+    return nom
+
+
+def well_xyz(name: str, grid: dict, z_nom: float) -> tuple[float, float, float]:
+    """Calibrated spindle (x, y, z_work) for a grid well (taught z overrides the nominal work height)."""
+    m = re.fullmatch(r"([A-Ha-h])(\d{1,2})", name.strip())
+    if not m:
+        raise ValueError(f"bad well {name}")
+    r, c = ROWS.index(m.group(1).upper()), int(m.group(2)) - 1
+    if not (0 <= c < grid["cols"]):
+        raise ValueError(f"bad well {name}")
+    ox, oy = grid["origin"]
+    return deck_cal.grid_spindle(grid["name"], r, c, (ox + c * grid["pitch"], oy + r * grid["pitch"]), z_nom)
+
+
+def eject_xyz() -> tuple[float, float, float]:
+    return deck_cal.point_spindle("eject_bar", (EJECT_BAR[0], EJECT_BAR[1], -20.0))
 
 
 def loc(name: str) -> tuple[str, float, float, float]:
@@ -75,11 +97,10 @@ def loc(name: str) -> tuple[str, float, float, float]:
     n = name.strip().lower().replace("reservoir:", "").replace("res_", "")
     if n in RESERVOIRS:
         x, y = RESERVOIRS[n]
-        return "reservoir", x, y, Z_RES
+        return ("reservoir", *deck_cal.point_spindle("reservoir." + n, (x, y, Z_RES)))
     if n == "waste":
-        return "waste", WASTE[0], WASTE[1], -10.0
-    x, y = well_xy(name, PLATE)
-    return "well", x, y, Z_WELL
+        return ("waste", *deck_cal.point_spindle("waste", (WASTE[0], WASTE[1], -10.0)))
+    return ("well", *well_xyz(name, PLATE, Z_WELL))
 
 
 def mix_rgb(comp: dict[str, float]) -> list[int]:
@@ -198,8 +219,8 @@ class Sim:
                     self.errors.append(f"step {i}: pick_tip while holding a tip")
                 if rw in self.used_tips:
                     self.errors.append(f"step {i}: tip {rw} already used")
-                x, y = well_xy(rw, TIP_RACK)
-                self._goto(x, y, Z_TIP, i, "pick_tip")
+                x, y, zt = well_xyz(rw, TIP_RACK, Z_TIP)
+                self._goto(x, y, zt, i, "pick_tip")
                 self.t += 0.5
                 self.tip = {"id": rw, "vol": 0.0, "comp": {}, "sources": set()}
                 self.used_tips.add(rw)
@@ -260,10 +281,11 @@ class Sim:
                 if not self.tip:
                     self.warnings.append(f"step {i}: eject without tip")
                     return
-                self._goto(EJECT_BAR[0], EJECT_BAR[1], -20.0, i, "eject")
-                self._goto(EJECT_BAR[0], EJECT_BAR[1] + 8, -20.0, i, "eject")
+                ex, ey, ez = eject_xyz()
+                self._goto(ex, ey, ez, i, "eject")
+                self._goto(ex, ey + 8, ez, i, "eject")
                 self.tip = None
-                self._goto(EJECT_BAR[0], EJECT_BAR[1] + 8, Z_SAFE, i, "eject")
+                self._goto(ex, ey + 8, Z_SAFE, i, "eject")
             elif op == "photo":
                 bx, by = SO101_BASES["so_a"]
                 tx, ty = (190.0, 50.0)

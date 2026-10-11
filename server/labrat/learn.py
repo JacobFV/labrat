@@ -109,7 +109,7 @@ def _rescore_all() -> int:
 
 
 async def observe(run_id: str, rating: int | None = None, rgb: list[int] | None = None, well: str | None = None,
-                  vol_ul: float | None = None) -> dict:
+                  vol_ul: float | None = None, source: str = "operator") -> dict:
     from . import lab
 
     run = store.get("runs", run_id)
@@ -125,7 +125,7 @@ async def observe(run_id: str, rating: int | None = None, rgb: list[int] | None 
     cmd_vol = float(sum(s.get("ul", 0) for s in v["protocol"] if s.get("op") == "dispense" and s.get("dst", "").upper() == well))
     ob = store.put("observations", {"run_id": run_id, "experiment_id": exp["id"], "variant_id": v["id"], "well": well,
                                     "rating": rating, "rgb": [int(x) for x in rgb] if rgb else None, "comp": comp,
-                                    "predicted_rgb": w.get("rgb"), "vol_ul": vol_ul, "cmd_vol_ul": cmd_vol})
+                                    "predicted_rgb": w.get("rgb"), "vol_ul": vol_ul, "cmd_vol_ul": cmd_vol, "source": source})
     run["observation_rating"], run["observed_rgb"] = rating, ob["rgb"]
     await lab.emit_run(run)
 
@@ -162,7 +162,7 @@ async def observe(run_id: str, rating: int | None = None, rgb: list[int] | None 
         promoted = True
     metrics = {"v": ver["v"], "accepted": accepted, "error_before": ver["error_before"], "error_after": ver["error_after"],
                "run_error_before": single_before, "run_error_after": single_after, "rescored_variants": rescored,
-               "promoted_procedure": promoted, "rating": rating}
+               "promoted_procedure": promoted, "rating": rating, "source": source}
     store.event("rsi.update", **metrics)
     track("rsi.update", input=f"run {run_id} rating={rating} rgb={rgb}", output=str(metrics), props=metrics)
     return {"observation": ob, "version": ver, **metrics}

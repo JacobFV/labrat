@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import agent, lab, learn
+from . import agent, deck_cal, lab, learn
 from .config import PHONE_DIR, TOKEN, WEB_DIR, log
 from .hub import hub
 from .store import store
@@ -16,6 +16,10 @@ from .telemetry import SESSION_ID, modelence
 from .voice import stt
 
 app = FastAPI(title="LabRat")
+
+from .vision import router as _vision_router  # noqa: E402
+
+app.include_router(_vision_router)
 
 
 def _authed(ws: WebSocket) -> bool:
@@ -244,6 +248,77 @@ async def abort():
 @app.get("/api/memory/search")
 async def memory_search(q: str, k: int = 5, type: str | None = None):
     return {"query": q, "results": await store.recall(q, k, type)}
+
+
+# ---------------- deck calibration ----------------
+class JogIn(BaseModel):
+    device: str = "cnc"
+    dx: float = 0.0
+    dy: float = 0.0
+    dz: float = 0.0
+    f: float = 600.0
+
+
+class TeachIn(BaseModel):
+    target: str
+    pos: list[float] | None = None  # optional explicit spindle xyz (else read from the CNC)
+
+
+async def _cnc_pos() -> list[float]:
+    try:
+        st = await hub.cmd("cnc", "status", {}, timeout=5)
+        p = st.get("wpos") or st.get("pos")
+        if p:
+            return [float(v) for v in p]
+    except Exception as e:  # noqa: BLE001
+        log.warning(f"cnc status failed: {e}")
+    p = ((hub.devices.get("cnc") or {}).get("state") or {}).get("wpos")
+    if not p:
+        raise HTTPException(409, "no CNC position available (bridge connected?)")
+    return [float(v) for v in p]
+
+
+def _sync_pos(p: list[float]) -> None:
+    lab._pos.update({"x": round(p[0], 2), "y": round(p[1], 2), "z": round(p[2], 2)})
+
+
+@app.get("/api/deck_cal")
+async def get_deck_cal():
+    return deck_cal.summary()
+
+
+@app.post("/api/deck_cal")
+async def post_deck_cal(body: dict):
+    deck_cal.update(body)
+    await hub.ui({"t": "deck_cal", "deck_cal": deck_cal.summary()})
+    return deck_cal.summary()
+
+
+@app.post("/api/deck_cal/teach")
+async def teach(body: TeachIn):
+    p = body.pos if body.pos else await _cnc_pos()
+    tip = deck_cal.teach(body.target, (p[0], p[1], p[2]))
+    store.event("deck_teach", target=body.target, spindle=p, tip=tip)
+    out = {"target": deck_cal.canon(body.target), "spindle": p, "tip": tip, "deck_cal": deck_cal.summary()}
+    await hub.ui({"t": "deck_cal", "deck_cal": out["deck_cal"]})
+    return out
+
+
+@app.post("/api/jog")
+async def jog(body: JogIn):
+    if body.device != "cnc":
+        raise HTTPException(400, "only cnc jog supported")
+    for v in (body.dx, body.dy, body.dz):
+        if abs(v) > 50:
+            raise HTTPException(400, "jog step too large (max 50 mm)")
+    try:
+        r = await hub.cmd("cnc", "jog", {"dx": body.dx, "dy": body.dy, "dz": body.dz, "f": body.f}, timeout=30)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(400, f"jog failed: {e}") from e
+    p = r.get("pos") if isinstance(r, dict) else None
+    if p:
+        _sync_pos(p)
+    return {"ok": True, "pos": p}
 
 
 @app.exception_handler(Exception)

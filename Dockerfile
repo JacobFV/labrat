@@ -3,7 +3,7 @@ ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 RUN pip install uv
 WORKDIR /app/server
 COPY server/pyproject.toml ./
-RUN uv pip install --system fastapi "uvicorn[standard]" httpx pymongo anthropic python-dotenv numpy python-multipart \
+RUN uv pip install --system fastapi "uvicorn[standard]" httpx pymongo anthropic python-dotenv numpy python-multipart pillow \
     && (uv pip install --system raindrop-ai || true)
 COPY server/ /app/server/
 COPY web/ /app/web/
