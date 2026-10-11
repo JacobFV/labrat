@@ -58,7 +58,26 @@ $AWS s3 cp "$TMP/labrat.tgz" "s3://$BUCKET/labrat.tgz" >/dev/null
 CODE_URL=$($AWS s3 presign "s3://$BUCKET/labrat.tgz" --expires-in 604800)
 ENV_URL=""
 if [[ -f "$ENV_FILE" ]]; then
-  $AWS s3 cp "$ENV_FILE" "s3://$BUCKET/labrat.env" >/dev/null
+  # docker --env-file keeps quotes and inline "# comments" literally: normalise to plain KEY=VALUE first
+  CLEAN_ENV="$(mktemp)"
+  python3 - "$ENV_FILE" "$CLEAN_ENV" <<'PY'
+import re, sys
+out = []
+for line in open(sys.argv[1]):
+    line = line.rstrip("\n")
+    m = re.match(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)$", line)
+    if not m:
+        continue
+    k, v = m.group(1), m.group(2).strip()
+    if v[:1] in "\"'" and v[-1:] == v[:1] and len(v) >= 2:
+        v = v[1:-1]
+    else:
+        v = re.split(r"\s+#", v, maxsplit=1)[0].strip()
+    out.append(f"{k}={v}")
+open(sys.argv[2], "w").write("\n".join(out) + "\n")
+PY
+  $AWS s3 cp "$CLEAN_ENV" "s3://$BUCKET/labrat.env" >/dev/null
+  rm -f "$CLEAN_ENV"
   ENV_URL=$($AWS s3 presign "s3://$BUCKET/labrat.env" --expires-in 604800)
 else
   echo "==> no $ENV_FILE; server will run with defaults (rule-based agent, in-memory store)"
