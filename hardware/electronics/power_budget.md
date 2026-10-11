@@ -71,4 +71,4 @@ Efficiencies: Buck A (XL4015, asynchronous) 85%, Buck B (Mini560, synchronous) 9
 | R_SHOULDER | 300 | too short | +100 mm |
 | R_ELBOW | 310 | too short | +100 mm |
 | NECK_PAN | 320 | too short | +100 mm |
-| NECK_TILT | 400 | too short | +200 mm |
+| NECK_TILT | 390 | too short | +200 mm |

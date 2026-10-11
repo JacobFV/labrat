@@ -5,15 +5,14 @@ from functools import lru_cache
 
 from build123d import Plane
 
-from . import (base, base_lid, cable_clip, column, elbow_drive_link, elbow_triangle, forearm, linkage_rod,
+from . import (base, cable_clip, column, elbow_drive_link, elbow_triangle, forearm, linkage_rod,
                neck_pan_mount, neck_tilt_bracket, phone_clamp, stylus_holder, stylus_plunger, tray, tray_shims,
                turret, upper_arm, wrist_link, yaw_gear_servo, yaw_gear_turret)
 
 # name -> (builder, meta).  Handed parts are listed once; build.py exports _L and _R.
 _REG = {
-    "base": (base.make, base.META),
-    "base_lid": (base_lid.make, base_lid.META),
-    "column": (column.make, column.META),
+    "chassis": (base.make, base.META),
+    "column_head": (column.make, column.META),
     "neck_pan_mount": (neck_pan_mount.make, neck_pan_mount.META),
     "neck_tilt_bracket": (neck_tilt_bracket.make, neck_tilt_bracket.META),
     "phone_clamp": (phone_clamp.make, phone_clamp.META),

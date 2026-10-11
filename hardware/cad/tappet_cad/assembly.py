@@ -29,11 +29,12 @@ from .params import (ARM_BASE, BEARING_608, CRANK_A, D_ANG, D_LEN, D_VEC, DECK_Z
 from .parts._common import ARM_SERVO, HORN_IN_ELBOW_LINK, HORN_IN_SHOULDER_LINK, SMALL_SERVO
 from .parts._neck import (PAN_HORN_FRAME, PAN_SERVO_FRAME, PHONE_BACK_Y, PHONE_CZ, TILT_SERVO_FRAME, TILT_HORN_FRAME)
 from .parts.stylus_plunger import tip_mock
+from .parts.column import dowel_mock
 from .parts.turret import SERVO_ORIGIN_V
 from .parts.yaw_gear_servo import YAW_SERVO_Z
 
 COLORS = dict(servo="#2b4c7e", servo_mg="#2d2d2d", horn="#f5f5f5", bearing="#9aa3ad", tip="#111111",
-              phone="#1c1c1e", screen="#3b6ea5", head_screen="#2ecc71")
+              phone="#1c1c1e", dowel="#c8a165", screen="#3b6ea5", head_screen="#2ecc71")
 
 
 def d2(a):
@@ -143,7 +144,7 @@ ARM_EXPLODE = {
     "stylus_plunger": (0, 20, 75), "stylus_tip": (0, 20, 60),
 }
 WORLD_EXPLODE = {
-    "base_lid": (0, 0, -45), "column": (0, -30, 40), "servo_pan": (0, -30, 95), "neck_pan_mount": (0, -30, 125),
+    "column_dowel": (0, -30, 25), "column_head": (0, -30, 70), "servo_pan": (0, -30, 95), "neck_pan_mount": (0, -30, 125),
     "horn_pan": (0, -30, 110), "servo_tilt": (40, -30, 135), "neck_tilt_bracket": (0, -30, 150),
     "horn_tilt": (22, -30, 150), "phone_clamp": (0, 5, 165), "phone_clamp_jaw": (0, 5, 200),
     "head_phone": (0, 55, 165), "head_screen": (0, 55, 165),
@@ -213,9 +214,9 @@ def body_items(q: dict, explode=False, shim="tray_shim_iphone_61") -> list[Item]
     phone_M = frame((0, PHONE_BACK_Y, PHONE_CZ), (0, 0, 1), (1, 0, 0), (0, 1, 0))
     tgt_M = T(TRAY_CX, TRAY_CY, TRAY_FLOOR_Z)
     rows = [
-        ("base", P.model("base"), np.eye(4), None, "body", True),
-        ("base_lid", P.model("base_lid"), np.eye(4), None, "body", True),
-        ("column", P.model("column"), np.eye(4), None, "body", True),
+        ("chassis", P.model("chassis"), np.eye(4), None, "body", True),
+        ("column_dowel", dowel_mock(), np.eye(4), COLORS["dowel"], "body", False),
+        ("column_head", P.model("column_head"), np.eye(4), None, "body", True),
         ("servo_pan", servo_model(SMALL_SERVO), PAN_SERVO_FRAME, COLORS["servo"], "neck", False),
         ("neck_pan_mount", P.model("neck_pan_mount"), Mpan, None, "neck", True),
         ("horn_pan", horn_model(SMALL_SERVO), Mpan @ PAN_HORN_FRAME, COLORS["horn"], "neck", False),

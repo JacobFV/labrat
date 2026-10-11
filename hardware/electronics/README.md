@@ -140,14 +140,14 @@ if an electronics-only board overlaps a CAD module or the wall.
 
 | item | position | notes |
 |---|---|---|
-| U1 (+J1) | rear panel, x = 40 | PD trigger module |
+| U1 (+J1) | rear edge of the chassis, x = 40 | PD trigger module |
 | U2 (Buck A) | on the first CAD buck station | |
 | U3 (Buck B) | on the second CAD buck station | U3 is fed by daisy-chaining from U2's input terminal (W3) |
 | A1 (DevKit) | CAD position, USB end at the rear | sits about 11 mm up on its pin headers; W6, W7, W9 and W11 pass underneath |
 | A2 (PCA9685) | CAD position | servo headers on its −x long edge, V+ terminal on the +x edge facing U2 |
 | A2 adaptor | on A2 | carries C4, C5, R7, R8, C10, R11 and TP2 |
 | **PB power board** (40 × 17 mm) | rear centre, x −7…33, y −47…−30 | F1, D2, C2, C3 = STAR, D3, R9, R10, C11, TP1, TP8 |
-| **HEAD board** (30 × 20 mm) | rear left, x −95…−65, y −47…−27 | J2 on the rear panel at x = −80, plus U4, U5, R4–R6, R12, R13, C7–C9, TP4 |
+| **HEAD board** (30 × 20 mm) | rear left, x −95…−65, y −47…−27 | J2 at the rear edge (x = −80), plus U4, U5, R4–R6, R12, R13, C7–C9, TP4 |
 
 **Gauges**
 
@@ -235,7 +235,7 @@ The design gives each tip a ground reference:
    * Crimp ferrules on all screw-terminal wires and twist the red/black pairs.
    * Heat-shrink every splice.
    * Label each Dupont housing with its W-number.
-7. Mount everything on M2/M3 nylon standoffs, with at least 10 mm of air above U2 and vent slots in the lid above it.
+7. Mount everything on M2/M3 nylon standoffs, with at least 10 mm of air above U2. The chassis is open (no enclosure), so airflow is free; keep loose wires off U2.
 
 ## 8. v1 carrier PCB (recommended)
 
@@ -318,7 +318,7 @@ until step 6.
   the HEAD port data lines. Handle the DevKit by its edges.
 * **Mechanical:** the servos are enabled only by an explicit `enable`. OE is pulled high at boot and the watchdog
   relaxes the arms after 5 s with no commands. Keep fingers out of the turret gears while the arms are enabled.
-* **Thermal:** typical heat in the bay is about 2.5 W, and up to about 4 W in a stall fault. Keep the vent slots above
+* **Thermal:** typical heat in the bay is about 2.5 W, and up to about 4 W in a stall fault. Keep the area above
   U2 clear and never run the robot inside a closed box.
 
 ## 11. Deviations from the original brief (and why)

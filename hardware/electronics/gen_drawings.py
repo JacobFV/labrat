@@ -1528,7 +1528,7 @@ def wiring_harness() -> Sheet:
         q = W2P(xc - CAD["SOCKET_BLOCK"]["dx"], BY1 - CAD["WALL"])
         s.rect(*q, 2 * CAD["SOCKET_BLOCK"]["dx"] * SC, (BY1 - CAD["WALL"] - CAD["SOCKET_BLOCK"]["y0"]) * SC,
                stroke="#9e9e9e", fill="#eeeeee", sw=1.2, track=False)
-    s.text(W2P(0, 60)[0], W2P(0, 60)[1] + 4, "tray dovetail sockets", 10, anchor="middle", color="#777")
+    s.text(W2P(0, 60)[0], W2P(0, 60)[1] + 4, "tray lugs (pin + M3)", 10, anchor="middle", color="#777")
     # modules (draw low ones first)
     for name in ("U1", "PB", "HB", "U2", "U3", "A2", "A1"):
         ax, ay, bx, by, title, lines, fill, owner = MODULES[name]
@@ -1615,11 +1615,11 @@ def wiring_harness() -> Sheet:
         "  wire (it would close a loop with the I2C ground in W8).",
         "!Signals (W7-W11): AWG24-26. A1 sits ~11 mm up on its headers, so W6/W7/W9/W11 pass under it.",
         "  W9 (USB D+/D-) twisted, < 15 cm end to end; keep W8/W9 >= 15 mm from the U2/U3 inductors.",
-        "!Arms: each bundle (3 servo leads + 30 AWG stylus GND) rises through its deck arm slot into the",
+        "!Arms: each bundle (3 servo leads + 30 AWG stylus GND) is cable-tied to the open chassis beside the",
         "  hollow turret; 60 mm service loop cable-tied at the slot, so the yaw range (joint -93..+23 deg,",
         "  up to 174 deg at the servo after 1.5x gearing) only flexes the loop, never the pins.",
-        "!Column: neck leads rise through the column cable slot; 40 mm loop at pan, 80 mm at the tilt yoke.",
-        "  The USB-C head cable (W12) runs from J2 on the rear panel up the column's rear cable channel.",
+        "!Column: neck leads are cable-tied up the 10 mm dowel column; 40 mm loop at pan, 80 mm at the tilt yoke.",
+        "  The USB-C head cable (W12) runs from J2 on the rear panel up the dowel column (cable-tied).",
     ], size=11, lh=16)
 
     # ---- front elevation (x-z) -----------------------------------------------------------

@@ -9,7 +9,7 @@ from ..params import TRAY_CX, TRAY_CY, TRAY_FLOOR_Z, TRAY_POCKET_L, TRAY_POCKET_
 from ._common import meta
 from .tray import CABLE_NOTCH_Y
 
-SHIM_H = 5.0
+SHIM_H = 2.0
 C = 0.15  # clearance on each contact face
 MIN_WALL = 0.8
 
@@ -18,8 +18,8 @@ SHIMS = {
     "tray_shim_iphone_67": ("iphone_15_plus_67", "iPhone 15/16 Plus, 15 Pro Max (6.7in); 16 Pro Max needs no shim"),
     "tray_shim_iphone_se": ("iphone_se", "iPhone SE 2nd/3rd gen"),
 }
-METAS = {k: meta(k, 1, color="#f7dc6f", orient=(0, 0, 0), notes=f"For {v[1]}. Print flat, 100% infill (thin walls).",
-                 infill=100) for k, v in SHIMS.items()}
+METAS = {k: meta(k, 1, color="#f7dc6f", orient=(0, 0, 0), notes=f"For {v[1]}. Print flat (2 mm tall frame).",
+                 infill=20, walls=3, layer=0.24) for k, v in SHIMS.items()}
 META = METAS["tray_shim_iphone_61"]
 
 
@@ -42,4 +42,12 @@ def make_shim(key):
         s = s - box(TRAY_CX - 8, TRAY_CX + 8, oy0 - 1, iy0 + 1, z0 + 1.2, z1 + 1)
     s = s - box(ox0 - 1, ox1 + 1, CABLE_NOTCH_Y[0] + 1, CABLE_NOTCH_Y[1] - 1, z0 + 1.2, z1 + 1) \
         if side_wall >= MIN_WALL and end_wall > 3 else s
+    # lightening slots in the wide end bars / sides
+    from ..lib.util import rbox as _rb
+    if end_wall > 7:
+        for sy, y0e in ((-1, oy0), (1, iy1)):
+            s = s - _rb(ix0 + 6, ix1 - 6, y0e + 2.0, y0e + end_wall - 2.0, z0 - 1, z1 + 1, 1.5)
+    if side_wall > 5:
+        for xa in (ox0, ix1):
+            s = s - _rb(xa + 1.6, xa + side_wall - 1.6, iy0 + 15, iy1 - 15, z0 - 1, z1 + 1, 1.0)
     return s

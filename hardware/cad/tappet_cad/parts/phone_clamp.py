@@ -14,9 +14,9 @@ from ._neck import CLAMP_PLATE_Y, JAW_BOTTOM_Z, PHONE_BACK_Y, PHONE_CZ, PHONE_W
 from .neck_tilt_bracket import CLAMP_BOLTS_X
 
 META = meta("phone_clamp", 1, color="#34495e", orient=(90, 0, 0),
-            notes="Print back-plate down (rail, ribs, jaws up; no supports). 4 walls, 30% infill.", walls=4)
+            notes="Print back down (rail, pads, jaws up; no supports).", infill=20, walls=3, layer=0.24)
 META_JAW = meta("phone_clamp_jaw", 1, color="#5d6d7e", orient=(180, 0, 0),
-                notes="Print upside down (top face on the bed, lip up). 100% infill.", infill=100)
+                notes="Print upside down (top face on the bed, lip up).", infill=20, walls=3, layer=0.24)
 
 PY0, PY1 = CLAMP_PLATE_Y
 PLATE_Z0 = JAW_BOTTOM_Z - 6.0
@@ -26,7 +26,7 @@ RAIL_Z0 = TILT_Z + 4.0
 LIP_Y = PHONE_BACK_Y + 11.0           # inner face of the jaw lips (max phone thickness 11)
 SPRING_Y = PHONE_BACK_Y + 3.0
 JAW_H = 9.0
-JAW_HALF = 13.0
+JAW_HALF = 10.0
 
 
 def rail_profile(clear=0.0):
@@ -36,14 +36,19 @@ def rail_profile(clear=0.0):
 
 
 def make():
-    plate = Pos(0, PY0, (PLATE_Z0 + PLATE_Z1) / 2) * Rot(-90, 0, 0) * extrude(RectangleRounded(72, PLATE_Z1 - PLATE_Z0, 8), PY1 - PY0)
-    # extrude along +y from PY0 (Rot(-90) maps +z -> +y)
+    # skeleton back: centre spine (carries the rail + jaws), cross bar on the bolt line, two side bars
+    pb = PY1 - 2.8                       # 2.8 mm skeleton back (the bolt pad keeps the full 4 mm)
+    pb = PY1 - 2.2
+    plate = box(-6.5, 6.5, pb, PY1, PLATE_Z0, PLATE_Z1)
+    plate = plate + box(-28.0, 28.0, pb, PY1, TILT_Z - 5.0, TILT_Z + 5.0) + box(-14.0, 14.0, PY0, PY1, TILT_Z - 6.0, TILT_Z + 6.0)
+    plate = plate - box(-3.5, 3.5, PY0 - 1, PY1 + 1, PLATE_Z0 + 9.0, TILT_Z - 9.0)    # spine window
     rail = Pos(0, 0, RAIL_Z0) * extrude(polygon_face(rail_profile()), STOP_Z0 - RAIL_Z0 + 0.01)
-    ribs = box(-27, -22, PY1 - 0.01, PHONE_BACK_Y, JAW_BOTTOM_Z + 4, TILT_Z + 28) + \
-        box(22, 27, PY1 - 0.01, PHONE_BACK_Y, JAW_BOTTOM_Z + 4, TILT_Z + 28)
-    ledge = box(-18, 18, PY1 - 0.01, LIP_Y + 2.0, JAW_BOTTOM_Z - 4.0, JAW_BOTTOM_Z)
-    lip = box(-18, 18, LIP_Y, LIP_Y + 2.0, JAW_BOTTOM_Z - 0.01, JAW_BOTTOM_Z + 3.0)
-    stop = box(-JAW_HALF, JAW_HALF, PY1 - 0.01, LIP_Y + 2.0, STOP_Z0, PLATE_Z1)
+    ribs = box(-28, -21, PY1 - 0.01, PHONE_BACK_Y, TILT_Z - 5, TILT_Z + 5) + \
+        box(21, 28, PY1 - 0.01, PHONE_BACK_Y, TILT_Z - 5, TILT_Z + 5)                 # phone rest pads
+    ledge = box(-14, 14, PY0, LIP_Y + 2.0, JAW_BOTTOM_Z - 3.0, JAW_BOTTOM_Z)
+    ledge = ledge - box(-9, 9, PY1 + 2.0, LIP_Y - 2.0, JAW_BOTTOM_Z - 4.0, JAW_BOTTOM_Z + 1)
+    lip = box(-14, 14, LIP_Y, LIP_Y + 2.0, JAW_BOTTOM_Z - 0.01, JAW_BOTTOM_Z + 3.0)
+    stop = box(-JAW_HALF, JAW_HALF, PY1 - 0.01, SPRING_Y + 8.5, STOP_Z0, PLATE_Z1)
     c = plate + rail + ribs + ledge + lip + stop
     c = c + cyl_z(2.0, STOP_Z0 - 8.0, STOP_Z0 + 0.01, 0, SPRING_Y + 4.5)
     for x in CLAMP_BOLTS_X:
@@ -51,7 +56,6 @@ def make():
         c = c - cyl_y(3.1, PY1 - 0.5, PHONE_BACK_Y + 1, x=x, z=TILT_Z)   # head counterbore below phone
     # cable slot in the lower ledge for the head's USB-C lead (port at the phone's short end is
     # left free; this slot is for a 90-degree cable routed down behind the clamp)
-    c = c - box(-30, -20, PY0 - 1, PY1 + 1, PLATE_Z0 + 8, PLATE_Z0 + 20)
     return c
 
 

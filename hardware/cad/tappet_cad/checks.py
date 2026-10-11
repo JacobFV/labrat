@@ -105,6 +105,20 @@ def joint_check(psi=-35.0, th1=100.0, th2=-20.0, tol=0.02):
 
 
 # ---------------------------------------------------------------------------------- printability
+Q_MM3_S = {0.28: 5.0, 0.24: 4.2, 0.2: 3.5, 0.12: 1.8}   # average volumetric rate, Ender 3 V3 SE / Cura stock
+
+
+def est_extruded_cm3(volume_mm3, area_mm2, meta):
+    """Shell model: surface_area x shell thickness printed solid, the rest at the infill fraction."""
+    t_shell = max(meta["walls"] * 0.42, 4 * meta["layer"])
+    shell = min(volume_mm3, area_mm2 * t_shell)
+    return (shell + meta["infill"] / 100.0 * (volume_mm3 - shell)) / 1000.0
+
+
+def est_hours(volume_mm3, area_mm2, height_mm, meta):
+    ext = est_extruded_cm3(volume_mm3, area_mm2, meta) * 1000.0
+    q = Q_MM3_S.get(round(meta["layer"], 2), 3.5) * (0.85 if meta["material"] == "PETG" else 1.0)
+    return (ext / q + height_mm / meta["layer"] * 1.5) / 3600.0
 def printability(export_items):
     rows, ok = [], True
     from .lib.util import bbox_dims
@@ -117,9 +131,10 @@ def printability(export_items):
         good = valid and n_sol == 1 and fits
         ok &= good
         v = shape.volume / 1000.0
-        mass = v * PLA_DENSITY * EFFECTIVE_FILL
+        mass = est_extruded_cm3(shape.volume, shape.area, meta) * (1.27 if meta["material"] == "PETG" else PLA_DENSITY)
         rows.append(dict(part=name, qty=qty, valid=valid, solids=n_sol, bbox=[round(bx, 1), round(by, 1), round(bz, 1)],
-                         fits_bed=fits, volume_cm3=round(v, 2), mass_g=round(mass, 1), material=meta["material"], ok=good))
+                         fits_bed=fits, volume_cm3=round(v, 2), mass_g=round(mass, 1), material=meta["material"],
+                         hours=round(est_hours(shape.volume, shape.area, bz, meta), 2), ok=good))
     return ok, rows
 
 

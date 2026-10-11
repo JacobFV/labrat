@@ -11,26 +11,30 @@ from ._common import SMALL_SERVO as S, meta
 from ._neck import (BRACKET_FACE_X, CHEEK_T, PAN_HORN_FRAME, PLATE_Z0, PLATE_Z1, TAB_TOP_X)
 
 META = meta("neck_pan_mount", 1, color="#e74c3c", orient=(0, 0, 0),
-            notes="Print plate-down. Servo window bridges ~13 mm. 4 walls, 40% infill.", infill=40, walls=4)
+            notes="Print plate-down. Servo window bridges ~13 mm.", infill=20, walls=3, layer=0.24)
 
 Y0, Y1 = PAN_Y - 24.0, PAN_Y + 12.0
 LEFT_X = (-(BRACKET_FACE_X + CHEEK_T + 1.0 + 3.0), -(BRACKET_FACE_X + CHEEK_T + 1.0))
 
 
 def make():
-    rx0, rx1 = TAB_TOP_X - 3.0, TAB_TOP_X
+    rx0, rx1 = TAB_TOP_X - 2.4, TAB_TOP_X
     plate = rbox(LEFT_X[0], rx1, Y0, Y1, PLATE_Z0, PLATE_Z1, 4)
     right = rbox(rx0, rx1, Y0, Y1, PLATE_Z0, TILT_Z + 13, 3)
     win = box(rx0 - 1, rx1 + 1, PAN_Y + S.body_x0 - 0.25, PAN_Y + S.body_x1 + 0.25,
               TILT_Z - S.body_w / 2 - 0.25, TILT_Z + S.body_w / 2 + 0.25)
     right = right - win
+    right = right - box(rx0 - 1, rx1 + 1, PAN_Y - 12.0, PAN_Y + 3.0, PLATE_Z1 + 2.0, TILT_Z - S.body_w / 2 - 3.0)
     for hx in S.hole_xs:
         right = right - cyl_x(M2_TAP / 2, rx0 - 1, rx1 + 1, y=PAN_Y + hx, z=TILT_Z)
     left = cyl_x(9.0, LEFT_X[0], LEFT_X[1], y=PAN_Y, z=TILT_Z) + box(LEFT_X[0], LEFT_X[1], PAN_Y - 9, PAN_Y + 9, PLATE_Z0, TILT_Z)
     left = left - cyl_x(M3_CLEAR / 2, LEFT_X[0] - 1, LEFT_X[1] + 1, y=PAN_Y, z=TILT_Z)
     # gussets
-    g = box(rx0 - 6, rx0, Y0, Y0 + 3, PLATE_Z1 - 0.01, PLATE_Z1 + 6) + box(LEFT_X[1], LEFT_X[1] + 5, PAN_Y - 9, PAN_Y + 9, PLATE_Z1 - 0.01, PLATE_Z1 + 3)
+    g = box(rx0 - 6, rx0, Y0, Y0 + 2.4, PLATE_Z1 - 0.01, PLATE_Z1 + 6) + box(rx0 - 6, rx0, Y1 - 2.4, Y1, PLATE_Z1 - 0.01, PLATE_Z1 + 6) + \
+        box(LEFT_X[1], LEFT_X[1] + 4, PAN_Y - 9, PAN_Y + 9, PLATE_Z1 - 0.01, PLATE_Z1 + 3)
     m = plate + right + left + g
+    m = m - rbox(4.5, rx0 - 3.0, Y0 + 3.0, Y1 - 3.0, PLATE_Z0 - 1, PLATE_Z1 + 1, 2.5)
+    m = m - rbox(LEFT_X[1] + 5.0, -4.5, Y0 + 3.0, PAN_Y - 9.0, PLATE_Z0 - 1, PLATE_Z1 + 1, 2.0)
     m = m - place(horn_pocket(S, 0.2), PAN_HORN_FRAME)
     m = m - cyl_z(M2_CLEAR / 2, PLATE_Z0 - 1, PLATE_Z1 + 1, PAN_X, PAN_Y)
     m = m - cyl_z(2.4, PLATE_Z1 - 1.8, PLATE_Z1 + 1, PAN_X, PAN_Y)

@@ -123,23 +123,22 @@ def update_readme(report):
         return re.sub(r"_(L|R)$", "", n)
 
     total_g = sum(r["mass_g"] * r["qty"] for r in pr)
-    # print time estimate: ~11 g/h effective + 8 min per plate start
-    total_h = total_g / 11.0 + 0.13 * sum(r["qty"] for r in pr) / 3
+    total_h = sum(r["hours"] * r["qty"] for r in pr)
     table = md_table(pr, [
         ("part (STL)", lambda r: f"`{r['part']}`"),
         ("qty", lambda r: r["qty"]),
         ("material", lambda r: r["material"]),
         ("bbox as printed (mm)", lambda r: " x ".join(f"{v:g}" for v in r["bbox"])),
-        ("volume cm3", lambda r: r["volume_cm3"]),
-        ("est. mass g (each)", lambda r: r["mass_g"]),
-        ("orientation / settings", lambda r: f"{metas[base_name(r['part'])]['layer']} mm, "
+        ("solid cm3", lambda r: r["volume_cm3"]),
+        ("est. g (each)", lambda r: r["mass_g"]),
+        ("settings / orientation", lambda r: f"{metas[base_name(r['part'])]['layer']} mm, "
                                              f"{metas[base_name(r['part'])]['walls']} walls, "
                                              f"{metas[base_name(r['part'])]['infill']}% infill. "
                                              f"{metas[base_name(r['part'])]['notes']}"),
     ])
-    table += f"\n\n**Total printed mass (all quantities): ~{total_g:.0f} g PLA**  \n" \
-             f"**Rough total print time: ~{total_h:.0f} h** (0.2 mm layers on a typical 0.4 mm-nozzle bed-slinger; " \
-             f"~11 g/h effective + plate changes; roughly halve on a CoreXY at 'fast' profiles)."
+    table += f"\n\n**All parts, all quantities: ~{total_g:.0f} g, ~{total_h:.1f} h of extrusion** (shell model: " \
+             f"surface area x shell thickness solid + infill; Ender 3 V3 SE average 5.0/4.2/3.5/1.8 mm3/s at " \
+             f"0.28/0.24/0.20/0.12 mm + 1.5 s per layer). Per-plate figures (incl. heat-up) are in plates/README.md."
     chk = report
     kin = "\n".join(f"| {r['pose']} | {r['arm']} | {', '.join(f'{v:.2f}' for v in r['q'])} | "
                     f"{', '.join(f'{v:.2f}' for v in r['fk'])} | {', '.join(f'{v:.2f}' for v in r['cad'])} | "
