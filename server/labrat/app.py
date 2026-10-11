@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from . import agent, deck_cal, lab, learn
 from .config import PHONE_DIR, TOKEN, WEB_DIR, log
 from .hub import hub
+from .status import services
 from .store import store
 from .telemetry import SESSION_ID, modelence
 from .voice import stt
@@ -159,8 +160,8 @@ async def healthz():
 
 @app.get("/api/state")
 async def state():
-    return {**hub.devices_msg(), "phones": len(hub.phones), "uis": len(hub.uis), "llm": agent.llm_available(),
-            "mongo": store.db is not None, "has_frame": hub.latest_frame is not None,
+    return {**hub.devices_msg(), "phones": len(hub.phones), "uis": len(hub.uis), "llm_configured": agent.llm_available(),
+            "services": services(), "has_frame": hub.latest_frame is not None,
             "pending_run": lab.pending_run(), "runs": store.list("runs", 10)}
 
 
@@ -186,7 +187,8 @@ async def variant_frames(exp_id: str, vid: str):
         v = lab.variant(e, vid)
     except ValueError as err:
         raise HTTPException(404, str(err)) from err
-    return {"experiment_id": exp_id, "variant_id": vid, "frames": v.get("frames", []), "sim": v.get("sim")}
+    frames = lab.ensure_frames(e, v)
+    return {"experiment_id": exp_id, "variant_id": vid, "frames": frames, "variant": lab.flat_variant(v)}
 
 
 @app.post("/api/chat")
@@ -328,6 +330,16 @@ async def _err(_, exc: Exception):
 
 
 # ---------------- static ----------------
+@app.middleware("http")
+async def _no_stale_static(request, call_next):
+    """Console JS/HTML must revalidate (ETag) so a reload always picks up the current app.js."""
+    resp = await call_next(request)
+    if not request.url.path.startswith("/api/"):
+        resp.headers.setdefault("Cache-Control", "no-cache")
+    return resp
+
+
+
 for d in (WEB_DIR, PHONE_DIR):
     d.mkdir(parents=True, exist_ok=True)
 app.mount("/phone", StaticFiles(directory=str(PHONE_DIR), html=True), name="phone")

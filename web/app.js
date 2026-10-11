@@ -36,6 +36,7 @@ function normStatus(v) {
   if (typeof v === 'boolean') return v ? 'ok' : 'off';
   if (typeof v === 'string') return v;
   if (typeof v === 'object') {
+    if (v.mode) return v.mode === 'local' ? 'off' : v.ok && v.mode === 'live' ? 'ok' : v.configured === false || v.ok ? 'mock' : 'error';
     if (v.status) return v.status;
     if ('ok' in v) return v.ok ? (v.mock || v.fallback ? 'mock' : 'ok') : (v.fallback || v.mock ? 'mock' : 'error');
     if ('enabled' in v) return v.enabled ? 'ok' : 'mock';
@@ -47,9 +48,8 @@ function renderPills() {
   const all = { ...S.services, ...S.devices };
   $('#pills').innerHTML = PILL_IDS.map((id) => {
     let v = all[id]; for (const a of PILL_ALIAS[id] || []) if (v == null && all[a] != null) v = all[a];
-    if (id === 'aws' && v == null && S.wsUp) v = 'ok'; // we're talking to the AWS-hosted server
     const st = normStatus(v); const cls = st === 'ok' ? 'ok' : st === 'mock' || st === 'fallback' || st === 'degraded' ? 'mock' : st === 'error' ? 'error' : 'off';
-    const tip = v != null ? esc(JSON.stringify(v).slice(0, 300)) : 'no data';
+    const tip = v == null ? 'no data' : esc(v.detail ? `${v.mode || ''}${v.mode ? ': ' : ''}${v.detail}` : JSON.stringify(v).slice(0, 300));
     return `<span class="pill ${cls}" title="${tip}"><i></i>${esc(PILL_LABEL[id] || id)}</span>`;
   }).join('');
 }
@@ -63,6 +63,7 @@ function ingestState(st) {
   for (const k of [...PILL_IDS, ...Object.values(PILL_ALIAS).flat()]) if (k in st && k !== 'devices' && !(k in S.devices)) S.services[k] = st[k];
   if ('phone' in st && typeof st.phone !== 'object') S.services.phone = st.phone;
   if (st.phone_connected != null) S.services.phone = st.phone_connected;
+  if (typeof st.phones === 'number') S.services.phone = { ok: st.phones > 0, mode: st.phones > 0 ? 'live' : 'local', detail: `${st.phones} phone(s) connected` };
   renderPills();
   if (S.live) { const live = {}; for (const [k, v] of Object.entries(S.devices)) live[k] = v.state || v; twin.applyDevices(live); }
   if (st.experiments) for (const e of st.experiments) upsertExp(e, false);
@@ -300,7 +301,9 @@ function setFrames(frames, label) {
 }
 async function playVariant(eid, vid) {
   let fr = S.sims.get(`${eid}:${vid}`);
-  if (!fr) { await loadExp(eid); fr = S.sims.get(`${eid}:${vid}`); }
+  if (!fr?.length) {
+    try { const r = await api(`/api/experiments/${encodeURIComponent(eid)}/variants/${encodeURIComponent(vid)}/frames`); fr = r.frames || []; if (fr.length) S.sims.set(`${eid}:${vid}`, fr); } catch {}
+  }
   if (fr?.length) setFrames(fr, vid); else addMsg('system', `no sim frames for ${vid} yet`);
 }
 function showFrame(i) {
@@ -341,8 +344,8 @@ function wsSend(o) { if (ws && ws.readyState === 1) { ws.send(JSON.stringify(o))
 function connect() {
   const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/ui?token=${encodeURIComponent(TOKEN)}`;
   try { ws = new WebSocket(url); } catch { return setTimeout(connect, wsBackoff); }
-  ws.onopen = () => { wsBackoff = 500; S.wsUp = true; renderPills(); $('#conn').textContent = 'online'; $('#conn').classList.add('on'); pollState(); loadExperiments(); };
-  ws.onclose = () => { S.wsUp = false; $('#conn').textContent = 'offline'; $('#conn').classList.remove('on'); setTimeout(connect, wsBackoff); wsBackoff = Math.min(8000, wsBackoff * 1.7); };
+  ws.onopen = () => { wsBackoff = 500; setConnMsg('connected to /ws/ui · agent ready'); S.wsUp = true; renderPills(); $('#conn').textContent = 'online'; $('#conn').classList.add('on'); pollState(); loadExperiments(); };
+  ws.onclose = (ev) => { setConnMsg(`disconnected from /ws/ui (code ${ev.code}${ev.code === 4401 ? ': bad token' : ''}) · retrying…`); S.wsUp = false; $('#conn').textContent = 'offline'; $('#conn').classList.remove('on'); setTimeout(connect, wsBackoff); wsBackoff = Math.min(8000, wsBackoff * 1.7); };
   ws.onerror = () => { try { ws.close(); } catch {} };
   ws.onmessage = (ev) => { let m; try { m = JSON.parse(ev.data); } catch { return; } try { handle(m); } catch (e) { console.error('handle', m.t, e); } };
 }
@@ -370,5 +373,6 @@ function handle(m) {
 connect();
 setInterval(pollState, 3000);
 renderPills();
-addMsg('system', `token=${TOKEN} · connecting to /ws/ui`);
+function setConnMsg(t) { let el = document.getElementById('connMsg'); if (!el) { el = document.createElement('div'); el.id = 'connMsg'; el.className = 'msg system'; chatLog.prepend(el); } el.textContent = t; }
+setConnMsg(S.wsUp ? 'connected to /ws/ui · agent ready' : 'connecting to /ws/ui…');
 window.labrat = { S, twin, handle };

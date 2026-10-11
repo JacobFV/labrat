@@ -13,11 +13,39 @@ F_XY, F_Z = 3000, 600
 FIRST_STOP = 0.812  # pipette plunger first stop (matches bridge calibration)
 
 
+def flat_variant(var: dict) -> dict:
+    """Variant for UI/REST: no frames; sim results flattened to score/predicted_rgb/checks/pass/time_s."""
+    v = {k: x for k, x in var.items() if k != "frames"}
+    s = var.get("sim")
+    if s:
+        v.update({"score": s.get("score"), "predicted_rgb": s.get("predicted_rgb"), "pass": bool(s.get("ok")),
+                  "time_s": s.get("duration_s"), "checks": sim_checks(s), "has_frames": bool(var.get("frames")) or bool(var.get("protocol"))})
+    return v
+
+
+def sim_checks(s: dict) -> list[dict]:
+    errs, warns = s.get("errors") or [], s.get("warnings") or []
+    out = [{"name": "safety", "ok": not errs, "msg": "; ".join(map(str, errs[:3]))},
+           {"name": "clean", "ok": not warns, "msg": "; ".join(map(str, warns[:3]))}]
+    if s.get("target"):
+        out.append({"name": "colour", "ok": (s.get("score") or 0) >= 0.8, "msg": f"target {s['target'].get('name')} score {s.get('score')}"})
+    return out
+
+
 def _strip(exp: dict) -> dict:
     """Experiment for UI/REST (no frames)."""
     e = {k: v for k, v in exp.items() if k != "variants"}
-    e["variants"] = [{k: v for k, v in var.items() if k != "frames"} for var in exp.get("variants", [])]
+    e["variants"] = [flat_variant(var) for var in exp.get("variants") or []]
     return e
+
+
+def ensure_frames(exp: dict, var: dict) -> list:
+    """Frames aren't persisted to Mongo; re-run the (deterministic) sim from the protocol when missing."""
+    if not var.get("frames") and var.get("protocol"):
+        r = sim.simulate(var["protocol"], exp.get("goal", ""))
+        var["frames"] = r.pop("frames")
+        var.setdefault("sim", r)
+    return var.get("frames") or []
 
 
 async def emit_experiment(exp: dict) -> None:
@@ -47,6 +75,7 @@ async def simulate_experiment(exp_id: str, n_variants: int | None = None) -> dic
         extra = sim.generate_variants(exp["goal"], n_variants, seed=len(exp["variants"]) + 7)[len(exp["variants"]):]
         exp["variants"].extend(extra)
     t0 = time.perf_counter()
+    exp.setdefault("variants", [])
     for v in exp["variants"]:
         r = sim.simulate(v["protocol"], exp["goal"])
         v["frames"] = r.pop("frames")
@@ -70,7 +99,7 @@ async def simulate_experiment(exp_id: str, n_variants: int | None = None) -> dic
             tags=["sim", exp_id], type="episodic", confidence=0.5, meta={"experiment_id": exp_id}))
     for v in sorted(exp["variants"], key=lambda v: v["id"] != exp["best_variant_id"]):
         await hub.ui({"t": "sim", "experiment_id": exp_id, "variant_id": v["id"], "score": v["sim"]["score"],
-                      "ok": v["sim"]["ok"], "predicted_rgb": v["sim"]["predicted_rgb"], "frames": v["frames"]})
+                      "ok": v["sim"]["ok"], "predicted_rgb": v["sim"]["predicted_rgb"], "variant": flat_variant(v), "frames": v["frames"]})
     return exp
 
 

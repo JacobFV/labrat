@@ -43,7 +43,10 @@ class Hub:
             self.phones.discard(ws)
 
     def devices_msg(self) -> dict:
-        return {"t": "devices", "bridge": self.bridge is not None, "devices": list(self.devices.values())}
+        from .status import services
+
+        return {"t": "devices", "bridge": self.bridge is not None, "devices": list(self.devices.values()),
+                "services": services(), "phones": len(self.phones)}
 
     async def push_devices(self, force: bool = True) -> None:
         now = time.time()

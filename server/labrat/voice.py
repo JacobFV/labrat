@@ -4,6 +4,7 @@ import base64
 import httpx
 
 from .config import env, warn_once
+from .status import mark
 
 DEFAULT_VOICE = "21m00Tcm4TlvDq8ikWAM"
 
@@ -22,8 +23,10 @@ async def tts(text: str) -> str | None:
                 json={"text": text[:1500], "model_id": "eleven_flash_v2_5"},
             )
             r.raise_for_status()
+            mark("elevenlabs", True, f"TTS {r.status_code}")
             return base64.b64encode(r.content).decode()
     except Exception as e:  # noqa: BLE001
+        mark("elevenlabs", False, f"TTS failed: {e}")
         warn_once("el_tts_err", f"ElevenLabs TTS failed: {e}")
         return None
 
@@ -44,7 +47,9 @@ async def stt(audio_b64: str, mime: str = "audio/webm") -> str | None:
                 files={"file": (f"utt.{ext}", raw, mime)},
             )
             r.raise_for_status()
+            mark("elevenlabs", True, f"STT {r.status_code}")
             return (r.json().get("text") or "").strip() or None
     except Exception as e:  # noqa: BLE001
+        mark("elevenlabs", False, f"STT failed: {e}")
         warn_once("el_stt_err", f"ElevenLabs STT failed: {e}")
         return None

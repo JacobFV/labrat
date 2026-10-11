@@ -13,6 +13,7 @@ from typing import Any
 
 from .config import env, log, warn_once
 from .embed import cosine, embed
+from .status import mark
 
 COLLS = ("experiments", "variants", "runs", "memories", "events", "sim_params", "observations")
 MEMORY_TYPES = ("semantic", "episodic", "procedural", "taxonomic")
@@ -48,6 +49,7 @@ class Store:
                 self.mem["memories"][d["id"]] = d
             for d in self.db.experiments.find({}, {"_id": 0}).sort("ts", -1).limit(50):
                 self.mem["experiments"][d["id"]] = d
+            self._rehydrate_variants(list(self.mem["experiments"]))
             for coll in ("sim_params", "observations"):
                 for d in self.db[coll].find({}, {"_id": 0}).sort("ts", 1).limit(500):
                     self.mem[coll][d["id"]] = d
@@ -73,6 +75,21 @@ class Store:
         except Exception as e:  # noqa: BLE001
             warn_once("vec_idx", f"Atlas vector index unavailable ({e}); cosine fallback")
 
+    def _rehydrate_variants(self, exp_ids: list[str]) -> None:
+        """Experiments are stored in Mongo without their variants (those live in `variants`, id "<exp>:<vid>"); re-embed them."""
+        by_exp: dict[str, list[dict]] = {}
+        for d in self.db.variants.find({"experiment_id": {"$in": exp_ids}}, {"_id": 0}):
+            vid = str(d.get("id", "")).split(":", 1)[-1]
+            v = {k: x for k, x in d.items() if k not in ("experiment_id", "ts")}
+            v["id"] = vid
+            by_exp.setdefault(d["experiment_id"], []).append(v)
+        for eid, vs in by_exp.items():
+            exp = self.mem["experiments"].get(eid)
+            if exp is not None and not exp.get("variants"):
+                exp["variants"] = sorted(vs, key=lambda v: v["id"])
+        for exp in self.mem["experiments"].values():
+            exp.setdefault("variants", [])
+
     # --- generic ---
     def put(self, coll: str, doc: dict) -> dict:
         doc.setdefault("id", uuid.uuid4().hex[:10])
@@ -88,7 +105,9 @@ class Store:
     def _write(self, coll: str, doc: dict) -> None:
         try:
             self.db[coll].replace_one({"id": doc["id"]}, doc, upsert=True)
+            mark("mongo", True, f"write {coll} ok")
         except Exception as e:  # noqa: BLE001
+            mark("mongo", False, f"write {coll} failed: {e}")
             warn_once(f"mongo_w_{coll}", f"mongo write {coll} failed: {e}")
 
     def get(self, coll: str, id_: str) -> dict | None:

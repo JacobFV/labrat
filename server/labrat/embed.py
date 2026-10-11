@@ -6,6 +6,7 @@ import re
 import httpx
 
 from .config import env, warn_once
+from .status import mark
 
 DIM_FALLBACK = 256
 VOYAGE_MODEL = "voyage-3.5"
@@ -33,8 +34,10 @@ async def embed(texts: list[str], input_type: str = "document") -> tuple[list[li
                 )
                 r.raise_for_status()
                 data = sorted(r.json()["data"], key=lambda d: d["index"])
+                mark("voyage", True, f"{VOYAGE_MODEL} {r.status_code}")
                 return [d["embedding"] for d in data], VOYAGE_MODEL
         except Exception as e:  # noqa: BLE001
+            mark("voyage", False, f"embeddings failed: {e}")
             warn_once("voyage_err", f"Voyage embeddings failed ({e}); using hashed fallback")
     else:
         warn_once("voyage_key", "VOYAGE_API_KEY not set; using hashed bag-of-words embeddings")

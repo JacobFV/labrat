@@ -11,6 +11,7 @@ from . import lab, sim
 from .config import ANTHROPIC_MODEL, FIREWORKS_MODEL, LLM_PROVIDER, env, log, warn_once
 from .hub import BridgeError, hub
 from .store import store
+from .status import mark
 from .telemetry import track
 from .voice import tts
 
@@ -340,7 +341,7 @@ async def _rules(text: str) -> str:
         prior = f" I recalled {len(mem)} related memories." if mem else ""
         return _sim_sentence(s) + prior + " Say 'run best' to run it for real."
     return ("I can: make a color (e.g. 'make orange'), simulate, run best, approve, abort, home arms, look, status, "
-            "remember ..., recall ... (LLM key not configured, using simple commands).")
+            "remember ..., recall ... (" + ("LLM call failed, so I'm using simple commands this turn" if llm_available() else "LLM key not configured, using simple commands") + ").")
 
 
 def _sim_sentence(r: dict) -> str:
@@ -369,11 +370,14 @@ async def handle(text: str, source: str = "ui") -> str:
         try:
             if use_llm:
                 reply = await (_fireworks_loop(text) if LLM_PROVIDER == "fireworks" else _anthropic_loop(text))
+                mark("llm", True, f"{LLM_PROVIDER} {_model()} ok")
             else:
                 warn_once("llm", "No LLM key configured; using rule-based agent")
                 reply = await _rules(text)
         except Exception as e:  # noqa: BLE001
             log.exception("agent error")
+            if use_llm:
+                mark("llm", False, f"{LLM_PROVIDER} failed: {e}")
             warn_once("llm_fail", f"LLM failed ({e}); falling back to rules for this turn")
             try:
                 reply = await _rules(text)

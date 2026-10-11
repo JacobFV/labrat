@@ -5,6 +5,7 @@ import uuid
 import httpx
 
 from .config import env, log, warn_once
+from .status import mark
 
 SESSION_ID = uuid.uuid4().hex[:12]
 _raindrop = None
@@ -35,12 +36,15 @@ def _rd():
 async def _raindrop_rest(payload: dict) -> None:
     try:
         async with httpx.AsyncClient(timeout=5) as c:
-            await c.post(
+            r = await c.post(
                 "https://api.raindrop.ai/v1/events/track",
                 headers={"Authorization": f"Bearer {env('RAINDROP_API_KEY')}"},
                 json=[payload],
             )
+            r.raise_for_status()
+            mark("raindrop", True, f"REST {r.status_code}")
     except Exception as e:  # noqa: BLE001
+        mark("raindrop", False, f"REST failed: {e}")
         warn_once("raindrop_rest", f"Raindrop REST failed: {e}")
 
 
@@ -57,7 +61,9 @@ def track(event: str, input: str = "", output: str = "", model: str = "", user_i
                 _spawn(_raindrop_rest(payload))
             else:
                 rd.track_ai(user_id=user_id, event=event, model=model or "n/a", input=input[:4000], output=output[:4000], convo_id=SESSION_ID, properties=props)
+                mark("raindrop", True, "SDK track_ai ok")
         except Exception as e:  # noqa: BLE001
+            mark("raindrop", False, f"track failed: {e}")
             warn_once("raindrop_track", f"Raindrop track failed: {e}")
     modelence(event, {"input": input[:1000], "output": output[:1000], "model": model, **props})
 
@@ -73,8 +79,11 @@ def modelence(event: str, data: dict) -> None:
         try:
             h = {"Authorization": f"Bearer {env('MODELENCE_KEY', '')}"}
             async with httpx.AsyncClient(timeout=5) as c:
-                await c.post(url, headers=h, json={"app": "labrat", "session": SESSION_ID, "event": event, "data": data})
+                r = await c.post(url, headers=h, json={"app": "labrat", "session": SESSION_ID, "event": event, "data": data})
+                r.raise_for_status()
+                mark("modelence", True, f"POST {r.status_code}")
         except Exception as e:  # noqa: BLE001
+            mark("modelence", False, f"hook failed: {e}")
             warn_once("modelence_err", f"Modelence hook failed: {e}")
 
     _spawn(go())
