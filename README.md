@@ -3,6 +3,14 @@
 **A voice-operated, simulation-first desk-lab agent with persistent memory that improves itself.**
 Built for the Harness Engineering & Model Wrangling Hackathon (SF, 2026-10-11).
 
+![The real LabRat bench: a 3018 CNC with a pink tip rack and well plates, an SO-101 arm at each front corner, the iPhone with animated eyes front-centre, and the laptop on the right](docs/images/bench_photo.png)
+
+**Built with**
+
+<p align="left">
+<img src="docs/images/sponsors/anthropic.png" alt="Anthropic (Claude)" height="24"> &nbsp;&nbsp; <img src="docs/images/sponsors/mongodb.png" alt="MongoDB Atlas" height="40"> &nbsp;&nbsp; <img src="docs/images/sponsors/voyageai.png" alt="Voyage AI" height="40"> &nbsp;&nbsp; <img src="docs/images/sponsors/aws.png" alt="AWS" height="40"> &nbsp;&nbsp; <img src="docs/images/sponsors/raindrop.png" alt="Raindrop" height="36"> &nbsp;&nbsp; <img src="docs/images/sponsors/modelence.png" alt="Modelence" height="36"> &nbsp;&nbsp; <img src="docs/images/sponsors/elevenlabs.png" alt="ElevenLabs" height="24">
+</p>
+
 Talk to it through an iPhone on a static stand looking down at the deck (its eyes, ears and voice), or
 chat with it on the laptop. It designs an experiment, **simulates many variants in a 3D digital twin**,
 picks the best one, asks for approval, and then runs it for real. The hardware is a 3018 CNC carrying a

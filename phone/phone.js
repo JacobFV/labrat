@@ -38,7 +38,7 @@ function draw(now) {
   face.gaze[0] = lerp(face.gaze[0], face.tgaze[0], 1 - Math.pow(0.0001, dt));
   face.gaze[1] = lerp(face.gaze[1], face.tgaze[1], 1 - Math.pow(0.0001, dt));
   // talking amplitude
-  const speaking = face.mood === 'speaking' || !audioEl.paused || speechSynthesis?.speaking;
+  const speaking = playingNow; // driven by real playback events, not by receipt of the say message
   face.talk = speaking ? (0.5 + 0.5 * Math.sin(now / 70)) * (0.5 + 0.5 * Math.sin(now / 173)) : lerp(face.talk, 0, k);
 
   const W = innerWidth, H = innerHeight; ctx.clearRect(0, 0, W, H);
@@ -50,7 +50,7 @@ function draw(now) {
   const breathe = 1 + Math.sin(now / 1400) * 0.015;
   for (const side of [-1, 1]) {
     const ex = cx + side * gap + face.gaze[0] * size * .35, ey = cy + face.gaze[1] * size * .35;
-    const w = size * .8 * breathe, h = size * cur.open * breathe * (1 - blinkAmt * .92) * (face.mood === 'speaking' ? 1 - face.talk * .08 : 1);
+    const w = size * .8 * breathe, h = size * cur.open * breathe * (1 - blinkAmt * .92) * (playingNow ? 1 - face.talk * .08 : 1);
     ctx.save();
     ctx.shadowColor = `rgba(${r},${g},${b},.55)`; ctx.shadowBlur = size * .45;
     ctx.fillStyle = col;
@@ -99,24 +99,122 @@ function handle(m) {
 }
 
 // ---------------- audio out ----------------
-const audioEl = new Audio(); audioEl.playsInline = true; audioEl.setAttribute('playsinline', '');
-const SILENT_MP3 = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjU0AAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBqpAAAAAAD/+xDEAAPAAAGkAAAAIAAANIAAAARMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQxDsDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+// iOS rules this section works around:
+//  * media can only start from a user gesture -> ONE <audio> element (in the DOM) is unlocked on Start and on every
+//    talk press, and is reused for all playback (new Audio() created later, outside a gesture, is blocked).
+//  * Web Audio + speechSynthesis are muted by the ring/silent switch; <audio> with audioSession 'playback' is not.
+//  * an open mic (getUserMedia) puts iOS in play-and-record, routing output to the quiet earpiece -> mic is released
+//    after every push-to-talk utterance and the session is switched to 'playback' before we play.
+const audioEl = document.createElement('audio');
+audioEl.playsInline = true; audioEl.setAttribute('playsinline', ''); audioEl.setAttribute('webkit-playsinline', ''); audioEl.preload = 'auto';
+audioEl.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none';
+document.body.appendChild(audioEl);
+const SILENT_MP3 = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjU0AAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBqpAAAAAAD/+xDEAAPAAAGkAAAAIAAANIAAAARMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQxDsDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+let actx = null;          // the ONE shared AudioContext (mic level meter + webaudio fallback playback)
+let playingNow = false;   // true only while sound is actually coming out -> drives the mouth
+let curUrl = null;        // blob URL of the clip in audioEl (revoked when replaced)
+
+function dbg(msg, report = true) {
+  const s = String(msg); const el = $('#dbg'); if (el) el.textContent = s;
+  console.warn('[labrat]', s);
+  if (report) send({ t: 'log', msg: s });
+}
+function setAudioSession(type) { try { if (navigator.audioSession && navigator.audioSession.type !== type) navigator.audioSession.type = type; } catch (e) { dbg('audioSession ' + type + ': ' + e.message); } }
+function getActx() {
+  if (!actx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) actx = new AC(); }
+  return actx;
+}
+// Call synchronously at the top of every user-gesture handler (Start tap, talk press).
+function unlockAudio() {
+  try {
+    const ac = getActx();
+    if (ac) {
+      if (ac.state !== 'running') ac.resume().catch(() => {});
+      const b = ac.createBuffer(1, 1, 22050), s = ac.createBufferSource(); s.buffer = b; s.connect(ac.destination); s.start(0);
+    }
+  } catch (e) { dbg('unlock ctx: ' + e.message); }
+  // prime the shared <audio> element (only if it isn't busy with a real clip)
+  if (audioEl.paused || !playingNow) {
+    try {
+      audioEl.onended = audioEl.onerror = audioEl.onplaying = null;
+      audioEl.muted = false; audioEl.src = SILENT_MP3;
+      const p = audioEl.play(); if (p && p.catch) p.catch((e) => dbg('unlock <audio>: ' + (e && e.name) + ' ' + (e && e.message)));
+    } catch (e) { dbg('unlock <audio>: ' + e.message); }
+  }
+  try { if ('speechSynthesis' in window && !speechSynthesis.speaking) { const u = new SpeechSynthesisUtterance(''); u.volume = 0; speechSynthesis.speak(u); } } catch {}
+}
+let hintShown = false;
+function showHint() {
+  if (hintShown) return; hintShown = true;
+  const h = $('#hint'); if (!h) return; h.classList.add('show'); setTimeout(() => h.classList.remove('show'), 9000);
+}
+
 const sayQueue = []; let sayBusy = false;
 function say(text, b64, mime) { sayQueue.push({ text, b64, mime }); if (!sayBusy) nextSay(); }
 function nextSay() {
-  const it = sayQueue.shift(); if (!it) { sayBusy = false; if (face.mood === 'speaking') setMood('idle'); return; }
-  sayBusy = true; setMood('speaking');
-  const done = () => { setTimeout(nextSay, 120); };
-  if (it.b64) {
-    audioEl.onended = done; audioEl.onerror = () => tts(it.text, done);
-    audioEl.src = 'data:' + (it.mime || 'audio/mpeg') + ';base64,' + it.b64;
-    audioEl.play().catch(() => tts(it.text, done));
-  } else tts(it.text, done);
+  const it = sayQueue.shift();
+  if (!it) { sayBusy = false; playingNow = false; if (face.mood === 'speaking') setMood('idle'); return; }
+  sayBusy = true; showHint();
+  // release a held mic (PTT) so iOS leaves play-and-record (earpiece) before we play
+  if (!vadOn) releaseMic();
+  if (!micStream) setAudioSession('playback'); // (VAD keeps the mic open; switching would kill capture)
+  let finished = false;
+  const done = () => { if (finished) return; finished = true; playingNow = false; audioEl.onended = audioEl.onerror = audioEl.onplaying = audioEl.onpause = null; setTimeout(nextSay, 120); };
+  if (it.b64) playClip(it, done); else tts(it.text, done);
 }
+function b64ToBlob(b64, type) {
+  const bin = atob(b64); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return new Blob([u8], { type });
+}
+function playClip(it, done) {
+  const type = it.mime || 'audio/mpeg';
+  let blob; try { blob = b64ToBlob(it.b64, type); } catch (e) { dbg('bad audio_b64: ' + e.message); return tts(it.text, done); }
+  if (curUrl) { try { URL.revokeObjectURL(curUrl); } catch {} }
+  curUrl = URL.createObjectURL(blob);
+  audioEl.onplaying = () => { playingNow = true; setMood('speaking'); };
+  audioEl.onended = done;
+  audioEl.onpause = () => { if (audioEl.ended) return; playingNow = false; };
+  audioEl.onerror = () => { const e = audioEl.error; dbg('audio error ' + (e ? e.code + ' ' + (e.message || '') : '?') + ' -> webaudio'); playWebAudio(blob, it, done); };
+  audioEl.muted = false; audioEl.volume = 1;
+  audioEl.src = curUrl; // blob: URL, type audio/mpeg
+  const p = audioEl.play();
+  if (p && p.catch) p.catch((e) => {
+    if (e && e.name === 'AbortError') return; // superseded by barge-in / new clip
+    dbg('play() rejected: ' + (e && e.name) + ' ' + (e && e.message) + ' -> webaudio');
+    audioEl.onerror = null; playWebAudio(blob, it, done);
+  });
+}
+// fallback #1: Web Audio (works if the context was unlocked, but obeys the silent switch)
+async function playWebAudio(blob, it, done) {
+  try {
+    const ac = getActx(); if (!ac) throw new Error('no AudioContext');
+    if (ac.state !== 'running') await ac.resume();
+    if (ac.state !== 'running') throw new Error('AudioContext ' + ac.state);
+    const buf = await new Promise((res, rej) => blob.arrayBuffer().then((ab) => ac.decodeAudioData(ab, res, rej)).catch(rej));
+    const src = ac.createBufferSource(); src.buffer = buf; src.connect(ac.destination);
+    src.onended = done; playingNow = true; setMood('speaking'); src.start(0); showHint();
+    curWebSrc = src;
+  } catch (e) { dbg('webaudio failed: ' + (e && e.message) + ' -> speechSynthesis'); tts(it.text, done); }
+}
+let curWebSrc = null;
+// fallback #2: speechSynthesis (also obeys the silent switch)
 function tts(text, done) {
-  if (!text || !('speechSynthesis' in window)) return done();
-  try { const u = new SpeechSynthesisUtterance(text); u.rate = 1.05; u.pitch = 1.1; u.onend = done; u.onerror = done; speechSynthesis.cancel(); speechSynthesis.speak(u); }
-  catch { done(); }
+  if (!text || !('speechSynthesis' in window)) { if (text) dbg('no speechSynthesis'); return done(); }
+  try {
+    const u = new SpeechSynthesisUtterance(text); u.rate = 1.05; u.pitch = 1.1; u.volume = 1;
+    u.onstart = () => { playingNow = true; setMood('speaking'); };
+    u.onend = done; u.onerror = (e) => { dbg('speechSynthesis error: ' + (e && e.error)); done(); };
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+    // iOS sometimes never fires onstart/onend when not primed; don't wedge the queue
+    setTimeout(() => { if (!playingNow && !speechSynthesis.speaking) { dbg('speechSynthesis never started'); done(); } }, 4000);
+  } catch (e) { dbg('speechSynthesis: ' + e.message); done(); }
+}
+function stopSpeaking() {
+  sayQueue.length = 0; sayBusy = false; playingNow = false;
+  audioEl.onended = audioEl.onerror = audioEl.onplaying = audioEl.onpause = null;
+  try { audioEl.pause(); } catch {}
+  try { curWebSrc && curWebSrc.stop(); } catch {} curWebSrc = null;
+  try { speechSynthesis?.cancel(); } catch {}
 }
 
 // ---------------- camera ----------------
@@ -142,41 +240,66 @@ function sendFrame() {
 }
 
 // ---------------- mic / recording ----------------
-let micStream = null, recorder = null, chunks = [], recording = false, recStart = 0, level = 0;
+// Push-to-talk acquires the mic on press and releases it (track.stop()) once the utterance is recorded, so iOS
+// isn't left in play-and-record (earpiece / ducked output) while the reply plays. VAD mode needs it open.
+let micStream = null, micSrc = null, analyser = null, recorder = null, chunks = [], recording = false, recStart = 0, level = 0;
 let vadOn = qs.get('vad') === '1', vadThresh = +(qs.get('vad_th') || 0.04), lastLoud = 0;
 const MIME = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/aac'].find((m) => window.MediaRecorder?.isTypeSupported?.(m)) || '';
-async function startMic() {
-  micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
-  try {
-    const AC = window.AudioContext || window.webkitAudioContext; const ac = new AC(); await ac.resume();
-    const src = ac.createMediaStreamSource(micStream); const an = ac.createAnalyser(); an.fftSize = 1024; src.connect(an);
-    const buf = new Float32Array(an.fftSize);
-    setInterval(() => {
-      an.getFloatTimeDomainData(buf); let s = 0; for (const v of buf) s += v * v; level = Math.sqrt(s / buf.length);
-      if (!vadOn) return;
-      const busy = sayBusy || !audioEl.paused;
-      const now = performance.now();
-      if (level > vadThresh && !busy) { lastLoud = now; if (!recording) startRec('vad'); }
-      if (recording && recMode === 'vad' && now - lastLoud > 900) stopRec();
-    }, 50);
-  } catch (e) { console.warn('analyser', e); }
+let micPending = null;
+async function acquireMic() {
+  if (micStream && micStream.active) return micStream;
+  if (micPending) return micPending;
+  setAudioSession('play-and-record');
+  micPending = (async () => {
+    const s = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
+    micStream = s;
+    try { const ac = getActx(); if (ac) { micSrc = ac.createMediaStreamSource(s); analyser = ac.createAnalyser(); analyser.fftSize = 1024; micSrc.connect(analyser); } }
+    catch (e) { console.warn('analyser', e); }
+    return s;
+  })();
+  try { return await micPending; } finally { micPending = null; }
 }
-let recMode = 'ptt';
-function startRec(mode = 'ptt') {
+function releaseMic() {
+  if (recording) return;
+  try { micSrc && micSrc.disconnect(); } catch {} micSrc = null; analyser = null; level = 0;
+  if (micStream) { for (const t of micStream.getTracks()) { try { t.stop(); } catch {} } micStream = null; }
+  if (camStream) for (const t of camStream.getAudioTracks()) { try { t.stop(); camStream.removeTrack(t); } catch {} }
+  setAudioSession('playback');
+}
+const lvlBuf = new Float32Array(1024);
+setInterval(() => {
+  if (!analyser) { level = 0; return; }
+  analyser.getFloatTimeDomainData(lvlBuf); let s = 0; for (const v of lvlBuf) s += v * v; level = Math.sqrt(s / lvlBuf.length);
+  if (!vadOn) return;
+  const busy = sayBusy || playingNow;
+  const now = performance.now();
+  if (level > vadThresh && !busy) { lastLoud = now; if (!recording) startRec('vad'); }
+  if (recording && recMode === 'vad' && now - lastLoud > 900) stopRec();
+}, 50);
+let recMode = 'ptt', pttHeld = false;
+async function startRec(mode = 'ptt') {
+  if (recording) return;
+  if (mode === 'ptt') {
+    if (sayBusy || playingNow) stopSpeaking(); // barge-in
+    try { await acquireMic(); } catch (e) { return err('mic: ' + e.message); }
+    if (!pttHeld) { if (!vadOn) releaseMic(); return; } // released before the mic came up
+  }
   if (!micStream || recording) return;
-  if (mode === 'ptt' && sayBusy) { audioEl.pause(); speechSynthesis?.cancel(); sayQueue.length = 0; sayBusy = false; } // barge-in
   chunks = []; recMode = mode;
   try { recorder = MIME ? new MediaRecorder(micStream, { mimeType: MIME }) : new MediaRecorder(micStream); } catch (e) { return err('MediaRecorder: ' + e.message); }
-  recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-  recorder.onstop = async () => {
-    const dur = performance.now() - recStart; const type = (recorder.mimeType || MIME || 'audio/mp4').split(';')[0];
-    if (dur < 350 || !chunks.length) { setMood('idle'); return; }
-    const blob = new Blob(chunks, { type }); const b64 = await blobToB64(blob);
+  const rec = recorder;
+  rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop = async () => {
+    const dur = performance.now() - recStart; const type = (rec.mimeType || MIME || 'audio/mp4').split(';')[0];
+    const myChunks = chunks; chunks = [];
+    if (!vadOn) releaseMic(); // free the mic -> iOS leaves play-and-record before the reply arrives
+    if (dur < 350 || !myChunks.length) { setMood('idle'); return; }
+    const blob = new Blob(myChunks, { type }); const b64 = await blobToB64(blob);
     send({ t: 'audio', mime: type, b64, ms: Math.round(dur) }); setMood('thinking');
   };
-  recorder.start(); recStart = performance.now(); recording = true; setMood('listening'); $('#talkBtn').classList.add('rec');
+  rec.start(); recStart = performance.now(); recording = true; setMood('listening'); $('#talkBtn').classList.add('rec');
 }
-function stopRec() { if (!recording) return; recording = false; $('#talkBtn').classList.remove('rec'); try { recorder.stop(); } catch {} }
+function stopRec() { if (!recording) return; recording = false; $('#talkBtn').classList.remove('rec'); try { recorder.stop(); } catch { if (!vadOn) releaseMic(); } }
 function blobToB64(blob) { return new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.readAsDataURL(blob); }); }
 
 // ---------------- wake lock ----------------
@@ -200,12 +323,12 @@ let started = false;
 function err(t) { $('#err').textContent = t; console.error(t); }
 $('#startBtn').onclick = async () => {
   // everything here runs inside the user gesture (iOS requirement)
-  audioEl.src = SILENT_MP3; audioEl.play().catch(() => {});
-  try { if ('speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } } catch {}
+  unlockAudio();
   keepAwake();
   try { document.documentElement.requestFullscreen?.().catch?.(() => {}); } catch {}
   const errs = [];
-  try { await startMic(); } catch (e) { errs.push('mic: ' + e.message); }
+  // ask for mic permission now; keep it open only in VAD mode (PTT re-acquires per press, releases after)
+  try { await acquireMic(); if (!vadOn) releaseMic(); } catch (e) { errs.push('mic: ' + e.message); }
   try { await startCamera(); } catch (e) { errs.push('camera: ' + e.message); }
   if (!window.isSecureContext) errs.push('not a secure context — camera/mic need HTTPS');
   started = true;
@@ -215,12 +338,12 @@ $('#startBtn').onclick = async () => {
   setMood('happy'); setTimeout(() => face.mood === 'happy' && setMood('idle'), 1500);
 };
 const talk = $('#talkBtn');
-const down = (e) => { e.preventDefault(); startRec('ptt'); };
-const up = (e) => { e.preventDefault(); if (recMode === 'ptt') stopRec(); };
+const down = (e) => { e.preventDefault(); if (pttHeld) return; pttHeld = true; if (sayBusy || playingNow) stopSpeaking(); unlockAudio(); startRec('ptt'); };
+const up = (e) => { e.preventDefault(); pttHeld = false; unlockAudio(); if (recMode === 'ptt') stopRec(); };
 talk.addEventListener('touchstart', down, { passive: false }); talk.addEventListener('touchend', up, { passive: false }); talk.addEventListener('touchcancel', up, { passive: false });
 talk.addEventListener('mousedown', down); talk.addEventListener('mouseup', up); talk.addEventListener('mouseleave', (e) => recording && recMode === 'ptt' && up(e));
 $('#flipBtn').onclick = async () => { facing = facing === 'user' ? 'environment' : 'user'; try { await startCamera(); } catch (e) { err('camera: ' + e.message); } };
-$('#vadBtn').onclick = () => { vadOn = !vadOn; $('#vadBtn').textContent = 'auto: ' + (vadOn ? 'on' : 'off'); $('#vadBtn').classList.toggle('on', vadOn); if (!vadOn && recMode === 'vad') stopRec(); };
+$('#vadBtn').onclick = () => { unlockAudio(); vadOn = !vadOn; if (vadOn) acquireMic().catch((e) => err('mic: ' + e.message)); else if (!recording) releaseMic(); $('#vadBtn').textContent = 'auto: ' + (vadOn ? 'on' : 'off'); $('#vadBtn').classList.toggle('on', vadOn); if (!vadOn && recMode === 'vad') stopRec(); };
 $('#previewBtn').onclick = () => video.classList.toggle('show');
 if (vadOn) { $('#vadBtn').textContent = 'auto: on'; $('#vadBtn').classList.add('on'); }
 // tap the eyes to poke them

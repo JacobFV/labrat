@@ -92,6 +92,8 @@ async def ws_phone(ws: WebSocket) -> None:
                 _bg(agent.handle(msg.get("text", ""), "phone"))
             elif t == "audio":
                 _bg(_phone_audio(msg))
+            elif t == "log":
+                log.warning("phone: %s", str(msg.get("msg", ""))[:500])
     except (WebSocketDisconnect, RuntimeError, json.JSONDecodeError):
         pass
     finally:

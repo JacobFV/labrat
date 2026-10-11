@@ -171,11 +171,14 @@ class So101(Device):
     # conversions
     def deg_to_ticks(self, j: str, deg: float) -> int:
         c = self.calib["joints"][j]
-        return int(round(CENTER + c["offset"] + c["sign"] * deg * TICKS_PER_REV / 360.0))
+        return int(round(CENTER + c["offset"] + c["sign"] * deg * TICKS_PER_REV / 360.0)) % TICKS_PER_REV
 
     def ticks_to_deg(self, j: str, t: int) -> float:
         c = self.calib["joints"][j]
-        return round(c["sign"] * (t - CENTER - c["offset"]) * 360.0 / TICKS_PER_REV, 2)
+        d = (t - CENTER - c["offset"]) % TICKS_PER_REV  # wrap: the zero pose may sit near the 0/4095 seam
+        if d >= TICKS_PER_REV / 2:
+            d -= TICKS_PER_REV
+        return round(c["sign"] * d * 360.0 / TICKS_PER_REV, 2)
 
     def clamp(self, j: str, deg: float) -> float:
         c = self.calib["joints"][j]
