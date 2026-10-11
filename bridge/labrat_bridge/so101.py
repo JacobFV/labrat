@@ -314,3 +314,46 @@ def calibrate(dev_id: str, port: str | None, mock: bool = False) -> None:
     p = save_json(f"{dev_id}.json", cal)
     print("saved", p)
     arm.close()
+
+
+def calibrate_step(dev_id: str, port: str, step: str) -> None:
+    """Non-interactive calibration, one step per call (for shells without a TTY).
+    step = "zero" | "limits:<seconds>" | "pose:<home|ready|rest>"; results merge into calib/<dev_id>.json."""
+    arm = So101(dev_id, port=port, mock=False)
+    cal = arm.calib
+    arm.set_torque(False)
+
+    def ticks():
+        return {j: arm.bus.read_pos(IDS[j]) for j in JOINTS}
+
+    try:
+        if step == "zero":
+            for j, t in ticks().items():
+                cal["joints"][j]["offset"] = t - CENTER
+            print("offsets:", {j: cal["joints"][j]["offset"] for j in JOINTS})
+        elif step.startswith("limits"):
+            secs = float(step.split(":", 1)[1]) if ":" in step else 45.0
+            lo = {j: 1e9 for j in JOINTS}
+            hi = {j: -1e9 for j in JOINTS}
+            t_end = time.time() + secs
+            print(f"recording limits for {secs:.0f}s - sweep every joint now", flush=True)
+            while time.time() < t_end:
+                for j, t in ticks().items():
+                    if t is None:
+                        continue
+                    d = arm.ticks_to_deg(j, t)
+                    lo[j], hi[j] = min(lo[j], d), max(hi[j], d)
+                time.sleep(0.05)
+            for j in JOINTS:
+                if hi[j] > lo[j]:
+                    cal["joints"][j]["min"], cal["joints"][j]["max"] = round(lo[j], 1), round(hi[j], 1)
+            print("limits:", {j: (cal["joints"][j]["min"], cal["joints"][j]["max"]) for j in JOINTS})
+        elif step.startswith("pose:"):
+            pose = step.split(":", 1)[1]
+            cal["poses"][pose] = {j: arm.ticks_to_deg(j, t) for j, t in ticks().items()}
+            print(pose, cal["poses"][pose])
+        else:
+            raise SystemExit(f"unknown step {step!r}")
+        print("saved", save_json(f"{dev_id}.json", cal))
+    finally:
+        arm.close()

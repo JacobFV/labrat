@@ -14,6 +14,16 @@ const ROWS = 'ABCDEFGH';
 const SAFE_H = 60; // tip height above deck at cnc z=0
 const BED_H = 72; // desk -> bed top (GLB feet bottom at -72)
 const PIP_DY = -45; // pipette axis vs spindle axis (deck y)
+// SO-101 placement matches the real bench (operator stands at -Z, the CNC front): so_a = operator's LEFT,
+// so_b = operator's RIGHT, both at the CNC's front corners, zero-pose reach pointing to the machine BACK (+Z).
+// The CNC group is mirrored in X (cncRoot.scale.x = -1) so machine +x reads left->right for the operator, as on
+// the real machine (the twin's deck->three map X=x-150, Z=y-90 is otherwise a mirror image).
+const ARM_PLACE = { so_a: { pos: [250, 0, -300] }, so_b: { pos: [-250, 0, -300] } };
+const ARM_YAW = -Math.PI / 2; // URDF +X (zero-pose reach) -> three +Z (machine back)
+const PAN_OFF = 39;           // pan axis is ~39 mm along URDF +X from the base origin
+// Recorded calibration zero = upper arm vertical, forearm horizontal toward the back, wrist straight, gripper half
+// open. The URDF zero already renders that L pose; per-joint offsets (deg) are added here if a joint ever differs.
+const JOINT_ZERO = { shoulder_pan: 0, shoulder_lift: 0, elbow_flex: 0, wrist_flex: 0, wrist_roll: 0, gripper: 0 };
 const BENCH_H = 900; // lab floor -> bench top; everything on the bench lives in this.stage (bench-top frame)
 export const DECK = {
   tip_rack: { x: 20, y: 20, pitch: 9 },
@@ -48,9 +58,9 @@ export class Twin {
       const pm = new THREE.PMREMGenerator(r); s.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; s.environmentIntensity = 0.7;
     } catch (e) { console.warn('env map', e); }
     this.camera = new THREE.PerspectiveCamera(38, 1, 1, 9000);
-    this.camera.position.set(-560, BENCH_H + 660, -1050);
+    this.camera.position.set(0, BENCH_H + 620, -1250);
     this.controls = new OrbitControls(this.camera, r.domElement);
-    this.controls.target.set(40, BENCH_H + 110, 0);
+    this.controls.target.set(-60, BENCH_H + 110, -60);
     this.controls.enableDamping = true; this.controls.maxPolarAngle = Math.PI * 0.49;
     this.stage = new THREE.Group(); this.stage.name = 'bench_top'; this.stage.position.y = BENCH_H; s.add(this.stage);
     // bright, airy lab: sky/bounce hemisphere, soft overhead daylight key (soft shadows), window fill
@@ -60,16 +70,16 @@ export class Twin {
     Object.assign(d.shadow.camera, { left: -1000, right: 1000, top: 1000, bottom: -1000, near: 200, far: 3500 }); s.add(d);
     const fill = new THREE.DirectionalLight(0xe6efff, 0.7); fill.position.set(900, BENCH_H + 600, -900); s.add(fill);
     this._buildLab();
-    this.cncRoot = new THREE.Group(); this.cncRoot.position.y = BED_H; this.stage.add(this.cncRoot);
+    this.cncRoot = new THREE.Group(); this.cncRoot.position.y = BED_H; this.cncRoot.scale.x = -1; this.stage.add(this.cncRoot);
     this.deck = new THREE.Group(); this.deck.name = 'deck'; this.cncRoot.add(this.deck); // rides on the Y bed
     this.wells = {}; this.tips = {};
     this._buildDeck(); this._buildGantry();
     this.arms = {
-      so_a: this._buildSO101(new THREE.Vector3(-345, 0, -40), 0x2b2b2b, false),
-      so_b: this._buildSO101(new THREE.Vector3(345, 0, -40), 0x2b2b2b, false),
+      so_a: this._buildSO101(new THREE.Vector3(...ARM_PLACE.so_a.pos), 0x2b2b2b, false),
+      so_b: this._buildSO101(new THREE.Vector3(...ARM_PLACE.so_b.pos), 0x2b2b2b, false),
     };
-    this.arms.so_b.root.rotation.y = Math.PI;
-    this.tappet = this._buildTappet(new THREE.Vector3(-560, 0, -260));
+    for (const k in this.arms) this.arms[k].root.rotation.y = ARM_YAW;
+    this.tappet = this._buildTappet(new THREE.Vector3(560, 0, 250));
     this.tappet.g.visible = false; // optional hardware: shown only once it reports state
     this._buildPhoneStand(); this._buildLaptop();
     this._shadows(this.scene);
@@ -77,7 +87,7 @@ export class Twin {
     try { window.__twin = this; } catch { /* no window */ }
     this.setCNC({ x: 150, y: 90, z: 0 });
     this.setPipette({ vol_ul: 0, tip: false });
-    for (const k in this.arms) this.setArm(k, { shoulder_pan: 0, shoulder_lift: -20, elbow_flex: 60, wrist_flex: 40, wrist_roll: 0, gripper: 10 });
+    for (const k in this.arms) this.setArm(k, { shoulder_pan: 0, shoulder_lift: 0, elbow_flex: 0, wrist_flex: 0, wrist_roll: 0, gripper: 50 });
     new ResizeObserver(() => this.resize()).observe(el);
     this.resize();
     const loop = () => { this.controls.update(); r.render(s, this.camera); requestAnimationFrame(loop); };
@@ -95,7 +105,7 @@ export class Twin {
     edges.position.y = 0.2; this.deck.add(edges);
     // tip rack
     const tr = DECK.tip_rack, rackC = P(tr.x + 49.5, tr.y + 31.5);
-    this._box(110, 30, 76, 0x1d1d22, new THREE.Vector3(rackC.x, 15, rackC.z), this.deck);
+    this._box(110, 30, 76, 0xe8508f, new THREE.Vector3(rackC.x, 15, rackC.z), this.deck, { roughness: .45 });
     const tipGeo = new THREE.ConeGeometry(2.6, 22, 10); tipGeo.rotateX(Math.PI); tipGeo.translate(0, 11, 0);
     const tipMat = this._mat(0xe8e2c8, { transparent: true, opacity: .85 });
     for (let r = 0; r < 8; r++) for (let c = 0; c < 12; c++) {
@@ -177,13 +187,13 @@ export class Twin {
 
   // official SO-101 URDF + meshes (web/models/so101, Apache-2.0); fallback = simple chains
   async _loadArms() {
-    const place = { so_a: { pos: [-345, 0, -40], rotY: 0 }, so_b: { pos: [345, 0, -40], rotY: Math.PI } };
+    const place = { so_a: { ...ARM_PLACE.so_a, rotY: ARM_YAW }, so_b: { ...ARM_PLACE.so_b, rotY: ARM_YAW } };
     for (const k of Object.keys(place)) {
       try {
         const arm = await loadSO101({ bodyColor: k === 'so_a' ? 0xf4f3ee : 0xffd11f, servoColor: 0x141416 });
         const a = this.arms[k]; const pl = place[k];
         // pan axis sits ~39 mm along +X of the URDF base origin: put the pan axis at pl.pos
-        arm.root.position.set(pl.pos[0] - 39 * Math.cos(pl.rotY), 0, pl.pos[2] + 39 * Math.sin(pl.rotY)); arm.root.rotation.y = pl.rotY;
+        arm.root.position.set(pl.pos[0] - PAN_OFF * Math.cos(pl.rotY), 0, pl.pos[2] + PAN_OFF * Math.sin(pl.rotY)); arm.root.rotation.y = pl.rotY;
         this.stage.add(arm.root); this._shadows(arm.root);
         a.root.visible = false; a.so101 = arm;
         if (a.q) setSO101(arm, a.q);
@@ -191,41 +201,35 @@ export class Twin {
     }
   }
 
-  // iPhone on a static tripod at the front-right corner, ~350 mm up, looking 45 deg down at the bed
+  // iPhone standing upright (portrait) front-centre on a ~150 mm taped base, in front of the CNC front frame:
+  // screen + eyes face the operator (-Z), rear camera looks at the CNC (+Z)
   _buildPhoneStand() {
-    const g = this.phoneStand = new THREE.Group(); g.name = 'phone_stand'; this.stage.add(g);
-    const base = new THREE.Vector3(230, 0, -330), head = new THREE.Vector3(185, 350, -290);
-    const metal = this._mat(0x2c2e33, { metalness: .7, roughness: .35 });
-    const rod = (a, b, r) => { const v = b.clone().sub(a); const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, v.length(), 16), metal); m.position.copy(a).add(b).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v.normalize()); g.add(m); return m; };
-    const hub = new THREE.Vector3(base.x, 120, base.z);
-    for (let i = 0; i < 3; i++) { const a = i * 2 * Math.PI / 3 + .4; rod(hub, new THREE.Vector3(base.x + 105 * Math.cos(a), 0, base.z + 105 * Math.sin(a)), 4.5); }
-    const top = new THREE.Vector3(base.x, 300, base.z); rod(new THREE.Vector3(base.x, 110, base.z), top, 7);
-    rod(top, head, 5);
-    const ball = new THREE.Mesh(new THREE.SphereGeometry(11, 20, 14), metal); ball.position.copy(head); g.add(ball);
-    const target = new THREE.Vector3(0, BED_H + 10, 0); g.updateMatrixWorld(true); // phone math in bench-top frame
-    const phone = this.phone = new THREE.Group(); phone.position.copy(head); g.add(phone);
-    phone.lookAt(g.localToWorld(head.clone().multiplyScalar(2).sub(target))); // +Z (screen) away from the bed, rear camera at the bed
-    const off = new THREE.Group(); off.position.z = 20; phone.add(off);
-    const body = new THREE.Mesh(new THREE.BoxGeometry(71.6, 147.6, 7.8), this._mat(0x0d0e10, { metalness: .5, roughness: .25 })); off.add(body);
-    const clamp = this._box(80, 22, 14, 0x1b1c1f, new THREE.Vector3(0, 0, -9), off); void clamp;
+    const g = this.phoneStand = new THREE.Group(); g.name = 'phone_stand'; g.position.set(0, 0, -225); this.stage.add(g);
+    const tape = new THREE.MeshStandardMaterial({ color: 0x9a9ea4, metalness: .55, roughness: .38 });
+    const baseGeo = new THREE.CylinderGeometry(34, 44, 150, 9, 3); // crumpled-looking duct-taped block
+    const p = baseGeo.attributes.position; for (let i = 0; i < p.count; i++) { const f = 1 + 0.06 * Math.sin(i * 12.9898) ; p.setX(i, p.getX(i) * f); p.setZ(i, p.getZ(i) * f); } baseGeo.computeVertexNormals();
+    const base = new THREE.Mesh(baseGeo, tape); base.position.y = 75; g.add(base);
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(62, 70, 1.2, 7), tape); skirt.position.y = .6; g.add(skirt); // tape flaps on the table
+    const phone = this.phone = new THREE.Group(); phone.position.set(0, 150 + 147.6 / 2 - 22, 0); g.add(phone); // bottom slotted ~22 mm into the base
+    const body = new THREE.Mesh(new THREE.BoxGeometry(71.6, 147.6, 7.8), this._mat(0x0d0e10, { metalness: .5, roughness: .25 })); phone.add(body);
     const cv = document.createElement('canvas'); cv.width = 256; cv.height = 528; const cx = cv.getContext('2d');
-    cx.fillStyle = '#05080a'; cx.fillRect(0, 0, 256, 528);
-    cx.fillStyle = '#6ee7c8'; cx.shadowColor = '#6ee7c8'; cx.shadowBlur = 24;
-    for (const ex of [78, 178]) { cx.beginPath(); cx.ellipse(ex, 230, 30, 48, 0, 0, Math.PI * 2); cx.fill(); }
-    cx.shadowBlur = 0; cx.fillStyle = '#05080a'; for (const ex of [86, 186]) { cx.beginPath(); cx.arc(ex, 214, 9, 0, Math.PI * 2); cx.fill(); }
-    cx.fillStyle = '#6ee7c8'; cx.font = 'bold 22px ui-monospace, monospace'; cx.textAlign = 'center'; cx.fillText('labrat eye', 128, 440);
+    cx.fillStyle = '#050607'; cx.fillRect(0, 0, 256, 528);
+    cx.fillStyle = '#3fe0c0'; cx.shadowColor = '#3fe0c0'; cx.shadowBlur = 18;
+    for (const ex of [70, 186]) { cx.beginPath(); cx.arc(ex, 230, 34, 0, Math.PI * 2); cx.fill(); }
+    cx.shadowBlur = 0; cx.fillStyle = '#050607'; for (const ex of [74, 190]) { cx.beginPath(); cx.arc(ex, 230, 15, 0, Math.PI * 2); cx.fill(); }
+    cx.fillStyle = '#3fe0c0'; cx.fillRect(110, 300, 36, 5);
+    cx.fillStyle = '#9aa3ad'; cx.font = '13px ui-sans-serif, sans-serif'; cx.textAlign = 'center'; cx.fillText('labrat eye', 128, 450);
     const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
     const scr = new THREE.Mesh(new THREE.PlaneGeometry(66, 142), new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0xffffff, emissiveMap: tex, roughness: .08, metalness: .1 }));
-    scr.position.z = 3.95; off.add(scr);
-    const cam = this._box(22, 22, 2, 0x16171a, new THREE.Vector3(-18, 55, -4.9), off);
-    for (const [lx, ly] of [[-23, 60], [-13, 50]]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 2, 20), this._mat(0x050505, { roughness: .05, metalness: .8 })); l.rotation.x = Math.PI / 2; l.position.set(lx, ly, -6); off.add(l); }
-    void cam;
+    scr.position.z = -3.95; scr.rotation.y = Math.PI; phone.add(scr); // screen toward the operator (-Z)
+    this._box(22, 22, 2, 0x16171a, new THREE.Vector3(18, 55, 4.9), phone); // rear camera bump toward the CNC
+    for (const [lx, ly] of [[23, 60], [13, 50]]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 2, 20), this._mat(0x050505, { roughness: .05, metalness: .8 })); l.rotation.x = Math.PI / 2; l.position.set(lx, ly, 6); phone.add(l); }
   }
 
   // thin MacBook-style laptop on the bench, off to the side (outside CNC + arm reach), showing the LabRat console
   _buildLaptop() {
     const g = this.laptop = new THREE.Group(); g.name = 'laptop'; this.stage.add(g);
-    g.position.set(650, 0, -190); g.rotation.y = 0.45;
+    g.position.set(-640, 0, -230); g.rotation.y = -0.45; // operator's right, beyond so_b, angled toward the operator
     const W = 304, D = 212, T = 15, r = 9;
     const rr = (w, h, rad) => { const sh = new THREE.Shape(), x = -w / 2, y = -h / 2; sh.moveTo(x + rad, y); sh.lineTo(x + w - rad, y); sh.quadraticCurveTo(x + w, y, x + w, y + rad); sh.lineTo(x + w, y + h - rad); sh.quadraticCurveTo(x + w, y + h, x + w - rad, y + h); sh.lineTo(x + rad, y + h); sh.quadraticCurveTo(x, y + h, x, y + h - rad); sh.lineTo(x, y + rad); sh.quadraticCurveTo(x, y, x + rad, y); return sh; };
     const alu = new THREE.MeshStandardMaterial({ color: 0xc9ccd1, metalness: .85, roughness: .32 });
@@ -359,7 +363,7 @@ export class Twin {
   setArm(id, q = {}) {
     const a = this.arms[id]; if (!a || !q) return; const d = THREE.MathUtils.degToRad;
     a.q = { ...(a.q || {}), ...q };
-    if (a.so101) { setSO101(a.so101, q); return; }
+    if (a.so101) { const qq = {}; for (const [j, v] of Object.entries(q)) qq[j] = (v == null || JOINT_ZERO[j] == null) ? v : +v + JOINT_ZERO[j]; setSO101(a.so101, qq); return; }
     if (q.shoulder_pan != null) a.pan.rotation.y = d(q.shoulder_pan);
     if (q.shoulder_lift != null) a.lift.rotation.z = d(q.shoulder_lift);
     if (q.elbow_flex != null) a.elbow.rotation.z = d(q.elbow_flex);

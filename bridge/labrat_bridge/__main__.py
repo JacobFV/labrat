@@ -32,10 +32,16 @@ def main(argv=None):
         ap = argparse.ArgumentParser(prog="labrat_bridge calibrate")
         ap.add_argument("--device", default="so_a", choices=["so_a", "so_b"])
         ap.add_argument("--port", help="Feetech bus adapter port (omit = mock dry-run)")
+        ap.add_argument("--step", help="non-interactive: zero | limits:<secs> | pose:<home|ready|rest>")
         a = ap.parse_args(argv[1:])
-        from .so101 import calibrate
+        from .so101 import calibrate, calibrate_step
 
-        calibrate(a.device, a.port, mock=a.port is None)
+        if a.step:
+            if not a.port:
+                ap.error("--step needs --port")
+            calibrate_step(a.device, a.port, a.step)
+        else:
+            calibrate(a.device, a.port, mock=a.port is None)
         return
     if argv and argv[0] == "scan":
         found = discover(argv[1] if len(argv) > 1 else "auto")

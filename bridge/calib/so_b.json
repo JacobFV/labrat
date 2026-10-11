@@ -1,0 +1,66 @@
+{
+ "joints": {
+  "shoulder_pan": {
+   "offset": 1718,
+   "sign": 1,
+   "min": -110,
+   "max": 110
+  },
+  "shoulder_lift": {
+   "offset": 1392,
+   "sign": 1,
+   "min": -100,
+   "max": 100
+  },
+  "elbow_flex": {
+   "offset": 1423,
+   "sign": 1,
+   "min": -100,
+   "max": 100
+  },
+  "wrist_flex": {
+   "offset": 1872,
+   "sign": 1,
+   "min": -100,
+   "max": 100
+  },
+  "wrist_roll": {
+   "offset": -459,
+   "sign": 1,
+   "min": -150,
+   "max": 150
+  },
+  "gripper": {
+   "offset": 1827,
+   "sign": 1,
+   "min": 0,
+   "max": 90
+  }
+ },
+ "poses": {
+  "home": {
+   "shoulder_pan": 0,
+   "shoulder_lift": -90,
+   "elbow_flex": 90,
+   "wrist_flex": 45,
+   "wrist_roll": 0,
+   "gripper": 0
+  },
+  "ready": {
+   "shoulder_pan": 0,
+   "shoulder_lift": -30,
+   "elbow_flex": 40,
+   "wrist_flex": 60,
+   "wrist_roll": 0,
+   "gripper": 40
+  },
+  "rest": {
+   "shoulder_pan": 0,
+   "shoulder_lift": -100,
+   "elbow_flex": 95,
+   "wrist_flex": 50,
+   "wrist_roll": 0,
+   "gripper": 0
+  }
+ }
+}
