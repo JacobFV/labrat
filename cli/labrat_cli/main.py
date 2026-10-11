@@ -22,13 +22,17 @@ from rich.table import Table
 from rich.text import Text
 from rich.theme import Theme
 
-GOLD = "#f5d76e"
-THEME = Theme({"gold": GOLD, "dim": "#6b6b6b", "ok": "#6ee7c8", "warn": "#d8a64f", "err": "#ff5a5a", "txt": "#ededed"})
+# Theme-neutral: never paint a background; rely on the terminal's own fg/bg.
+# GOLD is a mid-depth gold that reads on both light and dark terminals; status
+# colours use ANSI names so the terminal's palette adapts them.
+GOLD = "#c9970a"
+LINE = "grey50"  # table / panel borders
+THEME = Theme({"gold": GOLD, "dim": "dim", "ok": "green", "warn": "yellow", "err": "red", "txt": "default"})
 console = Console(theme=THEME, highlight=False)
 PT_STYLE = Style.from_dict({
-    "prompt": f"{GOLD} bold", "bottom-toolbar": "bg:#0a0a0a #a8a8a8 noreverse",
-    "bottom-toolbar.gold": f"bg:#0a0a0a {GOLD}", "bottom-toolbar.ok": "bg:#0a0a0a #6ee7c8",
-    "bottom-toolbar.warn": "bg:#0a0a0a #d8a64f", "bottom-toolbar.err": "bg:#0a0a0a #ff5a5a",
+    "prompt": f"{GOLD} bold", "bottom-toolbar": "noreverse bg:default fg:default",
+    "bottom-toolbar.gold": f"{GOLD} bold", "bottom-toolbar.ok": "ansigreen",
+    "bottom-toolbar.warn": "ansiyellow", "bottom-toolbar.err": "ansired",
 })
 HELP = [
     ("<text>", "chat with the agent"),
@@ -167,7 +171,7 @@ class App:
             name = meta.get("tool") or text.split("(")[0]
             rest = text[len(name):] if text.startswith(name) else text
             chip = Text()
-            chip.append(f" ⚙ {name} ", style=f"bold #1a1300 on {GOLD}" if ok else "bold white on #ff5a5a")
+            chip.append(f" ⚙ {name} ", style=f"bold {GOLD} reverse" if ok else "bold red reverse")
             chip.append(" " + rest[:220], style="dim")
             console.print(chip)
         elif role == "agent":
@@ -200,7 +204,7 @@ class App:
         ss = e.get("sim_summary") or {}
         vs = [v for v in e.get("variants", []) if v.get("sim")]
         vs.sort(key=lambda v: (v["sim"].get("ok", False), v["sim"].get("score") or -1e9), reverse=True)
-        tb = Table(title=f"[gold]sim[/] {e['id']} · {e.get('goal')}", title_justify="left", border_style="#2a2a2a",
+        tb = Table(title=f"[gold]sim[/] {e['id']} · {e.get('goal')}", title_justify="left", border_style=LINE,
                    header_style="dim", caption=f"{ss.get('passing')}/{ss.get('n')} pass · {ss.get('sim_ms')} ms · best {e.get('best_variant_id')}",
                    caption_justify="left", caption_style="dim")
         for c, w in (("id", 6), ("color", 6), ("rgb", 15), ("score", 5), ("pass", 4), ("time", 4)):
@@ -229,7 +233,7 @@ class App:
         done = len(r.get("log", []))
         width = 24
         fill = int(width * done / n)
-        bar = Text("█" * fill, style=GOLD) + Text("░" * (width - fill), style="#2a2a2a")
+        bar = Text("█" * fill, style=GOLD) + Text("░" * (width - fill), style=LINE)
         st = r.get("status")
         sty = {"done": "ok", "failed": "err", "aborted": "err", "awaiting_approval": "warn"}.get(st, "gold")
         line = Text(f"▶ run {r['id']} ", style="bold") + bar + Text(f" {done}/{n} ", style="dim") + Text(st or "", style=sty)
@@ -262,7 +266,7 @@ class App:
             await self.status()
         elif cmd == "/exp":
             es = await self.get("/api/experiments")
-            tb = Table(border_style="#2a2a2a", header_style="dim")
+            tb = Table(border_style=LINE, header_style="dim")
             for c in ("id", "status", "n", "best", "goal"):
                 tb.add_column(c)
             for e in es[:20]:
@@ -294,7 +298,7 @@ class App:
             console.print("[err]■ abort sent[/]")
         elif cmd == "/mem":
             r = await self.get("/api/memory/search", q=" ".join(a) or "experiment", k=8)
-            tb = Table(border_style="#2a2a2a", header_style="dim")
+            tb = Table(border_style=LINE, header_style="dim")
             for c in ("score", "type", "text"):
                 tb.add_column(c)
             for m in r.get("results", []):
@@ -303,7 +307,7 @@ class App:
             console.print(tb)
         elif cmd == "/learning":
             r = await self.get("/api/learning")
-            tb = Table(title=f"[gold]learning[/] · current v{r.get('current_v')}", title_justify="left", border_style="#2a2a2a", header_style="dim")
+            tb = Table(title=f"[gold]learning[/] · current v{r.get('current_v')}", title_justify="left", border_style=LINE, header_style="dim")
             for c in ("v", "err before", "err after", "runs", "accepted", "vol_gain"):
                 tb.add_column(c)
             for v in r.get("versions", []):
@@ -325,7 +329,7 @@ class App:
     async def status(self) -> None:
         st = await self.get("/api/state")
         h = await self.get("/healthz")
-        tb = Table(border_style="#2a2a2a", header_style="dim", title="[gold]devices[/]", title_justify="left")
+        tb = Table(border_style=LINE, header_style="dim", title="[gold]devices[/]", title_justify="left")
         for c in ("id", "kind", "status", "state"):
             tb.add_column(c)
         for d in st.get("devices", []):
@@ -388,7 +392,7 @@ class App:
     def cal_table(self, cal: dict) -> None:
         o = cal["pipette_offset"]
         tb = Table(title=f"[gold]deck calibration[/] · offset dx={o['dx']} dy={o['dy']} dz={o['dz']}", title_justify="left",
-                   border_style="#2a2a2a", header_style="dim")
+                   border_style=LINE, header_style="dim")
         for c in ("target", "tip x", "tip y", "tip z"):
             tb.add_column(c)
         for k, p in cal.get("points", {}).items():
@@ -400,7 +404,7 @@ class App:
     # ---------- main ----------
     async def main(self) -> None:
         console.print(Panel(Text.assemble(("● LabRat", f"bold {GOLD}"), ("  terminal · ", "dim"), (self.server, "txt"),
-                                          ("\nchat with the agent, or /help", "dim")), border_style="#2a2a2a", expand=False))
+                                          ("\nchat with the agent, or /help", "dim")), border_style=LINE, expand=False))
         self.session = PromptSession(bottom_toolbar=self.toolbar, style=PT_STYLE, refresh_interval=1.0)
         wst = asyncio.create_task(self.ws_loop())
         with patch_stdout(raw=True):

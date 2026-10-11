@@ -14,6 +14,7 @@ const ROWS = 'ABCDEFGH';
 const SAFE_H = 60; // tip height above deck at cnc z=0
 const BED_H = 72; // desk -> bed top (GLB feet bottom at -72)
 const PIP_DY = -45; // pipette axis vs spindle axis (deck y)
+const BENCH_H = 900; // lab floor -> bench top; everything on the bench lives in this.stage (bench-top frame)
 export const DECK = {
   tip_rack: { x: 20, y: 20, pitch: 9 },
   plate: { x: 140, y: 20, pitch: 9, cap: 300 },
@@ -41,24 +42,25 @@ export class Twin {
     r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
     el.appendChild(r.domElement);
     const s = this.scene = new THREE.Scene();
-    s.fog = new THREE.Fog(0x0b0c0e, 1600, 3200);
-    try { // subtle studio environment so anodised alu and steel read as metal
-      const pm = new THREE.PMREMGenerator(r); s.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; s.environmentIntensity = 0.55;
+    s.background = new THREE.Color(0xeef0f2);
+    s.fog = new THREE.Fog(0xeef0f2, 3200, 7000);
+    try { // studio environment so anodised alu and steel read as metal
+      const pm = new THREE.PMREMGenerator(r); s.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; s.environmentIntensity = 0.7;
     } catch (e) { console.warn('env map', e); }
-    this.camera = new THREE.PerspectiveCamera(38, 1, 1, 6000);
-    this.camera.position.set(-640, 640, -1080);
+    this.camera = new THREE.PerspectiveCamera(38, 1, 1, 9000);
+    this.camera.position.set(-560, BENCH_H + 660, -1050);
     this.controls = new OrbitControls(this.camera, r.domElement);
-    this.controls.target.set(60, 110, -120);
-    this.controls.enableDamping = true;
-    s.add(new THREE.HemisphereLight(0xf2f5ff, 0x2a2622, 1.1));
-    const d = this.sun = new THREE.DirectionalLight(0xfff6ea, 2.4); d.position.set(-380, 820, -460);
-    d.castShadow = true; d.shadow.mapSize.set(2048, 2048); d.shadow.bias = -0.0004; d.shadow.normalBias = 0.6; d.shadow.radius = 4;
-    Object.assign(d.shadow.camera, { left: -650, right: 650, top: 650, bottom: -650, near: 100, far: 2200 }); s.add(d);
-    const fill = new THREE.DirectionalLight(0xdfe8ff, 0.6); fill.position.set(500, 300, 600); s.add(fill);
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.ShadowMaterial({ opacity: 0.32 }));
-    ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; s.add(ground);
-    const grid = new THREE.GridHelper(1600, 32, 0x2a2a2a, 0x161616); grid.position.y = -0.3; s.add(grid);
-    this.cncRoot = new THREE.Group(); this.cncRoot.position.y = BED_H; s.add(this.cncRoot);
+    this.controls.target.set(40, BENCH_H + 110, 0);
+    this.controls.enableDamping = true; this.controls.maxPolarAngle = Math.PI * 0.49;
+    this.stage = new THREE.Group(); this.stage.name = 'bench_top'; this.stage.position.y = BENCH_H; s.add(this.stage);
+    // bright, airy lab: sky/bounce hemisphere, soft overhead daylight key (soft shadows), window fill
+    s.add(new THREE.HemisphereLight(0xffffff, 0xd8d2c8, 1.35));
+    const d = this.sun = new THREE.DirectionalLight(0xfffaf0, 2.2); d.position.set(-300, BENCH_H + 1500, -500); d.target = this.stage;
+    d.castShadow = true; d.shadow.mapSize.set(2048, 2048); d.shadow.bias = -0.0004; d.shadow.normalBias = 0.6; d.shadow.radius = 6; d.shadow.blurSamples = 16;
+    Object.assign(d.shadow.camera, { left: -1000, right: 1000, top: 1000, bottom: -1000, near: 200, far: 3500 }); s.add(d);
+    const fill = new THREE.DirectionalLight(0xe6efff, 0.7); fill.position.set(900, BENCH_H + 600, -900); s.add(fill);
+    this._buildLab();
+    this.cncRoot = new THREE.Group(); this.cncRoot.position.y = BED_H; this.stage.add(this.cncRoot);
     this.deck = new THREE.Group(); this.deck.name = 'deck'; this.cncRoot.add(this.deck); // rides on the Y bed
     this.wells = {}; this.tips = {};
     this._buildDeck(); this._buildGantry();
@@ -67,7 +69,7 @@ export class Twin {
       so_b: this._buildSO101(new THREE.Vector3(345, 0, -40), 0x2b2b2b, false),
     };
     this.arms.so_b.root.rotation.y = Math.PI;
-    this.tappet = this._buildTappet(new THREE.Vector3(0, 0, -330));
+    this.tappet = this._buildTappet(new THREE.Vector3(-560, 0, -260));
     this.tappet.g.visible = false; // optional hardware: shown only once it reports state
     this._buildPhoneStand(); this._buildLaptop();
     this._shadows(this.scene);
@@ -182,7 +184,7 @@ export class Twin {
         const a = this.arms[k]; const pl = place[k];
         // pan axis sits ~39 mm along +X of the URDF base origin: put the pan axis at pl.pos
         arm.root.position.set(pl.pos[0] - 39 * Math.cos(pl.rotY), 0, pl.pos[2] + 39 * Math.sin(pl.rotY)); arm.root.rotation.y = pl.rotY;
-        this.scene.add(arm.root); this._shadows(arm.root);
+        this.stage.add(arm.root); this._shadows(arm.root);
         a.root.visible = false; a.so101 = arm;
         if (a.q) setSO101(arm, a.q);
       } catch (e) { console.warn('SO-101 model failed, keeping simple arm', k, e); }
@@ -191,18 +193,18 @@ export class Twin {
 
   // iPhone on a static tripod at the front-right corner, ~350 mm up, looking 45 deg down at the bed
   _buildPhoneStand() {
-    const g = this.phoneStand = new THREE.Group(); g.name = 'phone_stand'; this.scene.add(g);
-    const base = new THREE.Vector3(200, 0, -400), head = new THREE.Vector3(165, 350, -330);
+    const g = this.phoneStand = new THREE.Group(); g.name = 'phone_stand'; this.stage.add(g);
+    const base = new THREE.Vector3(230, 0, -330), head = new THREE.Vector3(185, 350, -290);
     const metal = this._mat(0x2c2e33, { metalness: .7, roughness: .35 });
     const rod = (a, b, r) => { const v = b.clone().sub(a); const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, v.length(), 16), metal); m.position.copy(a).add(b).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v.normalize()); g.add(m); return m; };
     const hub = new THREE.Vector3(base.x, 120, base.z);
-    for (let i = 0; i < 3; i++) { const a = i * 2 * Math.PI / 3 + .4; rod(hub, new THREE.Vector3(base.x + 150 * Math.cos(a), 0, base.z + 150 * Math.sin(a)), 4.5); }
+    for (let i = 0; i < 3; i++) { const a = i * 2 * Math.PI / 3 + .4; rod(hub, new THREE.Vector3(base.x + 105 * Math.cos(a), 0, base.z + 105 * Math.sin(a)), 4.5); }
     const top = new THREE.Vector3(base.x, 300, base.z); rod(new THREE.Vector3(base.x, 110, base.z), top, 7);
     rod(top, head, 5);
     const ball = new THREE.Mesh(new THREE.SphereGeometry(11, 20, 14), metal); ball.position.copy(head); g.add(ball);
-    const target = new THREE.Vector3(0, BED_H + 10, 0);
+    const target = new THREE.Vector3(0, BED_H + 10, 0); g.updateMatrixWorld(true); // phone math in bench-top frame
     const phone = this.phone = new THREE.Group(); phone.position.copy(head); g.add(phone);
-    phone.lookAt(head.clone().multiplyScalar(2).sub(target)); // +Z (screen) away from the bed, rear camera at the bed
+    phone.lookAt(g.localToWorld(head.clone().multiplyScalar(2).sub(target))); // +Z (screen) away from the bed, rear camera at the bed
     const off = new THREE.Group(); off.position.z = 20; phone.add(off);
     const body = new THREE.Mesh(new THREE.BoxGeometry(71.6, 147.6, 7.8), this._mat(0x0d0e10, { metalness: .5, roughness: .25 })); off.add(body);
     const clamp = this._box(80, 22, 14, 0x1b1c1f, new THREE.Vector3(0, 0, -9), off); void clamp;
@@ -220,34 +222,103 @@ export class Twin {
     void cam;
   }
 
-  // open laptop on the desk, off to the side (outside CNC + arm reach), dark console on screen
+  // thin MacBook-style laptop on the bench, off to the side (outside CNC + arm reach), showing the LabRat console
   _buildLaptop() {
-    const g = this.laptop = new THREE.Group(); g.name = 'laptop'; this.scene.add(g);
-    g.position.set(560, 0, -470); g.rotation.y = Math.PI + 0.6;
-    const alu = this._mat(0xa7acb3, { metalness: .8, roughness: .32 });
-    const base = new THREE.Mesh(new THREE.BoxGeometry(310, 14, 220), alu); base.position.y = 7; g.add(base);
-    this._box(270, 1, 105, 0x16171a, new THREE.Vector3(0, 14.4, -40), g, { roughness: .7 });
-    for (let r = 0; r < 5; r++) for (let c = 0; c < 14; c++) this._box(16, 1.2, 15, 0x222327, new THREE.Vector3(-121 + c * 18.6, 15.2, -82 + r * 19.5), g, { roughness: .6 });
-    this._box(110, .6, 66, 0x9aa0a7, new THREE.Vector3(0, 14.3, 60), g, { metalness: .6, roughness: .25 });
-    const lid = new THREE.Group(); lid.position.set(0, 14, -110); lid.rotation.x = -THREE.MathUtils.degToRad(20); g.add(lid);
-    const shell = new THREE.Mesh(new THREE.BoxGeometry(310, 215, 6), alu); shell.position.set(0, 107.5, -3); lid.add(shell);
-    this._box(304, 209, .6, 0x050506, new THREE.Vector3(0, 107.5, .3), lid, { roughness: .1 });
-    const cv = document.createElement('canvas'); cv.width = 640; cv.height = 400; const c = cv.getContext('2d');
-    c.fillStyle = '#0b0d10'; c.fillRect(0, 0, 640, 400); c.fillStyle = '#16191e'; c.fillRect(0, 0, 640, 26);
-    for (const [i, col] of ['#ff5f57', '#febc2e', '#28c840'].entries()) { c.fillStyle = col; c.beginPath(); c.arc(16 + i * 18, 13, 5, 0, 7); c.fill(); }
-    c.font = '15px ui-monospace, Menlo, monospace';
-    const lines = [['#6ee7c8', 'labrat> run protocol serial_dilution.yaml'], ['#8a93a3', '[cnc]   grbl 1.1h  ok  home  x0 y0 z0'], ['#8a93a3', '[pip]   tip A1 picked   rest_us=667'],
-      ['#c9d1d9', '[step 3/24] aspirate 50 uL  R2 -> plate B1'], ['#c9d1d9', '[step 4/24] dispense 50 uL  plate B1  mix x3'], ['#8a93a3', '[so_a]  watching bed  conf 0.97'],
-      ['#8a93a3', '[eye]   plate detected  96 wells  rot 0.4 deg'], ['#f2c81d', '[warn]  R1 low: 3.2 mL'], ['#c9d1d9', '[step 5/24] eject tip -> waste'], ['#6ee7c8', 'labrat> _']];
-    lines.forEach(([col, t], i) => { c.fillStyle = col; c.fillText(t, 18, 58 + i * 32); });
-    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
-    const scr = new THREE.Mesh(new THREE.PlaneGeometry(286, 179), new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: .9, roughness: .15 }));
-    scr.position.set(0, 110, .7); lid.add(scr);
+    const g = this.laptop = new THREE.Group(); g.name = 'laptop'; this.stage.add(g);
+    g.position.set(650, 0, -190); g.rotation.y = 0.45;
+    const W = 304, D = 212, T = 15, r = 9;
+    const rr = (w, h, rad) => { const sh = new THREE.Shape(), x = -w / 2, y = -h / 2; sh.moveTo(x + rad, y); sh.lineTo(x + w - rad, y); sh.quadraticCurveTo(x + w, y, x + w, y + rad); sh.lineTo(x + w, y + h - rad); sh.quadraticCurveTo(x + w, y + h, x + w - rad, y + h); sh.lineTo(x + rad, y + h); sh.quadraticCurveTo(x, y + h, x, y + h - rad); sh.lineTo(x, y + rad); sh.quadraticCurveTo(x, y, x + rad, y); return sh; };
+    const alu = new THREE.MeshStandardMaterial({ color: 0xc9ccd1, metalness: .85, roughness: .32 });
+    const slab = (w, h, t, rad, bev) => { const geo = new THREE.ExtrudeGeometry(rr(w, h, rad), { depth: t - 2 * bev, bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelSegments: 3, curveSegments: 8 }); geo.translate(0, 0, bev); return geo; };
+    // unibody base: lies flat (shape XY -> XZ), tapered from 15 mm at the hinge to 9 mm at the front edge
+    const bg = slab(W, D, T, r, 1.5); bg.rotateX(-Math.PI / 2);
+    const pos = bg.attributes.position; for (let i = 0; i < pos.count; i++) { const z = pos.getZ(i); pos.setY(i, pos.getY(i) * Math.min(1, Math.max(0.6, 1 - (D / 2 - z) / D * 0.4))); }
+    bg.computeVertexNormals(); const base = new THREE.Mesh(bg, alu); g.add(base);
+    // keyboard well + individual keys + trackpad (deck top ~ 13 mm at the keyboard)
+    const keyTop = 12.4, kb = new THREE.Group(); g.add(kb);
+    this._box(272, .6, 112, 0x1b1c1f, new THREE.Vector3(0, keyTop, 52), kb, { roughness: .8 });
+    const keyM = new THREE.MeshStandardMaterial({ color: 0x141518, roughness: .6 }), keyG = new THREE.BoxGeometry(15.5, 1.2, 14.5);
+    const rows = [[14, 0], [14, 0], [13, 9], [12, 14], [11, 20]];
+    rows.forEach(([n, off], ri) => { for (let c = 0; c < n; c++) { const k = new THREE.Mesh(keyG, keyM); k.position.set(-127 + off + c * 18.6 + (ri > 1 ? 4 : 0), keyTop + .9, 6 + ri * 18.4 + 14); kb.add(k); } });
+    const space = new THREE.Mesh(new THREE.BoxGeometry(92, 1.2, 14.5), keyM); space.position.set(0, keyTop + .9, 6 + 5 * 18.4 + 14); kb.add(space);
+    const fn = new THREE.Mesh(new THREE.BoxGeometry(15.5, 1.2, 8), keyM); for (let c = 0; c < 14; c++) { const k = fn.clone(); k.position.set(-121 + c * 18.6, keyTop + .9, 10); kb.add(k); }
+    this._box(130, .4, 78, 0xb9bdc3, new THREE.Vector3(0, 10.3, -55), g, { metalness: .5, roughness: .22 });
+    // lid: 6 mm, hinge at the back edge, open ~110 deg
+    const hinge = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 250, 20), new THREE.MeshStandardMaterial({ color: 0x2a2c30, metalness: .6, roughness: .4 }));
+    hinge.rotation.z = Math.PI / 2; hinge.position.set(0, 13, D / 2 - 3); g.add(hinge);
+    const lid = new THREE.Group(); lid.position.set(0, 14, D / 2 - 3); lid.rotation.x = THREE.MathUtils.degToRad(20); g.add(lid);
+    const lg = slab(W, D, 6, r, 1); lg.translate(0, D / 2, -6); const shell = new THREE.Mesh(lg, alu); lid.add(shell);
+    // shell back is +Z (away from user); flip so the screen faces the user (-Z of the group = front)
+    lid.rotation.y = 0;
+    const bezel = new THREE.Mesh(new THREE.ShapeGeometry(rr(W - 4, D - 4, r - 1)), new THREE.MeshStandardMaterial({ color: 0x0a0a0b, roughness: .15 }));
+    bezel.position.set(0, D / 2, -6.05); bezel.rotation.y = Math.PI; lid.add(bezel);
+    const scrM = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveIntensity: .95, roughness: .12 });
+    new THREE.TextureLoader().load(new URL('./models/laptop/console.jpg', import.meta.url).href, (t) => { t.colorSpace = THREE.SRGBColorSpace; scrM.emissiveMap = t; scrM.needsUpdate = true; });
+    const scr = new THREE.Mesh(new THREE.PlaneGeometry(284, 184), scrM); scr.position.set(0, D / 2 + 3, -6.15); scr.rotation.y = Math.PI; lid.add(scr);
+    this._box(6, 3, .3, 0x111111, new THREE.Vector3(0, D - 4, -6.2), lid); // camera notch
+  }
+
+  // lab room: light floor, off-white back wall with a shelf of lab items, white bench on a steel frame + drawer cabinet
+  _buildLab() {
+    const s = this.scene, lab = this.lab = new THREE.Group(); lab.name = 'lab'; s.add(lab);
+    const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: .7, metalness: 0, ...o });
+    const add = (geo, mat, x, y, z, parent = lab) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; parent.add(m); return m; };
+    const BX = 1800, BZ = 900, BC = 30, WALL_Z = 560;
+    // floor (light vinyl) + wall + skirting
+    const floor = add(new THREE.PlaneGeometry(8000, 8000), M(0xd9d6d0, { roughness: .85 }), 0, 0, 0); floor.rotation.x = -Math.PI / 2; floor.castShadow = false;
+    const wall = add(new THREE.PlaneGeometry(8000, 3200), M(0xf3f1ec, { roughness: .95 }), 0, 1600, WALL_Z); wall.rotation.y = Math.PI; wall.castShadow = false;
+    add(new THREE.BoxGeometry(8000, 90, 12), M(0xe2e0db), 0, 45, WALL_Z - 6);
+    // bench: white laminate top 1800x900x30 with a light grey edge, powder-coated steel frame
+    add(new THREE.BoxGeometry(BX, BC, BZ), M(0xf7f7f5, { roughness: .45 }), 0, BENCH_H - BC / 2, 20);
+    add(new THREE.BoxGeometry(BX + 2, 4, BZ + 2), M(0xc9ccd0, { roughness: .5 }), 0, BENCH_H - BC + 2, 20);
+    const steel = M(0x9aa1a9, { metalness: .6, roughness: .4 });
+    for (const x of [-BX / 2 + 40, BX / 2 - 40]) for (const z of [20 - BZ / 2 + 40, 20 + BZ / 2 - 40]) add(new THREE.BoxGeometry(50, BENCH_H - BC, 50), steel, x, (BENCH_H - BC) / 2, z);
+    for (const z of [20 - BZ / 2 + 40, 20 + BZ / 2 - 40]) add(new THREE.BoxGeometry(BX - 80, 50, 40), steel, 0, BENCH_H - BC - 25, z);
+    for (const x of [-BX / 2 + 40, BX / 2 - 40]) add(new THREE.BoxGeometry(40, 40, BZ - 80), steel, x, 160, 20);
+    // drawer cabinet under the left end
+    const cab = M(0xe9ebee, { roughness: .5 }), cx = BX / 2 - 300;
+    add(new THREE.BoxGeometry(460, BENCH_H - BC - 70, BZ - 120), cab, cx, (BENCH_H - BC - 70) / 2 + 20, 40);
+    for (let i = 0; i < 4; i++) {
+      const y = 70 + i * 190; add(new THREE.BoxGeometry(440, 176, 6), M(0xf4f5f6, { roughness: .45 }), cx, y + 88, 40 - (BZ - 120) / 2 - 3);
+      add(new THREE.BoxGeometry(160, 12, 14), steel, cx, y + 150, 40 - (BZ - 120) / 2 - 12);
+    }
+    // wall shelf with lab items
+    const SH_Y = BENCH_H + 430, SH_D = 240, shZ = WALL_Z - SH_D / 2;
+    add(new THREE.BoxGeometry(1300, 22, SH_D), M(0xf8f8f6, { roughness: .5 }), 0, SH_Y, shZ);
+    for (const x of [-560, 560]) { add(new THREE.BoxGeometry(14, 160, 14), steel, x, SH_Y - 90, WALL_Z - 7); add(new THREE.BoxGeometry(14, 14, SH_D - 20), steel, x, SH_Y - 18, shZ); }
+    const top = SH_Y + 11;
+    const glass = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .05, transmission: .9, thickness: 3, ior: 1.5, transparent: true, opacity: .55 });
+    const amber = new THREE.MeshPhysicalMaterial({ color: 0x9a4f12, roughness: .15, transmission: .35, transparent: true, opacity: .9 });
+    const bottle = (x, z, mat, cap, h = 170, rad = 38) => {
+      add(new THREE.CylinderGeometry(rad, rad, h, 36), mat, x, top + h / 2, z);
+      add(new THREE.CylinderGeometry(rad * .55, rad, 26, 36), mat, x, top + h + 13, z);
+      add(new THREE.CylinderGeometry(rad * .5, rad * .5, 30, 28), M(cap, { roughness: .4 }), x, top + h + 41, z);
+      add(new THREE.BoxGeometry(rad * 1.3, h * .45, 1), M(0xffffff, { roughness: .9 }), x, top + h * .5, z - rad - .3);
+    };
+    bottle(-480, shZ, amber, 0x1f5fbf); bottle(-385, shZ + 10, amber, 0x1f5fbf, 140, 32);
+    bottle(-280, shZ - 5, new THREE.MeshPhysicalMaterial({ color: 0xe8f1ff, roughness: .08, transmission: .85, transparent: true, opacity: .6 }), 0xd23b2f, 200, 44);
+    // beaker with blue liquid
+    const bk = add(new THREE.CylinderGeometry(48, 46, 130, 40, 1, true), glass, -120, top + 65, shZ); bk.material.side = THREE.DoubleSide;
+    add(new THREE.CylinderGeometry(44, 44, 70, 40), M(0x3a7fd9, { roughness: .1, transparent: true, opacity: .75 }), -120, top + 36, shZ);
+    // box of pipette tips (blue rack, lid open)
+    const tb = new THREE.Group(); tb.position.set(110, top, shZ); lab.add(tb);
+    add(new THREE.BoxGeometry(122, 70, 82), M(0x2f6fd0, { roughness: .35 }), 0, 35, 0, tb);
+    add(new THREE.BoxGeometry(118, 3, 78), M(0xeef3fb, { roughness: .4 }), 0, 71, 0, tb);
+    const tg = new THREE.ConeGeometry(2.8, 48, 10); tg.rotateX(Math.PI);
+    const tm = M(0xf2efe2, { roughness: .3 }); const inst = new THREE.InstancedMesh(tg, tm, 96); const mm = new THREE.Matrix4();
+    for (let i = 0; i < 96; i++) { mm.makeTranslation(-49.5 + (i % 12) * 9, 72 + 22, -31.5 + Math.floor(i / 12) * 9); inst.setMatrixAt(i, mm); } inst.castShadow = true; tb.add(inst);
+    const lidm = add(new THREE.BoxGeometry(124, 4, 84), M(0x7fb0f0, { transparent: true, opacity: .55, roughness: .2 }), 0, 0, 0, tb); lidm.position.set(0, 72 + 40, 42 + 2); lidm.rotation.x = -1.2;
+    // second shelf items: a stack of petri dishes and a small box
+    for (let i = 0; i < 4; i++) add(new THREE.CylinderGeometry(45, 45, 12, 36), glass, 300, top + 6 + i * 13, shZ);
+    add(new THREE.BoxGeometry(150, 110, 120), M(0xf2f2ef, { roughness: .8 }), 470, top + 55, shZ);
+    add(new THREE.BoxGeometry(110, 40, 1), M(0x2f6fd0), 470, top + 70, shZ - 60.6);
+    // soft ceiling light panels (emissive) above the bench
+    for (const x of [-600, 0, 600]) { const p = add(new THREE.BoxGeometry(560, 12, 560), M(0xffffff, { emissive: 0xffffff, emissiveIntensity: 1.2 }), x, 3000, 0); p.castShadow = false; }
   }
 
   // SO-101 as a simple 6-joint chain (fallback until the URDF model loads)
   _buildSO101(pos, color, phone) {
-    const root = new THREE.Group(); root.position.copy(pos); this.scene.add(root);
+    const root = new THREE.Group(); root.position.copy(pos); this.stage.add(root);
     const c = color, acc = 0xf5d76e;
     this._box(60, 20, 60, 0x181818, new THREE.Vector3(0, 10, 0), root);
     const pan = new THREE.Group(); pan.position.y = 20; root.add(pan);
@@ -275,7 +346,7 @@ export class Twin {
     return { root, pan, lift, elbow, wflex, roll, fingerA, fingerB };
   }
   _buildTappet(pos) {
-    const g = new THREE.Group(); g.position.copy(pos); this.scene.add(g);
+    const g = new THREE.Group(); g.position.copy(pos); this.stage.add(g);
     this._box(40, 14, 40, 0x1a1a1a, new THREE.Vector3(0, 7, 0), g);
     const a = new THREE.Group(); a.position.y = 14; g.add(a);
     this._box(14, 80, 14, 0x6ee7c8, new THREE.Vector3(0, 40, 0), a);

@@ -260,19 +260,19 @@ function renderLearning(vs) {
   const X = (i) => L + (vs.length === 1 ? (W - L - R) / 2 : i * (W - L - R) / (vs.length - 1));
   const Y = (y) => T + (H - T - B) * (1 - y / ymax);
   const line = (k) => vs.map((v, i) => v[k] == null ? null : `${X(i)},${Y(+v[k])}`).filter(Boolean).join(' ');
-  const grid = [0, .25, .5, .75, 1].map((f) => `<line x1="${L}" x2="${W - R}" y1="${Y(ymax * f)}" y2="${Y(ymax * f)}" stroke="#1a1a1a"/><text x="${L - 4}" y="${Y(ymax * f) + 3}" text-anchor="end">${(ymax * f).toPrecision(2)}</text>`).join('');
-  const marks = vs.map((v, i) => `${v.error_before != null && v.error_after != null ? `<line x1="${X(i)}" x2="${X(i)}" y1="${Y(+v.error_before)}" y2="${Y(+v.error_after)}" stroke="#6ee7c8" stroke-dasharray="2 2"/>` : ''}
-    ${v.error_before != null ? `<circle cx="${X(i)}" cy="${Y(+v.error_before)}" r="3.5" fill="#ff5a5a"><title>v${esc(v.v)} before: ${(+v.error_before).toFixed(4)}</title></circle>` : ''}
-    ${v.error_after != null ? `<circle cx="${X(i)}" cy="${Y(+v.error_after)}" r="3.5" fill="#f5d76e"><title>v${esc(v.v)} after: ${(+v.error_after).toFixed(4)}</title></circle>` : ''}
+  const grid = [0, .25, .5, .75, 1].map((f) => `<line x1="${L}" x2="${W - R}" y1="${Y(ymax * f)}" y2="${Y(ymax * f)}" style="stroke:var(--chart-grid)"/><text x="${L - 4}" y="${Y(ymax * f) + 3}" text-anchor="end">${(ymax * f).toPrecision(2)}</text>`).join('');
+  const marks = vs.map((v, i) => `${v.error_before != null && v.error_after != null ? `<line x1="${X(i)}" x2="${X(i)}" y1="${Y(+v.error_before)}" y2="${Y(+v.error_after)}" style="stroke:var(--chart-gain)" stroke-dasharray="2 2"/>` : ''}
+    ${v.error_before != null ? `<circle cx="${X(i)}" cy="${Y(+v.error_before)}" r="3.5" style="fill:var(--chart-before)"><title>v${esc(v.v)} before: ${(+v.error_before).toFixed(4)}</title></circle>` : ''}
+    ${v.error_after != null ? `<circle cx="${X(i)}" cy="${Y(+v.error_after)}" r="3.5" style="fill:var(--chart-after);stroke:var(--bg-2);stroke-width:1"><title>v${esc(v.v)} after: ${(+v.error_after).toFixed(4)}</title></circle>` : ''}
     <text x="${X(i)}" y="${H - 8}" text-anchor="middle">v${esc(v.v)}</text>`).join('');
   const first = vs.find((v) => v.error_before != null)?.error_before, last = [...vs].reverse().find((v) => v.error_after != null)?.error_after;
   const gain = first != null && last != null && +first > 0 ? (1 - last / first) * 100 : null;
   box.innerHTML = `<div><h2>Sim-model prediction error by version</h2>
     ${gain != null ? `<div style="margin-top:4px">Error went from <b class="mono">${(+first).toFixed(4)}</b> to <b class="mono" style="color:var(--accent)">${(+last).toFixed(4)}</b>: <b class="mono" style="color:var(--ok)">${gain.toFixed(1)}% lower</b> across ${vs.length} versions.</div>` : ''}</div>
     <svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${grid}
-      <polyline points="${line('error_before')}" fill="none" stroke="#ff5a5a" stroke-opacity=".5"/>
-      <polyline points="${line('error_after')}" fill="none" stroke="#f5d76e" stroke-width="1.5"/>${marks}</svg>
-    <div class="legend"><span><i style="background:#ff5a5a"></i>before refit</span><span><i style="background:#f5d76e"></i>after refit</span><span><i style="background:#6ee7c8"></i>improvement</span></div>
+      <polyline points="${line('error_before')}" fill="none" style="stroke:var(--chart-before)" stroke-opacity=".55"/>
+      <polyline points="${line('error_after')}" fill="none" style="stroke:var(--chart-after)" stroke-width="1.75"/>${marks}</svg>
+    <div class="legend"><span><i style="background:var(--chart-before)"></i>before refit</span><span><i style="background:var(--chart-after)"></i>after refit</span><span><i style="background:var(--chart-gain)"></i>improvement</span></div>
     <table class="vtable"><tr><th>v</th><th>before</th><th>after</th><th>runs</th><th>params</th></tr>
     ${vs.slice().reverse().map((v) => `<tr><td>${esc(v.v)}</td><td>${v.error_before != null ? (+v.error_before).toFixed(4) : '—'}</td><td>${v.error_after != null ? (+v.error_after).toFixed(4) : '—'}</td><td>${esc(v.n_runs ?? '')}</td><td title="${esc(v.created_at || '')}">${esc(JSON.stringify(v.params || {})).slice(0, 160)}</td></tr>`).join('')}</table>`;
 }

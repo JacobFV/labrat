@@ -13,14 +13,14 @@ async function api(path, opts = {}) {
 }
 
 const css = `
-.cc-back{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
-.cc-box{background:var(--bg-2,#0a0a0a);border:1px solid var(--border-2,#2a2a2a);border-radius:4px;max-width:min(920px,100%);max-height:100%;overflow:auto;padding:12px;color:var(--text-1,#ededed);font:13px var(--font-sans,system-ui)}
+.cc-back{position:fixed;inset:0;background:rgba(26,24,20,.45);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+.cc-box{background:var(--bg-2,#fff);border:1px solid var(--border-1,#E4E0D4);box-shadow:var(--shadow-lg,0 18px 50px rgba(26,24,20,.18));border-radius:4px;max-width:min(920px,100%);max-height:100%;overflow:auto;padding:12px;color:var(--text-1,#1A1814);font:13px var(--font-sans,system-ui)}
 .cc-head{display:flex;gap:8px;align-items:center;margin-bottom:8px}.cc-head b{flex:1}
 .cc-stage{position:relative;display:inline-block;cursor:crosshair;max-width:100%}
 .cc-stage img{display:block;max-width:100%;height:auto}
-.cc-dot{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border:2px solid var(--accent,#f5d76e);border-radius:50%;pointer-events:none}
-.cc-dot span{position:absolute;left:14px;top:-4px;font:11px var(--font-mono,monospace);color:var(--accent,#f5d76e);text-shadow:0 0 3px #000}
-.cc-msg{margin-top:8px;color:var(--text-2,#a8a8a8);font-family:var(--font-mono,monospace)}`;
+.cc-dot{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border:2px solid var(--accent-fill,#F5D76E);box-shadow:0 0 0 1px #1A1814,inset 0 0 0 1px #1A1814;border-radius:50%;pointer-events:none}
+.cc-dot span{position:absolute;left:14px;top:-4px;font:11px var(--font-mono,monospace);color:#1A1814;background:var(--accent-fill,#F5D76E);padding:0 3px;border-radius:2px}
+.cc-msg{margin-top:8px;color:var(--text-2,#5E594D);font-family:var(--font-mono,monospace)}`;
 const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
 function open() {
