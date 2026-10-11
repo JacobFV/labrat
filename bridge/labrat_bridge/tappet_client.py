@@ -1,4 +1,4 @@
-# Vendored from robot-2026-10-11/host/tappet/client.py (stdlib + pyserial only).
+# Vendored from tappet/host/tappet/client.py (in this repo) (stdlib + pyserial only).
 """BodyClient: talks the SPEC §4 JSON-lines protocol over serial (pyserial) or TCP (simulator).
 
     with BodyClient.connect("tcp://127.0.0.1:7777") as body:

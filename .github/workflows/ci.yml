@@ -1,0 +1,92 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: LabRat server tests (sim, e2e, vision, RSI)
+        working-directory: server
+        run: uv run --group dev pytest -q
+
+  bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: USB bridge tests (mock drivers, limits, watchdog)
+        working-directory: bridge
+        run: uv run --group dev pytest -q
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: JS syntax check (console, phone, Tappet web UI)
+        run: for f in web/*.js phone/*.js tappet/web/*.js; do echo "$f"; node --check "$f"; done
+
+  tappet-host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Tappet Python tests (kinematics, simulator, bridge, calibration)
+        working-directory: tappet/host
+        run: uv run --extra dev pytest -q
+
+  tappet-firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('tappet/firmware/platformio.ini') }}
+      - run: pip install platformio
+      - name: Native unit tests
+        working-directory: tappet/firmware
+        run: pio test -e native
+      - name: Build ESP32-S3 firmware
+        working-directory: tappet/firmware
+        run: pio run -e esp32s3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tappet-firmware
+          path: tappet/firmware/.pio/build/esp32s3/firmware.bin
+
+  tappet-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Build + unit tests
+        working-directory: tappet/android
+        run: echo "sdk.dir=$ANDROID_HOME" > local.properties && ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tappet-head-debug.apk
+          path: tappet/android/app/build/outputs/apk/debug/*.apk
+
+  tappet-cad:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Build CAD + kinematic/interference checks
+        working-directory: tappet/hardware/cad
+        run: uv run --python 3.12 --with build123d --with trimesh --with matplotlib --with numpy python build.py

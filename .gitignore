@@ -1,7 +1,33 @@
-__pycache__/
+# OS / editors
 .DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Secrets / local state
 .env
-.pytest_cache/
-.venv/
-*.pyc
 server/data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+.uv/
+tappet/host/out/
+host/out/
+
+# PlatformIO
+tappet/firmware/.pio/
+
+# Android / Gradle
+tappet/android/.gradle/
+tappet/android/build/
+tappet/android/app/build/
+tappet/android/local.properties
+tappet/android/.kotlin/
+local.properties
+*.apk
+*.aab
+!tappet/android/gradle/wrapper/gradle-wrapper.jar

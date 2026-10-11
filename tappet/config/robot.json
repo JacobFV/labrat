@@ -107,7 +107,7 @@
       "model": "TappetBody",
       "description": "Tappet desktop robot body",
       "version": "1.0",
-      "uri": "https://github.com/JacobFV/tappet",
+      "uri": "https://github.com/JacobFV/labrat/tree/main/tappet",
       "serial": "0001"
     },
     "sim_tcp_port": 7777,

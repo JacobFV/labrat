@@ -1,7 +1,7 @@
 """Deck calibration: pipette-tip offset + taught deck positions -> spindle (CNC) coordinates.
 
 Taught points are CNC machine coords of the PIPETTE TIP. The CNC moves the spindle, so
-spindle = tip - pipette_offset. Untaught targets fall back to the nominal deck (CONTRACT.md),
+spindle = tip - pipette_offset. Untaught targets fall back to the nominal deck (docs/ARCHITECTURE.md §6),
 whose numbers are spindle coords (so an uncalibrated deck behaves exactly as before).
 If both corners of a grid are taught (A1 + H12), pitch and rotation are derived from them;
 otherwise the nominal 9 mm pitch, axis-aligned, is used from the taught A1.

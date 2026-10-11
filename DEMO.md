@@ -1,6 +1,12 @@
 # LabRat: 2-minute demo script
 
-**Setup before going on stage.** Server is up (AWS URL or `localhost:8000`). Laptop console is open at `/?token=labrat`. The iPhone is on `so_a` with `/phone/?token=labrat` open and the eyes showing. The bridge is running (`--mock all` if there is no hardware). Reservoirs hold water, red, yellow and blue. A fresh tip rack and an empty plate are on the deck.
+> **Status (2026-10-11, 14:59 PDT):** Anthropic, MongoDB Atlas, Raindrop, ElevenLabs TTS and Modelence
+> are live (verified HTTP 200). Voyage is not set yet (hashed-embedding fallback). Hardware is not yet
+> connected, so rehearse with `--mock all`. AWS is not yet deployed: use the laptop server URL.
+> The Modelence Mission Control dashboard (https://labrat-mission-mv4c6k4pk66-prod.cloud.modelence.app)
+> can be shown in place of, or next to, the Raindrop tab. System design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+**Setup before going on stage.** Server is up (laptop `localhost:8000`, or the AWS URL once deployed). Laptop console is open at `/?token=labrat`. The iPhone is on `so_a` with `/phone/?token=labrat` open and the eyes showing. The bridge is running (`--mock all` if there is no hardware). Reservoirs hold water, red, yellow and blue. A fresh tip rack and an empty plate are on the deck.
 Calibrate the camera once: click **Calibrate cam** in the top bar, click the centres of wells A1, A12, H12 and H1, then click **Save**.
 Have a second browser tab open on the Raindrop dashboard and one on the Atlas `memories` collection.
 

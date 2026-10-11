@@ -1,5 +1,11 @@
 # Tappet
 
+> **Tappet is now part of [LabRat](../README.md).** This directory was merged from the former
+> `JacobFV/tappet` repository (full history kept); that repo is archived and superseded by
+> [JacobFV/labrat](https://github.com/JacobFV/labrat). Inside LabRat, Tappet provides the low-cost
+> ESP32-S3 + PCA9685 arms (driven by `bridge/labrat_bridge/tappet_client.py`) and the servo channel
+> (PCA9685 ch 8) that actuates the pipette plunger. System design: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
+
 **A ~$99 desktop robot that uses your phones.** Your old Android phone becomes its head: face,
 eyes, ears, voice and brain. Two small stylus arms reach down and operate your iPhone (or any
 touchscreen) lying in a tray in front of it. Talk to it, or control it from your iPhone's browser, and
@@ -49,7 +55,7 @@ through apps that have no API.
 
 ```bash
 # Simulator + PC bridge + web UI
-cd host
+cd tappet/host                           # from the LabRat repo root
 uv run tappet sim &                      # firmware simulator on :7777
 uv run tappet bridge --sim               # web UI on http://localhost:8080 (PIN printed)
 uv run tappet taptest --sim -n 100       # v0 acceptance test in simulation
@@ -59,7 +65,7 @@ uv run --extra dev pytest -q             # 98 tests
 
 ```bash
 # Firmware
-cd firmware
+cd tappet/firmware                       # from the LabRat repo root
 pio test -e native                       # 40 host-side unit tests
 pio run -e esp32s3 -t upload             # flash the DevKit (UART USB port)
 ```

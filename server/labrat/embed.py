@@ -27,7 +27,7 @@ async def embed(texts: list[str], input_type: str = "document") -> tuple[list[li
         try:
             async with httpx.AsyncClient(timeout=15) as c:
                 r = await c.post(
-                    "https://api.voyageai.com/v1/embeddings",
+                    env("VOYAGE_BASE_URL", "https://api.voyageai.com/v1").rstrip("/") + "/embeddings",
                     headers={"Authorization": f"Bearer {key}"},
                     json={"input": texts, "model": VOYAGE_MODEL, "input_type": input_type},
                 )
