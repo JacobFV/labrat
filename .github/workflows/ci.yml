@@ -48,10 +48,9 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: android-actions/setup-android@v3
       - name: Build + unit tests
         working-directory: android
-        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
+        run: echo "sdk.dir=$ANDROID_HOME" > local.properties && ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: tappet-head-debug.apk
