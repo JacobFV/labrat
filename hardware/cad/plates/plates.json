@@ -1,0 +1,96 @@
+{
+ "bed_mm": 220.0,
+ "shim": "61",
+ "plates": [
+  {
+   "n": 1,
+   "file": "plate1_base_column_clamp",
+   "profile": "structural",
+   "settings": "PLA, 0.20 mm, 3 walls, 20% gyroid, adhesion: SKIRT (a brim would not fit around the base), supports: OFF",
+   "parts": {
+    "base": 1,
+    "phone_clamp": 1,
+    "column": 1
+   },
+   "pieces": 3,
+   "solid_volume_cm3": 240.9,
+   "max_height_mm": 180.0
+  },
+  {
+   "n": 2,
+   "file": "plate2_lid_turrets_neck",
+   "profile": "strong",
+   "settings": "PLA, 0.20 mm, 4 walls, 30% gyroid, no brim, supports: OFF",
+   "parts": {
+    "base_lid": 1,
+    "turret_L": 1,
+    "turret_R": 1,
+    "neck_pan_mount": 1,
+    "neck_tilt_bracket": 1,
+    "phone_clamp_jaw": 1
+   },
+   "pieces": 6,
+   "solid_volume_cm3": 128.2,
+   "max_height_mm": 45.5
+  },
+  {
+   "n": 3,
+   "file": "plate3_tray_shim",
+   "profile": "structural",
+   "settings": "PLA, 0.20 mm, 3 walls, 20% gyroid, adhesion: SKIRT (a brim would not fit around the base), supports: OFF",
+   "parts": {
+    "tray": 1,
+    "tray_shim_iphone_61": 1
+   },
+   "pieces": 2,
+   "solid_volume_cm3": 113.9,
+   "max_height_mm": 12.0
+  },
+  {
+   "n": 4,
+   "file": "plate4_arm_links",
+   "profile": "links",
+   "settings": "PLA, 0.20 mm, 4 walls, 40% gyroid, no brim, supports: OFF",
+   "parts": {
+    "forearm": 2,
+    "wrist_link_b": 2,
+    "upper_arm": 2,
+    "linkage_rod": 2,
+    "wrist_link_a": 2,
+    "elbow_triangle": 2,
+    "elbow_drive_link": 2
+   },
+   "pieces": 14,
+   "solid_volume_cm3": 50.8,
+   "max_height_mm": 5.0
+  },
+  {
+   "n": 5,
+   "file": "plate5_gears_stylus",
+   "profile": "fine",
+   "settings": "PLA, 0.12 mm, 4 walls, 100% infill, tree supports ON 'touching buildplate' (only the stylus holders need them), brim OFF",
+   "parts": {
+    "yaw_gear_turret": 2,
+    "stylus_holder_L": 1,
+    "stylus_holder_R": 1,
+    "yaw_gear_servo": 2,
+    "stylus_plunger": 2
+   },
+   "pieces": 8,
+   "solid_volume_cm3": 25.7,
+   "max_height_mm": 46.7
+  },
+  {
+   "n": 6,
+   "file": "plate6_cable_clips_PETG",
+   "profile": "petg",
+   "settings": "PETG, 0.20 mm, 3 walls, 100% infill, supports: OFF",
+   "parts": {
+    "cable_clip": 12
+   },
+   "pieces": 12,
+   "solid_volume_cm3": 6.0,
+   "max_height_mm": 6.0
+  }
+ ]
+}

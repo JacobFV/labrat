@@ -1,5 +1,7 @@
 # Tappet — mechanical CAD (build123d)
 
+> **Just want to print it?** Use the six ready-made plates in [`plates/`](plates/README.md): every part count is included, laid out for a 220 × 220 bed (Ender 3 V3 SE), with one Cura profile per plate.
+
 Parametric, fully scripted CAD for the Tappet desktop robot: a Luxo-lamp-style column carrying the
 Android "head" on a pan/tilt neck, two 3-DOF parallel-linkage arms with compliant capacitive styluses,
 and a fixed tray for the target phone. All kinematic geometry is read from
