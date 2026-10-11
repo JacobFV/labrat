@@ -348,9 +348,13 @@ class Grbl(GrblBase):
             self._execute([f"G90 G21 G1 Z0 F{FEED_Z_MAX:g}", f"G1 X0 Y0 F{FEED_XY_MAX:g}"], [])
         return dict(self.st)
 
-    def a_zero(self):
-        """Declare the current position as work 0,0,0 (use when homing is disabled)."""
-        self._send("G10 L20 P1 X0 Y0 Z0")
+    def a_zero(self, x=0, y=0, z=0):
+        """Declare the current position as work (x, y, z), default 0,0,0 (use when homing is disabled).
+        Declaring a mid-range point (e.g. x=20, z=-10) leaves room to move left/up from where it sits."""
+        x, y, z = float(x), float(y), float(z)
+        check_bounds(x, y, z)
+        self._send(f"G10 L20 P1 X{x:g} Y{y:g} Z{z:g}")
+        time.sleep(0.3)
         return dict(self.st)
 
     def a_stop(self):
