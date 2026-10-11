@@ -31,3 +31,10 @@ local.properties
 *.apk
 *.aab
 !tappet/android/gradle/wrapper/gradle-wrapper.jar
+
+# video build outputs (large / contain third-party music; publish the demo on YouTube instead)
+video/build/*
+!video/build/build_video.py
+video/*.mov
+video/*.mp3
+video/labrat_demo_final.mp4

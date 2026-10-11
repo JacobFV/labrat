@@ -1,0 +1,11 @@
+I'm Jacob, and today I built LabRat: a self-improving harness for a physical lab agent.
+
+Two SO-101 arms, a CNC with a servo pipette I designed this morning, and an iPhone as its eyes, ears and voice, all driven by one agent running on AWS.
+
+I ask it: make the most orange well from red and yellow. Claude recalls my past runs from MongoDB Atlas, using episodic, semantic, procedural and taxonomic memory retrieved with Voyage AI. Then it simulates sixteen protocols in a 3D digital twin. Nothing touches the hardware without a passing simulation and my approval.
+
+After the real run, the camera measures the result and the harness improves itself: it refits its simulator, re-scores old plans, and promotes what worked into procedural memory. In my test, one observation cut prediction error by sixty-nine percent, and every step is traced in Raindrop.
+
+ElevenLabs gives it a voice, Modelence runs mission control, and it's all open source.
+
+That's LabRat. Think in simulation, act with permission, remember everything.
