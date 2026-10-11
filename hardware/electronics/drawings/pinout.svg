@@ -1,0 +1,240 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1150" viewBox="0 0 1800 1150">
+<rect x="0" y="0" width="1800" height="1150" fill="#ffffff"/>
+<rect x="12" y="12" width="1776" height="1126" fill="none" stroke="#111" stroke-width="2"/>
+<text x="30.0" y="44.0" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="start" fill="#111" font-weight="bold">ESP32-S3-DevKitC-1 PIN USAGE (top view, USB connectors at the bottom)</text>
+<rect x="760.0" y="100.0" width="280.0" height="876.0" rx="8" stroke="#111" fill="#1b5e20" stroke-width="2"/>
+<rect x="800.0" y="120.0" width="200.0" height="140.0" rx="4" stroke="#ccc" fill="#cfd8dc" stroke-width="1.5"/>
+<text x="900.0" y="180.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">ESP32-S3-WROOM-1</text>
+<text x="900.0" y="198.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">(antenna end)</text>
+<rect x="820.0" y="926.0" width="60.0" height="50.0" rx="0" stroke="#999" fill="#b0bec5" stroke-width="1.5"/>
+<rect x="920.0" y="926.0" width="60.0" height="50.0" rx="0" stroke="#999" fill="#b0bec5" stroke-width="1.5"/>
+<text x="850.0" y="958.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#263238" font-weight="bold">UART</text>
+<text x="950.0" y="958.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#263238" font-weight="bold">USB</text>
+<text x="900.0" y="520.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#fff" font-weight="bold">J1 = left header</text>
+<text x="900.0" y="540.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#fff" font-weight="bold">J3 = right header</text>
+<circle cx="830.0" cy="876.0" r="8" stroke="#fff" fill="#fff59d" stroke-width="1.6"/>
+<text x="844.0" y="880.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#fff">RGB LED</text>
+<circle cx="970.0" cy="876.0" r="8" stroke="#fff" fill="#b0bec5" stroke-width="1.6"/>
+<text x="956.0" y="880.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#fff">BOOT</text>
+<circle cx="778.0" cy="130.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="134.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">1</text>
+<text x="726.0" y="134.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111" font-weight="bold">3V3</text>
+<rect x="643.7" y="119.0" width="44.4" height="20.0" rx="4" stroke="#c62828" fill="#c62828" stroke-width="1"/>
+<text x="665.9" y="134.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">+3V3</text>
+<circle cx="778.0" cy="168.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="172.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">2</text>
+<text x="726.0" y="172.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111" font-weight="bold">3V3</text>
+<rect x="643.7" y="157.0" width="44.4" height="20.0" rx="4" stroke="#c62828" fill="#c62828" stroke-width="1"/>
+<text x="665.9" y="172.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">+3V3</text>
+<circle cx="778.0" cy="206.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="210.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">3</text>
+<text x="726.0" y="210.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111">RST</text>
+<text x="688.1" y="210.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="end" fill="#666">(EN)</text>
+<circle cx="778.0" cy="244.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="248.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">4</text>
+<text x="726.0" y="248.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111" font-weight="bold">GPIO4</text>
+<rect x="567.5" y="233.0" width="107.7" height="20.0" rx="4" stroke="#2e7d32" fill="#2e7d32" stroke-width="1"/>
+<text x="621.3" y="248.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">VSERVO_SENSE</text>
+<text x="559.5" y="248.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="end" fill="#333">Servo rail monitor, 10k/10k -&gt; 0.5x</text>
+<circle cx="778.0" cy="282.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="286.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">5</text>
+<text x="726.0" y="286.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111" font-weight="bold">GPIO5</text>
+<rect x="595.2" y="271.0" width="80.0" height="20.0" rx="4" stroke="#2e7d32" fill="#2e7d32" stroke-width="1"/>
+<text x="635.2" y="286.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">VIN_SENSE</text>
+<text x="587.2" y="286.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="end" fill="#333">PD input monitor, 100k/22k -&gt; 0.18x</text>
+<circle cx="778.0" cy="320.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="324.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">6</text>
+<text x="726.0" y="324.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111">GPIO6</text>
+<circle cx="778.0" cy="358.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="362.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">7</text>
+<text x="726.0" y="362.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111" font-weight="bold">GPIO7</text>
+<rect x="560.8" y="347.0" width="114.4" height="20.0" rx="4" stroke="#ef6c00" fill="#ef6c00" stroke-width="1"/>
+<text x="618.0" y="362.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">PHONE_VBUS_EN</text>
+<text x="552.8" y="362.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="end" fill="#333">U4 TPS2553 EN (high = phone VBUS on)</text>
+<circle cx="778.0" cy="396.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="400.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">8</text>
+<text x="726.0" y="400.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111" font-weight="bold">GPIO15</text>
+<rect x="548.6" y="385.0" width="122.3" height="20.0" rx="4" stroke="#ef6c00" fill="#ef6c00" stroke-width="1"/>
+<text x="609.7" y="400.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">PHONE_VBUS_FLT</text>
+<text x="540.6" y="400.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="end" fill="#333">U4 TPS2553 /FAULT (low = over-current/thermal)</text>
+<circle cx="778.0" cy="434.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="438.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">9</text>
+<text x="726.0" y="438.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111">GPIO16</text>
+<circle cx="778.0" cy="472.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="476.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">10</text>
+<text x="726.0" y="476.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111">GPIO17</text>
+<circle cx="778.0" cy="510.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="514.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">11</text>
+<text x="726.0" y="514.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111">GPIO18</text>
+<circle cx="778.0" cy="548.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="552.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">12</text>
+<text x="726.0" y="552.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111" font-weight="bold">GPIO8</text>
+<rect x="611.0" y="537.0" width="64.2" height="20.0" rx="4" stroke="#1565c0" fill="#1565c0" stroke-width="1"/>
+<text x="643.1" y="552.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">I2C_SDA</text>
+<text x="603.0" y="552.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="end" fill="#333">I2C SDA to PCA9685 (0x40)</text>
+<circle cx="778.0" cy="586.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="590.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">13</text>
+<text x="726.0" y="590.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111">GPIO3</text>
+<text x="675.2" y="590.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="end" fill="#666">(strap)</text>
+<circle cx="778.0" cy="624.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="628.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">14</text>
+<text x="726.0" y="628.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111">GPIO46</text>
+<text x="666.5" y="628.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="end" fill="#666">(strap)</text>
+<circle cx="778.0" cy="662.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="666.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">15</text>
+<text x="726.0" y="666.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111" font-weight="bold">GPIO9</text>
+<rect x="611.0" y="651.0" width="64.2" height="20.0" rx="4" stroke="#1565c0" fill="#1565c0" stroke-width="1"/>
+<text x="643.1" y="666.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">I2C_SCL</text>
+<text x="603.0" y="666.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="end" fill="#333">I2C SCL to PCA9685</text>
+<circle cx="778.0" cy="700.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="704.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">16</text>
+<text x="726.0" y="704.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111" font-weight="bold">GPIO10</text>
+<rect x="610.6" y="689.0" width="60.2" height="20.0" rx="4" stroke="#ef6c00" fill="#ef6c00" stroke-width="1"/>
+<text x="640.7" y="704.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">PCA_OE</text>
+<text x="602.6" y="704.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="end" fill="#333">PCA9685 /OE (low = servos energised)</text>
+<circle cx="778.0" cy="738.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="742.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">17</text>
+<text x="726.0" y="742.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111">GPIO11</text>
+<circle cx="778.0" cy="776.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="780.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">18</text>
+<text x="726.0" y="780.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111">GPIO12</text>
+<circle cx="778.0" cy="814.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="818.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">19</text>
+<text x="726.0" y="818.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111">GPIO13</text>
+<circle cx="778.0" cy="852.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="856.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">20</text>
+<text x="726.0" y="856.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111">GPIO14</text>
+<circle cx="778.0" cy="890.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="894.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">21</text>
+<text x="726.0" y="894.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111" font-weight="bold">5V</text>
+<rect x="616.7" y="879.0" width="80.0" height="20.0" rx="4" stroke="#c62828" fill="#c62828" stroke-width="1"/>
+<text x="656.7" y="894.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">5V_DEVKIT</text>
+<circle cx="778.0" cy="928.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="750.0" y="932.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" fill="#666">22</text>
+<text x="726.0" y="932.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end" fill="#111" font-weight="bold">GND</text>
+<rect x="650.4" y="917.0" width="37.7" height="20.0" rx="4" stroke="#424242" fill="#424242" stroke-width="1"/>
+<text x="669.3" y="932.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">GND</text>
+<circle cx="1022.0" cy="130.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="134.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">1</text>
+<text x="1074.0" y="134.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111" font-weight="bold">GND</text>
+<rect x="1111.9" y="119.0" width="37.7" height="20.0" rx="4" stroke="#424242" fill="#424242" stroke-width="1"/>
+<text x="1130.7" y="134.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">GND</text>
+<circle cx="1022.0" cy="168.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="172.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">2</text>
+<text x="1074.0" y="172.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO43</text>
+<text x="1133.5" y="172.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#666">(U0TXD)</text>
+<circle cx="1022.0" cy="206.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="210.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">3</text>
+<text x="1074.0" y="210.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO44</text>
+<text x="1133.5" y="210.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#666">(U0RXD)</text>
+<circle cx="1022.0" cy="244.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="248.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">4</text>
+<text x="1074.0" y="248.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO1</text>
+<circle cx="1022.0" cy="282.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="286.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">5</text>
+<text x="1074.0" y="286.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO2</text>
+<circle cx="1022.0" cy="320.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="324.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">6</text>
+<text x="1074.0" y="324.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO42</text>
+<circle cx="1022.0" cy="358.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="362.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">7</text>
+<text x="1074.0" y="362.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO41</text>
+<circle cx="1022.0" cy="396.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="400.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">8</text>
+<text x="1074.0" y="400.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO40</text>
+<circle cx="1022.0" cy="434.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="438.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">9</text>
+<text x="1074.0" y="438.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO39</text>
+<circle cx="1022.0" cy="472.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="476.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">10</text>
+<text x="1074.0" y="476.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO38</text>
+<circle cx="1022.0" cy="510.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="514.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">11</text>
+<text x="1074.0" y="514.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO37</text>
+<text x="1133.5" y="514.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#666">(PSRAM*)</text>
+<circle cx="1022.0" cy="548.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="552.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">12</text>
+<text x="1074.0" y="552.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO36</text>
+<text x="1133.5" y="552.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#666">(PSRAM*)</text>
+<circle cx="1022.0" cy="586.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="590.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">13</text>
+<text x="1074.0" y="590.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO35</text>
+<text x="1133.5" y="590.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#666">(PSRAM*)</text>
+<circle cx="1022.0" cy="624.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="628.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">14</text>
+<text x="1074.0" y="628.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111" font-weight="bold">GPIO0</text>
+<text x="1124.8" y="628.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#666">(BOOT)</text>
+<rect x="1170.1" y="613.0" width="99.8" height="20.0" rx="4" stroke="#00838f" fill="#00838f" stroke-width="1"/>
+<text x="1220.0" y="628.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">USER_BUTTON</text>
+<text x="1277.9" y="628.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#333">BOOT button (+ optional panel SW1)</text>
+<circle cx="1022.0" cy="662.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="666.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">15</text>
+<text x="1074.0" y="666.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO45</text>
+<text x="1133.5" y="666.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#666">(strap)</text>
+<circle cx="1022.0" cy="700.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="704.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">16</text>
+<text x="1074.0" y="704.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111" font-weight="bold">GPIO48</text>
+<rect x="1133.5" y="689.0" width="91.9" height="20.0" rx="4" stroke="#00838f" fill="#00838f" stroke-width="1"/>
+<text x="1179.4" y="704.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">STATUS_LED</text>
+<text x="1233.3" y="704.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#333">On-board WS2812 RGB LED</text>
+<circle cx="1022.0" cy="738.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="742.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">17</text>
+<text x="1074.0" y="742.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO47</text>
+<circle cx="1022.0" cy="776.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="780.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">18</text>
+<text x="1074.0" y="780.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">GPIO21</text>
+<circle cx="1022.0" cy="814.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="818.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">19</text>
+<text x="1074.0" y="818.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111" font-weight="bold">GPIO20</text>
+<text x="1133.5" y="818.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#666">(USB D+)</text>
+<rect x="1188.2" y="803.0" width="60.2" height="20.0" rx="4" stroke="#6a1b9a" fill="#6a1b9a" stroke-width="1"/>
+<text x="1218.3" y="818.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">USB_DP</text>
+<text x="1256.4" y="818.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#333">USB OTG D+ (host) to HEAD port</text>
+<circle cx="1022.0" cy="852.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="856.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">20</text>
+<text x="1074.0" y="856.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111" font-weight="bold">GPIO19</text>
+<text x="1129.1" y="856.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#666">(USB D-)</text>
+<rect x="1183.9" y="841.0" width="60.2" height="20.0" rx="4" stroke="#6a1b9a" fill="#6a1b9a" stroke-width="1"/>
+<text x="1214.0" y="856.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">USB_DN</text>
+<text x="1252.1" y="856.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#333">USB OTG D- (host) to HEAD port</text>
+<circle cx="1022.0" cy="890.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="894.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">21</text>
+<text x="1074.0" y="894.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111" font-weight="bold">GND</text>
+<rect x="1111.9" y="879.0" width="37.7" height="20.0" rx="4" stroke="#424242" fill="#424242" stroke-width="1"/>
+<text x="1130.7" y="894.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">GND</text>
+<circle cx="1022.0" cy="928.0" r="7" stroke="#fdd835" fill="#000" stroke-width="2.5"/>
+<text x="1050.0" y="932.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#666">22</text>
+<text x="1074.0" y="932.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111" font-weight="bold">GND</text>
+<rect x="1111.9" y="917.0" width="37.7" height="20.0" rx="4" stroke="#424242" fill="#424242" stroke-width="1"/>
+<text x="1130.7" y="932.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">GND</text>
+<text x="30.0" y="1000.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111" font-weight="bold">Legend:</text>
+<rect x="90.0" y="988.0" width="16.0" height="16.0" rx="0" stroke="#c62828" fill="#c62828" stroke-width="1"/>
+<text x="112.0" y="1001.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">power</text>
+<rect x="160.5" y="988.0" width="16.0" height="16.0" rx="0" stroke="#424242" fill="#424242" stroke-width="1"/>
+<text x="182.5" y="1001.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">ground</text>
+<rect x="233.6" y="988.0" width="16.0" height="16.0" rx="0" stroke="#1565c0" fill="#1565c0" stroke-width="1"/>
+<text x="255.6" y="1001.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">I2C</text>
+<rect x="286.9" y="988.0" width="16.0" height="16.0" rx="0" stroke="#6a1b9a" fill="#6a1b9a" stroke-width="1"/>
+<text x="308.9" y="1001.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">USB OTG</text>
+<rect x="371.1" y="988.0" width="16.0" height="16.0" rx="0" stroke="#2e7d32" fill="#2e7d32" stroke-width="1"/>
+<text x="393.1" y="1001.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">ADC sense</text>
+<rect x="464.8" y="988.0" width="16.0" height="16.0" rx="0" stroke="#ef6c00" fill="#ef6c00" stroke-width="1"/>
+<text x="486.8" y="1001.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">control</text>
+<rect x="541.8" y="988.0" width="16.0" height="16.0" rx="0" stroke="#00838f" fill="#00838f" stroke-width="1"/>
+<text x="563.8" y="1001.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">user I/O</text>
+<text x="30.0" y="1026.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">Free for expansion: GPIO1, 2, 6, 11-14, 16-18, 21, 38-42, 47 (ADC-capable: 1, 2, 6, 11-14, 16-18).</text>
+<text x="30.0" y="1044.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">Avoid: GPIO3/45/46 (straps), 35-37 (octal PSRAM on N16R8), 43/44 (UART0 console), 19/20 (taken by USB host).</text>
+<text x="30.0" y="1062.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#666">* PSRAM pins used only on octal-PSRAM (R8) modules.  RGB LED: GPIO48 on DevKitC-1 v1.0, GPIO38 on v1.1 - check the silkscreen.</text>
+<rect x="1240.0" y="1030.0" width="540.0" height="102.0" rx="0" stroke="#111" fill="#fff" stroke-width="2"/>
+<line x1="1240.0" y1="1064.0" x2="1780.0" y2="1064.0" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="1240.0" y1="1098.0" x2="1780.0" y2="1098.0" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="1600.0" y1="1064.0" x2="1600.0" y2="1132.0" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="1690.0" y1="1098.0" x2="1690.0" y2="1132.0" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+<text x="1250.0" y="1053.0" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="start" fill="#111" font-weight="bold">TAPPET desktop robot</text>
+<text x="1770.0" y="1053.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#666">hardware/electronics</text>
+<text x="1250.0" y="1087.0" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="start" fill="#1f4e9c" font-weight="bold">ESP32-S3 DevKitC-1 pin map</text>
+<text x="1610.0" y="1087.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#111">Sheet PM</text>
+<text x="1250.0" y="1121.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#666">File: drawings/pinout.svg</text>
+<text x="1610.0" y="1121.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#111" font-weight="bold">Rev 0.1</text>
+<text x="1700.0" y="1121.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">2026-10-11</text>
+</svg>

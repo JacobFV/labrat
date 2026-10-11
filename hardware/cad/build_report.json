@@ -1,0 +1,815 @@
+{
+ "printability": {
+  "ok": true,
+  "rows": [
+   {
+    "part": "base",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     210.0,
+     120.0,
+     30.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 135.86,
+    "mass_g": 50.5,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "base_lid",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     204.2,
+     114.2,
+     17.6
+    ],
+    "fits_bed": true,
+    "volume_cm3": 66.54,
+    "mass_g": 24.8,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "column",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     46.0,
+     54.5,
+     180.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 66.21,
+    "mass_g": 24.6,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "neck_pan_mount",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     39.6,
+     36.0,
+     32.5
+    ],
+    "fits_bed": true,
+    "volume_cm3": 9.74,
+    "mass_g": 3.6,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "neck_tilt_bracket",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     32.0,
+     34.0,
+     26.5
+    ],
+    "fits_bed": true,
+    "volume_cm3": 6.67,
+    "mass_g": 2.5,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "phone_clamp",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     72.0,
+     106.5,
+     20.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 38.95,
+    "mass_g": 14.5,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "phone_clamp_jaw",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     26.0,
+     15.7,
+     12.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 3.17,
+    "mass_g": 1.2,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "turret_L",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     47.5,
+     57.2,
+     45.5
+    ],
+    "fits_bed": true,
+    "volume_cm3": 21.02,
+    "mass_g": 7.8,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "turret_R",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     47.5,
+     57.2,
+     45.5
+    ],
+    "fits_bed": true,
+    "volume_cm3": 21.02,
+    "mass_g": 7.8,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "yaw_gear_servo",
+    "qty": 2,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     22.0,
+     22.0,
+     5.5
+    ],
+    "fits_bed": true,
+    "volume_cm3": 1.6,
+    "mass_g": 0.6,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "yaw_gear_turret",
+    "qty": 2,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     32.0,
+     31.9,
+     15.1
+    ],
+    "fits_bed": true,
+    "volume_cm3": 5.18,
+    "mass_g": 1.9,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "upper_arm",
+    "qty": 2,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     116.0,
+     18.0,
+     5.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 5.85,
+    "mass_g": 2.2,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "forearm",
+    "qty": 2,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     147.0,
+     15.0,
+     4.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 5.08,
+    "mass_g": 1.9,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "elbow_drive_link",
+    "qty": 2,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     39.5,
+     18.0,
+     5.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 2.11,
+    "mass_g": 0.8,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "linkage_rod",
+    "qty": 2,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     110.0,
+     10.0,
+     5.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 3.39,
+    "mass_g": 1.3,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "wrist_link_a",
+    "qty": 2,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     109.2,
+     9.2,
+     4.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 3.03,
+    "mass_g": 1.1,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "wrist_link_b",
+    "qty": 2,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     119.2,
+     9.2,
+     4.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 3.31,
+    "mass_g": 1.2,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "elbow_triangle",
+    "qty": 2,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     47.0,
+     26.7,
+     4.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 2.63,
+    "mass_g": 1.0,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "stylus_holder_L",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     27.8,
+     16.8,
+     46.7
+    ],
+    "fits_bed": true,
+    "volume_cm3": 5.43,
+    "mass_g": 2.0,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "stylus_holder_R",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     27.8,
+     16.8,
+     46.7
+    ],
+    "fits_bed": true,
+    "volume_cm3": 5.43,
+    "mass_g": 2.0,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "stylus_plunger",
+    "qty": 2,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     6.6,
+     6.6,
+     24.5
+    ],
+    "fits_bed": true,
+    "volume_cm3": 0.66,
+    "mass_g": 0.2,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "tray",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     100.0,
+     187.8,
+     12.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 103.07,
+    "mass_g": 38.3,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "tray_shim_iphone_61",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     79.7,
+     164.7,
+     5.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 10.81,
+    "mass_g": 4.0,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "tray_shim_iphone_67",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     79.7,
+     164.7,
+     5.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 2.97,
+    "mass_g": 1.1,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "tray_shim_iphone_se",
+    "qty": 1,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     79.7,
+     164.7,
+     5.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 15.69,
+    "mass_g": 5.8,
+    "material": "PLA",
+    "ok": true
+   },
+   {
+    "part": "cable_clip",
+    "qty": 12,
+    "valid": true,
+    "solids": 1,
+    "bbox": [
+     16.4,
+     16.2,
+     6.0
+    ],
+    "fits_bed": true,
+    "volume_cm3": 0.5,
+    "mass_g": 0.2,
+    "material": "PETG",
+    "ok": true
+   }
+  ]
+ },
+ "kinematics": {
+  "ok": true,
+  "rows": [
+   {
+    "pose": "home",
+    "arm": "L",
+    "q": [
+     -35,
+     100,
+     -20
+    ],
+    "fk": [
+     -20.185,
+     132.565,
+     95.859
+    ],
+    "cad": [
+     -20.185,
+     132.565,
+     95.859
+    ],
+    "err_mm": 0.0,
+    "stylus_tilt_deg": -0.0,
+    "ok": true
+   },
+   {
+    "pose": "home",
+    "arm": "R",
+    "q": [
+     35,
+     100,
+     -20
+    ],
+    "fk": [
+     20.185,
+     132.565,
+     95.859
+    ],
+    "cad": [
+     20.185,
+     132.565,
+     95.859
+    ],
+    "err_mm": 0.0,
+    "stylus_tilt_deg": -0.0,
+    "ok": true
+   },
+   {
+    "pose": "park",
+    "arm": "L",
+    "q": [
+     20,
+     110,
+     -10
+    ],
+    "fk": [
+     -119.587,
+     135.028,
+     109.868
+    ],
+    "cad": [
+     -119.587,
+     135.028,
+     109.868
+    ],
+    "err_mm": 0.0,
+    "stylus_tilt_deg": 0.0,
+    "ok": true
+   },
+   {
+    "pose": "park",
+    "arm": "R",
+    "q": [
+     -20,
+     110,
+     -10
+    ],
+    "fk": [
+     119.587,
+     135.028,
+     109.868
+    ],
+    "cad": [
+     119.587,
+     135.028,
+     109.868
+    ],
+    "err_mm": 0.0,
+    "stylus_tilt_deg": 0.0,
+    "ok": true
+   },
+   {
+    "pose": "vector0_L(0, 160, 13.8)",
+    "arm": "L",
+    "q": [
+     -35.311213,
+     48.422861,
+     -60.783846
+    ],
+    "fk": [
+     -0.0,
+     160.0,
+     13.8
+    ],
+    "cad": [
+     -0.0,
+     160.0,
+     13.8
+    ],
+    "err_mm": 0.0,
+    "stylus_tilt_deg": 0.0,
+    "ok": true
+   },
+   {
+    "pose": "vector1_L(-30, 95, 13.8)",
+    "arm": "L",
+    "q": [
+     -45.0,
+     62.502761,
+     -87.597478
+    ],
+    "fk": [
+     -30.0,
+     95.0,
+     13.8
+    ],
+    "cad": [
+     -30.0,
+     95.0,
+     13.8
+    ],
+    "err_mm": 0.0,
+    "stylus_tilt_deg": 0.0,
+    "ok": true
+   },
+   {
+    "pose": "vector2_L(30, 225, 13.8)",
+    "arm": "L",
+    "q": [
+     -31.865978,
+     18.792413,
+     -29.050618
+    ],
+    "fk": [
+     30.0,
+     225.0,
+     13.8
+    ],
+    "cad": [
+     30.0,
+     225.0,
+     13.8
+    ],
+    "err_mm": 0.0,
+    "stylus_tilt_deg": 0.0,
+    "ok": true
+   },
+   {
+    "pose": "vector3_L(-30, 225, 13.8)",
+    "arm": "L",
+    "q": [
+     -16.557071,
+     32.006701,
+     -42.420164
+    ],
+    "fk": [
+     -30.0,
+     225.0,
+     13.8
+    ],
+    "cad": [
+     -30.0,
+     225.0,
+     13.8
+    ],
+    "err_mm": 0.0,
+    "stylus_tilt_deg": -0.0,
+    "ok": true
+   },
+   {
+    "pose": "vector4_R(0, 160, 13.8)",
+    "arm": "R",
+    "q": [
+     35.311213,
+     48.422861,
+     -60.783846
+    ],
+    "fk": [
+     0.0,
+     160.0,
+     13.8
+    ],
+    "cad": [
+     0.0,
+     160.0,
+     13.8
+    ],
+    "err_mm": 0.0,
+    "stylus_tilt_deg": 0.0,
+    "ok": true
+   },
+   {
+    "pose": "vector5_R(-30, 95, 13.8)",
+    "arm": "R",
+    "q": [
+     64.440035,
+     53.806131,
+     -67.878137
+    ],
+    "fk": [
+     -30.0,
+     95.0,
+     13.8
+    ],
+    "cad": [
+     -30.0,
+     95.0,
+     13.8
+    ],
+    "err_mm": 0.0,
+    "stylus_tilt_deg": 0.0,
+    "ok": true
+   },
+   {
+    "pose": "vector6_R(30, 225, 13.8)",
+    "arm": "R",
+    "q": [
+     16.557071,
+     32.006701,
+     -42.420164
+    ],
+    "fk": [
+     30.0,
+     225.0,
+     13.8
+    ],
+    "cad": [
+     30.0,
+     225.0,
+     13.8
+    ],
+    "err_mm": 0.0,
+    "stylus_tilt_deg": -0.0,
+    "ok": true
+   },
+   {
+    "pose": "vector7_R(-30, 225, 13.8)",
+    "arm": "R",
+    "q": [
+     31.865978,
+     18.792413,
+     -29.050618
+    ],
+    "fk": [
+     -30.0,
+     225.0,
+     13.8
+    ],
+    "cad": [
+     -30.0,
+     225.0,
+     13.8
+    ],
+    "err_mm": 0.0,
+    "stylus_tilt_deg": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "joints": {
+  "ok": true,
+  "rows": [
+   {
+    "joint": "E",
+    "part": "upper_arm",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "E",
+    "part": "forearm",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "E",
+    "part": "elbow_triangle",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "W",
+    "part": "forearm",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "W",
+    "part": "stylus_holder",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "Cp",
+    "part": "elbow_drive_link",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "Cp",
+    "part": "linkage_rod",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "Fr",
+    "part": "forearm",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "Fr",
+    "part": "linkage_rod",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "G",
+    "part": "turret",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "G",
+    "part": "wrist_link_a",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "Pd",
+    "part": "wrist_link_a",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "Pd",
+    "part": "elbow_triangle",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "Pe",
+    "part": "elbow_triangle",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "Pe",
+    "part": "wrist_link_b",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "Pb",
+    "part": "wrist_link_b",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "Pb",
+    "part": "stylus_holder",
+    "dist_mm": 0.0,
+    "ok": true
+   },
+   {
+    "joint": "linkage rel (theta1-theta2)",
+    "part": "120.0 in [20,160]",
+    "dist_mm": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "interference": {
+  "ok": true,
+  "hits": [],
+  "tested": 99
+ },
+ "interference_tap": {
+  "ok": true,
+  "hits": [],
+  "tested": 412
+ }
+}

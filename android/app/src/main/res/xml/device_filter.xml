@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- USB-serial bridges found on ESP32-S3 DevKits, plus Espressif native USB (decimal VID/PID) -->
+<resources>
+    <usb-device vendor-id="4292" product-id="60000" /> <!-- CP210x 0x10C4:0xEA60 -->
+    <usb-device vendor-id="6790" product-id="29987" /> <!-- CH340 0x1A86:0x7523 -->
+    <usb-device vendor-id="6790" product-id="21972" /> <!-- CH343 0x1A86:0x55D4 -->
+    <usb-device vendor-id="1027" product-id="24577" /> <!-- FTDI 0x0403:0x6001 -->
+    <usb-device vendor-id="12346" product-id="4097" /> <!-- Espressif 0x303A:0x1001 -->
+    <usb-device vendor-id="12346" product-id="16385" /> <!-- Espressif 0x303A:0x4001 -->
+</resources>

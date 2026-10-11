@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1150" viewBox="0 0 1800 1150">
+<rect x="0" y="0" width="1800" height="1150" fill="#ffffff"/>
+<rect x="12" y="12" width="1776" height="1126" fill="none" stroke="#111" stroke-width="2"/>
+<text x="30.0" y="44.0" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="start" fill="#111" font-weight="bold">SYSTEM BLOCK DIAGRAM - power (red), wired data (blue), wireless (green, dashed), mechanical (grey)</text>
+<rect x="336.0" y="90.0" width="974.0" height="680.0" rx="10" stroke="#111" fill="#fcfcfc" stroke-width="2" stroke-dasharray="8 5"/>
+<text x="352.0" y="118.0" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="start" fill="#111" font-weight="bold">TAPPET BODY (base bay)</text>
+<rect x="40.0" y="150.0" width="210.0" height="90.0" rx="8" stroke="#c62828" fill="#fdecea" stroke-width="2"/>
+<text x="145.0" y="174.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">USB-C PD charger</text>
+<text x="145.0" y="194.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">&gt;= 20 W (30 W rec.)</text>
+<text x="145.0" y="210.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">9 V / 2.22-3 A PDO</text>
+<rect x="40.0" y="420.0" width="210.0" height="100.0" rx="8" stroke="#666" fill="#eceff1" stroke-width="2"/>
+<text x="145.0" y="444.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">PC / laptop</text>
+<text x="145.0" y="464.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">Python tools, flashing</text>
+<text x="145.0" y="480.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">same JSON protocol</text>
+<text x="145.0" y="496.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">DevKit UART USB port</text>
+<rect x="40.0" y="660.0" width="210.0" height="90.0" rx="8" stroke="#666" fill="#eceff1" stroke-width="2"/>
+<text x="145.0" y="684.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">Browser (any)</text>
+<text x="145.0" y="704.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">remote control UI</text>
+<text x="145.0" y="720.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">6-digit PIN pairing</text>
+<rect x="360.0" y="150.0" width="220.0" height="90.0" rx="8" stroke="#c62828" fill="#fdecea" stroke-width="2"/>
+<text x="470.0" y="174.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">PD trigger + protection</text>
+<text x="470.0" y="194.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">CH224K -&gt; 9 V</text>
+<text x="470.0" y="210.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">PTC 3 A, TVS 12 V, 470 uF</text>
+<rect x="660.0" y="150.0" width="220.0" height="90.0" rx="8" stroke="#c62828" fill="#fdecea" stroke-width="2"/>
+<text x="770.0" y="174.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">Buck A  5.1 V / 5 A</text>
+<text x="770.0" y="194.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">XL4015 CC/CV module</text>
+<text x="770.0" y="210.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">CC limit 4.5 A</text>
+<rect x="960.0" y="150.0" width="220.0" height="90.0" rx="8" stroke="#1f4e9c" fill="#eef3fb" stroke-width="2"/>
+<text x="1070.0" y="174.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">PCA9685 PWM</text>
+<text x="1070.0" y="194.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">I2C 0x40, OE gated</text>
+<text x="1070.0" y="210.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">16 ch, 50 Hz</text>
+<rect x="360.0" y="320.0" width="220.0" height="90.0" rx="8" stroke="#c62828" fill="#fdecea" stroke-width="2"/>
+<text x="470.0" y="344.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">Buck B  5 V / 3 A</text>
+<text x="470.0" y="364.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">Mini560, fixed 5 V</text>
+<text x="470.0" y="380.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">logic + phone</text>
+<rect x="660.0" y="300.0" width="220.0" height="200.0" rx="8" stroke="#1f4e9c" fill="#eef3fb" stroke-width="2"/>
+<text x="770.0" y="324.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">ESP32-S3 DevKitC-1</text>
+<text x="770.0" y="344.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">motion planner, IK, watchdog</text>
+<text x="770.0" y="360.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">USB OTG host (AOA)</text>
+<text x="770.0" y="376.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">UART bridge 115200</text>
+<text x="770.0" y="392.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">ADC: VIN, V_SERVO</text>
+<text x="770.0" y="408.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">fault + power governor</text>
+<rect x="960.0" y="330.0" width="300.0" height="150.0" rx="8" stroke="#558b2f" fill="#f1f8e9" stroke-width="2"/>
+<text x="1110.0" y="354.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">8 servos</text>
+<text x="1110.0" y="374.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">L/R arm: YAW (SG90),</text>
+<text x="1110.0" y="390.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">SHOULDER, ELBOW (MG90S)</text>
+<text x="1110.0" y="406.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">neck: PAN, TILT (MG90S)</text>
+<text x="1110.0" y="422.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">ch0-7 (spares ch8-15)</text>
+<text x="1110.0" y="438.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">stylus tips -&gt; GND leads</text>
+<rect x="360.0" y="580.0" width="220.0" height="90.0" rx="8" stroke="#c62828" fill="#fdecea" stroke-width="2"/>
+<text x="470.0" y="604.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">USB power switch</text>
+<text x="470.0" y="624.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">TPS2553, 1.7 A limit</text>
+<text x="470.0" y="640.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">EN GPIO7, /FLT GPIO15</text>
+<rect x="660.0" y="580.0" width="220.0" height="90.0" rx="8" stroke="#1f4e9c" fill="#eef3fb" stroke-width="2"/>
+<text x="770.0" y="604.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">USB-C HEAD port</text>
+<text x="770.0" y="624.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">Rp 22k = 1.5 A advert.</text>
+<text x="770.0" y="640.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">ESD USBLC6, D+/D- GPIO20/19</text>
+<rect x="1450.0" y="260.0" width="300.0" height="110.0" rx="8" stroke="#f9a825" fill="#fff8e1" stroke-width="2"/>
+<text x="1600.0" y="284.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">Target iPhone in tray</text>
+<text x="1600.0" y="304.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">screen-up, portrait</text>
+<text x="1600.0" y="320.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">tapped by the stylus tips</text>
+<text x="1600.0" y="336.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">browser: web UI / touchpad</text>
+<rect x="1450.0" y="440.0" width="300.0" height="150.0" rx="8" stroke="#5e35b1" fill="#ede7f6" stroke-width="2"/>
+<text x="1600.0" y="464.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">Android phone = HEAD</text>
+<text x="1600.0" y="484.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">display, camera, mic, speaker</text>
+<text x="1600.0" y="500.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">Tappet app (AOA accessory)</text>
+<text x="1600.0" y="516.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">web UI :8080 + Claude agent</text>
+<text x="1600.0" y="532.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">on 2-axis neck, charging</text>
+<text x="1600.0" y="548.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">camera checks taps on tray</text>
+<rect x="1450.0" y="680.0" width="300.0" height="90.0" rx="8" stroke="#5e35b1" fill="#ede7f6" stroke-width="2"/>
+<text x="1600.0" y="704.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">Claude API (cloud)</text>
+<text x="1600.0" y="724.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">Messages API + tools</text>
+<text x="1600.0" y="740.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#333">called from the head app</text>
+<line x1="250.0" y1="195.0" x2="360.0" y2="195.0" stroke="#c62828" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 360.0,195.0 L 348.0,201.0 L 348.0,189.0 Z" stroke="#c62828" stroke-width="1" fill="#c62828" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="292.0" y="185.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#c62828" font-weight="bold">USB-C PD</text>
+<line x1="580.0" y1="195.0" x2="660.0" y2="195.0" stroke="#c62828" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 660.0,195.0 L 648.0,201.0 L 648.0,189.0 Z" stroke="#c62828" stroke-width="1" fill="#c62828" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="620.0" y="185.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#c62828" font-weight="bold">9 V</text>
+<line x1="470.0" y1="240.0" x2="470.0" y2="320.0" stroke="#c62828" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 470.0,320.0 L 464.0,308.0 L 476.0,308.0 Z" stroke="#c62828" stroke-width="1" fill="#c62828" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="480.0" y="285.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#c62828" font-weight="bold">9 V</text>
+<line x1="880.0" y1="195.0" x2="960.0" y2="195.0" stroke="#c62828" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 960.0,195.0 L 948.0,201.0 L 948.0,189.0 Z" stroke="#c62828" stroke-width="1" fill="#c62828" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="920.0" y="185.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#c62828" font-weight="bold">V+ 5.1 V</text>
+<line x1="1150.0" y1="240.0" x2="1150.0" y2="330.0" stroke="#1f4e9c" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 1150.0,330.0 L 1144.0,318.0 L 1156.0,318.0 Z" stroke="#1f4e9c" stroke-width="1" fill="#1f4e9c" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1160.0" y="280.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#1f4e9c" font-weight="bold">PWM x8</text>
+<line x1="1050.0" y1="240.0" x2="1050.0" y2="330.0" stroke="#c62828" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 1050.0,330.0 L 1044.0,318.0 L 1056.0,318.0 Z" stroke="#c62828" stroke-width="1" fill="#c62828" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1040.0" y="280.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#c62828" font-weight="bold">V+ (1000 uF)</text>
+<line x1="580.0" y1="365.0" x2="660.0" y2="365.0" stroke="#c62828" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 660.0,365.0 L 648.0,371.0 L 648.0,359.0 Z" stroke="#c62828" stroke-width="1" fill="#c62828" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="620.0" y="355.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#c62828" font-weight="bold">5 V (SS34)</text>
+<line x1="470.0" y1="410.0" x2="470.0" y2="580.0" stroke="#c62828" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 470.0,580.0 L 464.0,568.0 L 476.0,568.0 Z" stroke="#c62828" stroke-width="1" fill="#c62828" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="480.0" y="500.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#c62828" font-weight="bold">5 V</text>
+<line x1="580.0" y1="625.0" x2="660.0" y2="625.0" stroke="#c62828" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 660.0,625.0 L 648.0,631.0 L 648.0,619.0 Z" stroke="#c62828" stroke-width="1" fill="#c62828" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="620.0" y="615.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#c62828" font-weight="bold">VBUS</text>
+<line x1="820.0" y1="300.0" x2="820.0" y2="270.0" stroke="#1f4e9c" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="820.0" y1="270.0" x2="1000.0" y2="270.0" stroke="#1f4e9c" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="1000.0" y1="270.0" x2="1000.0" y2="240.0" stroke="#1f4e9c" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 1000.0,240.0 L 1006.0,252.0 L 994.0,252.0 Z" stroke="#1f4e9c" stroke-width="1" fill="#1f4e9c" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="910.0" y="262.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f4e9c" font-weight="bold">I2C + OE</text>
+<line x1="770.0" y1="500.0" x2="770.0" y2="580.0" stroke="#1f4e9c" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 770.0,580.0 L 764.0,568.0 L 776.0,568.0 Z" stroke="#1f4e9c" stroke-width="1" fill="#1f4e9c" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 770.0,500.0 L 776.0,512.0 L 764.0,512.0 Z" stroke="#1f4e9c" stroke-width="1" fill="#1f4e9c" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="780.0" y="545.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#1f4e9c" font-weight="bold">USB FS host</text>
+<path d="M 250,470 L 460,470 A 10,10 0 0 1 480,470 L 660,470" stroke="#1f4e9c" stroke-width="2.6" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="600.0" y1="470.0" x2="660.0" y2="470.0" stroke="#1f4e9c" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 660.0,470.0 L 648.0,476.0 L 648.0,464.0 Z" stroke="#1f4e9c" stroke-width="1" fill="#1f4e9c" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="300.0" y1="470.0" x2="250.0" y2="470.0" stroke="#1f4e9c" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 250.0,470.0 L 262.0,464.0 L 262.0,476.0 Z" stroke="#1f4e9c" stroke-width="1" fill="#1f4e9c" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="292.0" y="460.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f4e9c" font-weight="bold">UART 115200</text>
+<line x1="880.0" y1="610.0" x2="1360.0" y2="610.0" stroke="#c62828" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="1360.0" y1="610.0" x2="1360.0" y2="530.0" stroke="#c62828" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="1360.0" y1="530.0" x2="1450.0" y2="530.0" stroke="#c62828" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 1450.0,530.0 L 1438.0,536.0 L 1438.0,524.0 Z" stroke="#c62828" stroke-width="1" fill="#c62828" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1100.0" y="600.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#c62828" font-weight="bold">USB-C cable: 5 V, 1.5 A charge</text>
+<line x1="880.0" y1="650.0" x2="1380.0" y2="650.0" stroke="#1f4e9c" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="1380.0" y1="650.0" x2="1380.0" y2="560.0" stroke="#1f4e9c" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="1380.0" y1="560.0" x2="1450.0" y2="560.0" stroke="#1f4e9c" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M 1450.0,560.0 L 1438.0,566.0 L 1438.0,554.0 Z" stroke="#1f4e9c" stroke-width="1" fill="#1f4e9c" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 880.0,650.0 L 892.0,644.0 L 892.0,656.0 Z" stroke="#1f4e9c" stroke-width="1" fill="#1f4e9c" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1100.0" y="670.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#1f4e9c" font-weight="bold">AOA bulk endpoints: JSON lines</text>
+<line x1="1600.0" y1="370.0" x2="1600.0" y2="440.0" stroke="#2e7d32" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="7 5"/>
+<path d="M 1600.0,440.0 L 1594.0,428.0 L 1606.0,428.0 Z" stroke="#2e7d32" stroke-width="1" fill="#2e7d32" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 1600.0,370.0 L 1606.0,382.0 L 1594.0,382.0 Z" stroke="#2e7d32" stroke-width="1" fill="#2e7d32" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1610.0" y="410.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#2e7d32" font-weight="bold">Wi-Fi :8080</text>
+<line x1="1600.0" y1="590.0" x2="1600.0" y2="680.0" stroke="#2e7d32" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="7 5"/>
+<path d="M 1600.0,680.0 L 1594.0,668.0 L 1606.0,668.0 Z" stroke="#2e7d32" stroke-width="1" fill="#2e7d32" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 1600.0,590.0 L 1606.0,602.0 L 1594.0,602.0 Z" stroke="#2e7d32" stroke-width="1" fill="#2e7d32" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1610.0" y="640.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#2e7d32" font-weight="bold">HTTPS</text>
+<line x1="250.0" y1="705.0" x2="290.0" y2="705.0" stroke="#2e7d32" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="7 5"/>
+<line x1="290.0" y1="705.0" x2="290.0" y2="820.0" stroke="#2e7d32" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="7 5"/>
+<line x1="290.0" y1="820.0" x2="1420.0" y2="820.0" stroke="#2e7d32" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="7 5"/>
+<line x1="1420.0" y1="820.0" x2="1420.0" y2="580.0" stroke="#2e7d32" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="7 5"/>
+<line x1="1420.0" y1="580.0" x2="1450.0" y2="580.0" stroke="#2e7d32" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="7 5"/>
+<path d="M 1450.0,580.0 L 1438.0,586.0 L 1438.0,574.0 Z" stroke="#2e7d32" stroke-width="1" fill="#2e7d32" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 250.0,705.0 L 262.0,699.0 L 262.0,711.0 Z" stroke="#2e7d32" stroke-width="1" fill="#2e7d32" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="850.0" y="810.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#2e7d32" font-weight="bold">Wi-Fi LAN: http://&lt;head&gt;:8080</text>
+<line x1="1260.0" y1="400.0" x2="1350.0" y2="400.0" stroke="#666" stroke-width="3" stroke-linecap="round"/>
+<line x1="1350.0" y1="400.0" x2="1350.0" y2="315.0" stroke="#666" stroke-width="3" stroke-linecap="round"/>
+<line x1="1350.0" y1="315.0" x2="1450.0" y2="315.0" stroke="#666" stroke-width="3" stroke-linecap="round"/>
+<path d="M 1450.0,315.0 L 1438.0,321.0 L 1438.0,309.0 Z" stroke="#666" stroke-width="1" fill="#666" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1400.0" y="305.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666" font-weight="bold">stylus taps</text>
+<rect x="40.0" y="870.0" width="1150.0" height="100.0" rx="4" stroke="#9aa5b8" fill="#f7f9fc" stroke-width="1.2"/>
+<text x="50.0" y="890.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#1f4e9c" font-weight="bold">Key facts</text>
+<text x="52.0" y="910.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">Single input: one USB-C PD charger powers servos, MCU and charges the head phone. No batteries in the body.</text>
+<text x="52.0" y="926.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">ESP32-S3 is USB host on its native OTG pins and switches the Android head into Android Open Accessory mode;</text>
+<text x="52.0" y="942.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">the DevKit's UART port exposes the same newline-JSON protocol for a PC. Servo outputs are disabled (PCA OE high)</text>
+<text x="52.0" y="958.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">until firmware 'enable'; the watchdog parks and relaxes the arms after 5 s without commands.</text>
+<rect x="1240.0" y="1030.0" width="540.0" height="102.0" rx="0" stroke="#111" fill="#fff" stroke-width="2"/>
+<line x1="1240.0" y1="1064.0" x2="1780.0" y2="1064.0" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="1240.0" y1="1098.0" x2="1780.0" y2="1098.0" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="1600.0" y1="1064.0" x2="1600.0" y2="1132.0" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="1690.0" y1="1098.0" x2="1690.0" y2="1132.0" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+<text x="1250.0" y="1053.0" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="start" fill="#111" font-weight="bold">TAPPET desktop robot</text>
+<text x="1770.0" y="1053.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#666">hardware/electronics</text>
+<text x="1250.0" y="1087.0" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="start" fill="#1f4e9c" font-weight="bold">System block diagram</text>
+<text x="1610.0" y="1087.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#111">Sheet BD</text>
+<text x="1250.0" y="1121.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#666">File: drawings/block_diagram.svg</text>
+<text x="1610.0" y="1121.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#111" font-weight="bold">Rev 0.1</text>
+<text x="1700.0" y="1121.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">2026-10-11</text>
+</svg>

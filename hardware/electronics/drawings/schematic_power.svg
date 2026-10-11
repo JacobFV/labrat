@@ -1,0 +1,417 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1150" viewBox="0 0 1800 1150">
+<rect x="0" y="0" width="1800" height="1150" fill="#ffffff"/>
+<rect x="12" y="12" width="1776" height="1126" fill="none" stroke="#111" stroke-width="2"/>
+<text x="30.0" y="44.0" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="start" fill="#111" font-weight="bold">SHEET 1 - POWER TREE: USB-C PD 9 V in -&gt; protection -&gt; Buck A (servo rail) / Buck B (logic, phone)</text>
+<rect x="60.0" y="120.0" width="110.0" height="360.0" rx="0" stroke="#111" fill="#eef3fb" stroke-width="2"/>
+<line x1="170.0" y1="150.0" x2="200.0" y2="150.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="164.0" y="154.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">VBUS</text>
+<line x1="170.0" y1="190.0" x2="200.0" y2="190.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="164.0" y="194.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">GND</text>
+<line x1="170.0" y1="340.0" x2="200.0" y2="340.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="164.0" y="344.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">CC1</text>
+<line x1="170.0" y1="370.0" x2="200.0" y2="370.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="164.0" y="374.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">CC2</text>
+<line x1="170.0" y1="400.0" x2="200.0" y2="400.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="164.0" y="404.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">D+</text>
+<line x1="170.0" y1="430.0" x2="200.0" y2="430.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="164.0" y="434.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">D-</text>
+<line x1="170.0" y1="460.0" x2="200.0" y2="460.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="164.0" y="464.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">SHIELD</text>
+<text x="60.0" y="112.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#111" font-weight="bold">J1</text>
+<text x="115.0" y="288.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">USB-C</text>
+<text x="115.0" y="304.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#1f4e9c">PWR IN</text>
+<text x="115.0" y="320.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#1f4e9c">(sink)</text>
+<line x1="200.0" y1="190.0" x2="220.0" y2="190.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="220.0" y1="190.0" x2="220.0" y2="200.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="209.0" y1="200.0" x2="231.0" y2="200.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="213.0" y1="204.0" x2="227.0" y2="204.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="217.0" y1="208.0" x2="223.0" y2="208.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="200.0" y1="460.0" x2="220.0" y2="460.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="220.0" y1="460.0" x2="220.0" y2="470.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="209.0" y1="470.0" x2="231.0" y2="470.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="213.0" y1="474.0" x2="227.0" y2="474.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="217.0" y1="478.0" x2="223.0" y2="478.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<rect x="340.0" y="300.0" width="180.0" height="180.0" rx="0" stroke="#111" fill="#fbfbf3" stroke-width="2"/>
+<line x1="310.0" y1="340.0" x2="340.0" y2="340.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="346.0" y="344.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#111">CC1</text>
+<line x1="310.0" y1="370.0" x2="340.0" y2="370.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="346.0" y="374.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#111">CC2</text>
+<line x1="310.0" y1="400.0" x2="340.0" y2="400.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="346.0" y="404.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#111">DP</text>
+<line x1="310.0" y1="430.0" x2="340.0" y2="430.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="346.0" y="434.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#111">DM</text>
+<line x1="520.0" y1="340.0" x2="550.0" y2="340.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="514.0" y="344.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">PG</text>
+<line x1="520.0" y1="370.0" x2="550.0" y2="370.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="514.0" y="374.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">CFG1</text>
+<line x1="520.0" y1="400.0" x2="550.0" y2="400.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="514.0" y="404.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">CFG2</text>
+<line x1="520.0" y1="430.0" x2="550.0" y2="430.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="514.0" y="434.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">CFG3</text>
+<line x1="430.0" y1="270.0" x2="430.0" y2="300.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="430.0" y="316.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#111">VDD</text>
+<line x1="430.0" y1="480.0" x2="430.0" y2="510.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="430.0" y="473.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#111">GND</text>
+<text x="340.0" y="292.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#111" font-weight="bold">U1</text>
+<text x="430.0" y="378.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">CH224K</text>
+<text x="430.0" y="394.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#1f4e9c">USB-PD sink</text>
+<text x="430.0" y="410.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#1f4e9c">trigger</text>
+<line x1="200.0" y1="340.0" x2="310.0" y2="340.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="200.0" y1="370.0" x2="310.0" y2="370.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="200.0" y1="400.0" x2="310.0" y2="400.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="200.0" y1="430.0" x2="310.0" y2="430.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="430.0" y1="510.0" x2="430.0" y2="520.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="419.0" y1="520.0" x2="441.0" y2="520.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="423.0" y1="524.0" x2="437.0" y2="524.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="427.0" y1="528.0" x2="433.0" y2="528.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="200.0" y1="150.0" x2="760.0" y2="150.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="260" cy="150" r="3.6" fill="#1a1a1a"/>
+<line x1="260.0" y1="150.0" x2="260.0" y2="173.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="260.0" y1="217.0" x2="260.0" y2="240.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M 260.0,173.0 L 253.0,176.7 L 267.0,184.0 L 253.0,191.3 L 267.0,198.7 L 253.0,206.0 L 267.0,213.3 L 260.0,217.0" stroke="#111" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="246.0" y="191.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="end" fill="#111" font-weight="bold">R1</text>
+<text x="246.0" y="206.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="end" fill="#1f4e9c">1k</text>
+<line x1="260.0" y1="240.0" x2="430.0" y2="240.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="430.0" y1="240.0" x2="430.0" y2="270.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="300" cy="240" r="3.6" fill="#1a1a1a"/>
+<line x1="300.0" y1="240.0" x2="300.0" y2="264.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="300.0" y1="272.0" x2="300.0" y2="296.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="314.0" y1="264.0" x2="286.0" y2="264.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="314.0" y1="272.0" x2="286.0" y2="272.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<text x="280.0" y="257.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="end" fill="#111" font-weight="bold">C1</text>
+<text x="280.0" y="272.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="end" fill="#1f4e9c">1uF</text>
+<text x="280.0" y="287.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="end" fill="#1f4e9c">25V</text>
+<line x1="300.0" y1="296.0" x2="300.0" y2="306.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="289.0" y1="306.0" x2="311.0" y2="306.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="293.0" y1="310.0" x2="307.0" y2="310.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="297.0" y1="314.0" x2="303.0" y2="314.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="550.0" y1="370.0" x2="620.0" y2="370.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="620.0" y1="370.0" x2="620.0" y2="388.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="620.0" y1="432.0" x2="620.0" y2="450.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M 620.0,388.0 L 613.0,391.7 L 627.0,399.0 L 613.0,406.3 L 627.0,413.7 L 613.0,421.0 L 627.0,428.3 L 620.0,432.0" stroke="#111" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="634.0" y="399.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">R2</text>
+<text x="634.0" y="414.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">6.8k</text>
+<text x="634.0" y="429.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">-&gt; 9 V</text>
+<line x1="620.0" y1="450.0" x2="620.0" y2="460.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="609.0" y1="460.0" x2="631.0" y2="460.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="613.0" y1="464.0" x2="627.0" y2="464.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="617.0" y1="468.0" x2="623.0" y2="468.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="545.0" y1="395.0" x2="555.0" y2="405.0" stroke="#1565c0" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="545.0" y1="405.0" x2="555.0" y2="395.0" stroke="#1565c0" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="545.0" y1="425.0" x2="555.0" y2="435.0" stroke="#1565c0" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="545.0" y1="435.0" x2="555.0" y2="425.0" stroke="#1565c0" stroke-width="1.4" stroke-linecap="round"/>
+<circle cx="720" cy="150" r="3.6" fill="#1a1a1a"/>
+<line x1="720.0" y1="150.0" x2="720.0" y2="170.5" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="720.0" y1="214.5" x2="720.0" y2="235.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M 720.0,170.5 L 713.0,174.2 L 727.0,181.5 L 713.0,188.8 L 727.0,196.2 L 713.0,203.5 L 727.0,210.8 L 720.0,214.5" stroke="#111" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="734.0" y="188.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">R3</text>
+<text x="734.0" y="203.5" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">4.7k</text>
+<line x1="720.0" y1="235.0" x2="720.0" y2="261.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="720.0" y1="279.0" x2="720.0" y2="305.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M 710.0,261.0 L 730.0,261.0 L 720.0,279.0 Z" stroke="#111" stroke-width="1.8" fill="#fff" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="710.0" y1="279.0" x2="730.0" y2="279.0" stroke="#111" stroke-width="2.2" stroke-linecap="round"/>
+<line x1="706.0" y1="266.0" x2="696.0" y2="270.0" stroke="#111" stroke-width="1.3" stroke-linecap="round"/>
+<path d="M 700.0,271.0 L 696.0,270.0 L 697.0,266.0" stroke="#111" stroke-width="1.3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="706.0" y1="274.0" x2="696.0" y2="278.0" stroke="#111" stroke-width="1.3" stroke-linecap="round"/>
+<path d="M 700.0,279.0 L 696.0,278.0 L 697.0,274.0" stroke="#111" stroke-width="1.3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="742.0" y="266.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">D1</text>
+<text x="742.0" y="281.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">PD OK</text>
+<line x1="720.0" y1="305.0" x2="720.0" y2="340.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="720.0" y1="340.0" x2="550.0" y2="340.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="180.0" y="142.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#2e7d32" font-weight="bold">VBUS_IN (5-9 V)</text>
+<line x1="760.0" y1="150.0" x2="788.0" y2="150.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="832.0" y1="150.0" x2="860.0" y2="150.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<rect x="788.0" y="142.0" width="44.0" height="16.0" rx="0" stroke="#111" fill="#fff" stroke-width="1.8"/>
+<path d="M 784.0,164.0 L 830.0,136.0 L 838.0,136.0" stroke="#111" stroke-width="1.4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="840.0" y="168.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" fill="#111">t°</text>
+<text x="810.0" y="116.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="middle" fill="#111" font-weight="bold">F1</text>
+<text x="810.0" y="130.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="middle" fill="#1f4e9c">3A hold</text>
+<text x="810.0" y="190.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">PTC 1812, 16 V</text>
+<line x1="860.0" y1="150.0" x2="1230.0" y2="150.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="870.0" y="142.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#2e7d32" font-weight="bold">VIN_9V</text>
+<circle cx="930" cy="150" r="3.6" fill="#1a1a1a"/>
+<circle cx="1030" cy="150" r="3.6" fill="#1a1a1a"/>
+<circle cx="1110" cy="150" r="3.6" fill="#1a1a1a"/>
+<line x1="930.0" y1="245.0" x2="930.0" y2="206.5" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="930.0" y1="188.5" x2="930.0" y2="150.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M 940.0,206.5 L 920.0,206.5 L 930.0,188.5 Z" stroke="#111" stroke-width="1.8" fill="#fff" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 940.0,193.5 L 940.0,188.5 L 920.0,188.5 L 920.0,183.5" stroke="#111" stroke-width="2.2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="946.0" y="193.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">D2</text>
+<text x="946.0" y="208.5" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">SMBJ12A</text>
+<line x1="1030.0" y1="150.0" x2="1030.0" y2="191.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1030.0" y1="199.0" x2="1030.0" y2="240.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1044.0" y1="191.0" x2="1016.0" y2="191.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<path d="M 1044.0,203.0 Q 1030.0,199.0 1016.0,203.0" stroke="#111" stroke-width="2.4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1042.0" y="186.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#111" font-weight="bold">+</text>
+<text x="1050.0" y="184.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">C2</text>
+<text x="1050.0" y="199.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">470uF</text>
+<text x="1050.0" y="214.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">25V</text>
+<line x1="1110.0" y1="150.0" x2="1110.0" y2="191.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1110.0" y1="199.0" x2="1110.0" y2="240.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1124.0" y1="191.0" x2="1096.0" y2="191.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="1124.0" y1="199.0" x2="1096.0" y2="199.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<text x="1130.0" y="184.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">C3</text>
+<text x="1130.0" y="199.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">10uF</text>
+<text x="1130.0" y="214.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">25V</text>
+<line x1="930.0" y1="245.0" x2="930.0" y2="275.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="930.0" y1="275.0" x2="1110.0" y2="275.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1110.0" y1="275.0" x2="1110.0" y2="240.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1030.0" y1="240.0" x2="1030.0" y2="275.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="1030" cy="275" r="3.6" fill="#1a1a1a"/>
+<line x1="1030.0" y1="275.0" x2="1030.0" y2="285.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1019.0" y1="285.0" x2="1041.0" y2="285.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1023.0" y1="289.0" x2="1037.0" y2="289.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1027.0" y1="293.0" x2="1033.0" y2="293.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<text x="1030.0" y="309.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="middle" fill="#c62828" font-weight="bold">STAR GND</text>
+<line x1="1170.0" y1="150.0" x2="1170.0" y2="134.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="1170.0" cy="128.0" r="6" stroke="#111" fill="#fff6d5" stroke-width="1.6"/>
+<text x="1180.0" y="132.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#8d6e00" font-weight="bold">TP1</text>
+<circle cx="1170" cy="150" r="3.6" fill="#1a1a1a"/>
+<rect x="1260.0" y="110.0" width="160.0" height="140.0" rx="0" stroke="#111" fill="#fbfbf3" stroke-width="2"/>
+<line x1="1230.0" y1="150.0" x2="1260.0" y2="150.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1266.0" y="154.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#111">IN+</text>
+<line x1="1230.0" y1="210.0" x2="1260.0" y2="210.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1266.0" y="214.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#111">IN-</text>
+<line x1="1420.0" y1="150.0" x2="1450.0" y2="150.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1414.0" y="154.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">OUT+</text>
+<line x1="1420.0" y1="210.0" x2="1450.0" y2="210.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1414.0" y="214.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">OUT-</text>
+<text x="1260.0" y="102.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#111" font-weight="bold">U2</text>
+<text x="1340.0" y="168.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">BUCK A  9-&gt;5 V</text>
+<text x="1340.0" y="184.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#1f4e9c">XL4015 5A CC/CV</text>
+<text x="1340.0" y="200.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#1f4e9c">set 5.10 V, CC 4.5 A</text>
+<line x1="1230.0" y1="210.0" x2="1230.0" y2="210.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1230.0" y1="210.0" x2="1230.0" y2="220.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1219.0" y1="220.0" x2="1241.0" y2="220.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1223.0" y1="224.0" x2="1237.0" y2="224.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1227.0" y1="228.0" x2="1233.0" y2="228.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1450.0" y1="210.0" x2="1450.0" y2="220.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1439.0" y1="220.0" x2="1461.0" y2="220.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1443.0" y1="224.0" x2="1457.0" y2="224.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1447.0" y1="228.0" x2="1453.0" y2="228.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1450.0" y1="150.0" x2="1700.0" y2="150.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="1520" cy="150" r="3.6" fill="#1a1a1a"/>
+<circle cx="1600" cy="150" r="3.6" fill="#1a1a1a"/>
+<circle cx="1650" cy="150" r="3.6" fill="#1a1a1a"/>
+<line x1="1520.0" y1="150.0" x2="1520.0" y2="191.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1520.0" y1="199.0" x2="1520.0" y2="240.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1534.0" y1="191.0" x2="1506.0" y2="191.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<path d="M 1534.0,203.0 Q 1520.0,199.0 1506.0,203.0" stroke="#111" stroke-width="2.4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1532.0" y="186.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#111" font-weight="bold">+</text>
+<text x="1540.0" y="184.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">C4</text>
+<text x="1540.0" y="199.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">1000uF</text>
+<text x="1540.0" y="214.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">10V</text>
+<line x1="1520.0" y1="240.0" x2="1520.0" y2="250.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1509.0" y1="250.0" x2="1531.0" y2="250.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1513.0" y1="254.0" x2="1527.0" y2="254.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1517.0" y1="258.0" x2="1523.0" y2="258.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1600.0" y1="150.0" x2="1600.0" y2="191.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1600.0" y1="199.0" x2="1600.0" y2="240.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1614.0" y1="191.0" x2="1586.0" y2="191.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="1614.0" y1="199.0" x2="1586.0" y2="199.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<text x="1620.0" y="191.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">C5</text>
+<text x="1620.0" y="206.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">100nF</text>
+<line x1="1600.0" y1="240.0" x2="1600.0" y2="250.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1589.0" y1="250.0" x2="1611.0" y2="250.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1593.0" y1="254.0" x2="1607.0" y2="254.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1597.0" y1="258.0" x2="1603.0" y2="258.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1650.0" y1="150.0" x2="1650.0" y2="134.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="1650.0" cy="128.0" r="6" stroke="#111" fill="#fff6d5" stroke-width="1.6"/>
+<text x="1660.0" y="132.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#8d6e00" font-weight="bold">TP2</text>
+<path d="M 1700.0,150.0 L 1708.0,141.0 L 1774.6,141.0 L 1774.6,159.0 L 1708.0,159.0 Z" stroke="#1f4e9c" stroke-width="1.3" fill="#eef3fb" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1711.0" y="154.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c" font-weight="bold">V_SERVO</text>
+<text x="1770.0" y="292.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#666">-&gt; A2 V+ terminal (sheet 3)</text>
+<text x="1770.0" y="307.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#666">C4/C5 mounted AT the terminal</text>
+<circle cx="1200" cy="150" r="3.6" fill="#1a1a1a"/>
+<rect x="1260.0" y="450.0" width="160.0" height="120.0" rx="0" stroke="#111" fill="#fbfbf3" stroke-width="2"/>
+<line x1="1230.0" y1="480.0" x2="1260.0" y2="480.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1266.0" y="484.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#111">IN+</text>
+<line x1="1230.0" y1="540.0" x2="1260.0" y2="540.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1266.0" y="544.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#111">IN-</text>
+<line x1="1420.0" y1="480.0" x2="1450.0" y2="480.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1414.0" y="484.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">OUT+</text>
+<line x1="1420.0" y1="540.0" x2="1450.0" y2="540.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1414.0" y="544.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">OUT-</text>
+<text x="1260.0" y="442.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#111" font-weight="bold">U3</text>
+<text x="1340.0" y="498.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">BUCK B  9-&gt;5 V</text>
+<text x="1340.0" y="514.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#1f4e9c">Mini560 5V fixed</text>
+<text x="1340.0" y="530.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#1f4e9c">(5 A rated, &lt;=2.2 A)</text>
+<line x1="1200.0" y1="150.0" x2="1200.0" y2="480.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1200.0" y1="480.0" x2="1230.0" y2="480.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1230.0" y1="540.0" x2="1220.0" y2="540.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1220.0" y1="540.0" x2="1220.0" y2="550.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1209.0" y1="550.0" x2="1231.0" y2="550.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1213.0" y1="554.0" x2="1227.0" y2="554.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1217.0" y1="558.0" x2="1223.0" y2="558.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1450.0" y1="540.0" x2="1450.0" y2="550.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1439.0" y1="550.0" x2="1461.0" y2="550.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1443.0" y1="554.0" x2="1457.0" y2="554.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1447.0" y1="558.0" x2="1453.0" y2="558.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1450.0" y1="480.0" x2="1590.0" y2="480.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1500.0" y1="480.0" x2="1500.0" y2="516.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1500.0" y1="524.0" x2="1500.0" y2="560.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1514.0" y1="516.0" x2="1486.0" y2="516.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<path d="M 1514.0,528.0 Q 1500.0,524.0 1486.0,528.0" stroke="#111" stroke-width="2.4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1512.0" y="511.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#111" font-weight="bold">+</text>
+<text x="1520.0" y="509.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">C6</text>
+<text x="1520.0" y="524.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">100uF</text>
+<text x="1520.0" y="539.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">10V</text>
+<line x1="1500.0" y1="560.0" x2="1500.0" y2="570.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1489.0" y1="570.0" x2="1511.0" y2="570.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1493.0" y1="574.0" x2="1507.0" y2="574.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1497.0" y1="578.0" x2="1503.0" y2="578.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<circle cx="1500" cy="480" r="3.6" fill="#1a1a1a"/>
+<line x1="1460.0" y1="480.0" x2="1460.0" y2="464.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="1460.0" cy="458.0" r="6" stroke="#111" fill="#fff6d5" stroke-width="1.6"/>
+<text x="1470.0" y="462.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#8d6e00" font-weight="bold">TP3</text>
+<circle cx="1460" cy="480" r="3.6" fill="#1a1a1a"/>
+<text x="1568.0" y="600.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#2e7d32" font-weight="bold">5V_LOGIC</text>
+<line x1="1590.0" y1="480.0" x2="1621.0" y2="480.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1639.0" y1="480.0" x2="1670.0" y2="480.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M 1621.0,490.0 L 1621.0,470.0 L 1639.0,480.0 Z" stroke="#111" stroke-width="1.8" fill="#fff" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 1643.0,490.0 L 1639.0,490.0 L 1639.0,470.0 L 1635.0,470.0" stroke="#111" stroke-width="2.2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 1639.0,490.0 L 1643.0,494.0" stroke="#111" stroke-width="2.2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 1639.0,470.0 L 1635.0,466.0" stroke="#111" stroke-width="2.2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1630.0" y="448.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="middle" fill="#111" font-weight="bold">D3</text>
+<text x="1630.0" y="462.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="middle" fill="#1f4e9c">SS34</text>
+<path d="M 1670.0,480.0 L 1678.0,471.0 L 1757.0,471.0 L 1757.0,489.0 L 1678.0,489.0 Z" stroke="#1f4e9c" stroke-width="1.3" fill="#eef3fb" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1681.0" y="484.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c" font-weight="bold">5V_DEVKIT</text>
+<text x="1730.0" y="512.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">-&gt; A1 5V pin</text>
+<text x="1730.0" y="527.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">(sheet 2)</text>
+<circle cx="1560" cy="480" r="3.6" fill="#1a1a1a"/>
+<rect x="1240.0" y="700.0" width="180.0" height="160.0" rx="0" stroke="#111" fill="#fbfbf3" stroke-width="2"/>
+<line x1="1210.0" y1="740.0" x2="1240.0" y2="740.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1246.0" y="744.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#111">/FAULT</text>
+<line x1="1210.0" y1="820.0" x2="1240.0" y2="820.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1246.0" y="824.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#111">EN</text>
+<line x1="1420.0" y1="740.0" x2="1450.0" y2="740.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1414.0" y="744.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#111">OUT</text>
+<line x1="1330.0" y1="670.0" x2="1330.0" y2="700.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1330.0" y="716.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#111">IN</text>
+<line x1="1300.0" y1="860.0" x2="1300.0" y2="890.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1300.0" y="853.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#111">GND</text>
+<line x1="1370.0" y1="860.0" x2="1370.0" y2="890.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<text x="1370.0" y="853.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#111">ILIM</text>
+<text x="1240.0" y="692.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#111" font-weight="bold">U4</text>
+<text x="1330.0" y="768.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">TPS2553</text>
+<text x="1330.0" y="784.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#1f4e9c">USB power switch</text>
+<text x="1330.0" y="800.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#1f4e9c">I_LIM ~1.7 A</text>
+<line x1="1560.0" y1="480.0" x2="1560.0" y2="640.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1560.0" y1="640.0" x2="1330.0" y2="640.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1330.0" y1="640.0" x2="1330.0" y2="670.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="1560" cy="640" r="3.6" fill="#1a1a1a"/>
+<line x1="1560.0" y1="640.0" x2="1640.0" y2="640.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1640.0" y1="640.0" x2="1640.0" y2="661.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1640.0" y1="669.0" x2="1640.0" y2="690.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1654.0" y1="661.0" x2="1626.0" y2="661.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="1654.0" y1="669.0" x2="1626.0" y2="669.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<text x="1660.0" y="661.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">C9</text>
+<text x="1660.0" y="676.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">1uF</text>
+<line x1="1640.0" y1="690.0" x2="1640.0" y2="700.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1629.0" y1="700.0" x2="1651.0" y2="700.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1633.0" y1="704.0" x2="1647.0" y2="704.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1637.0" y1="708.0" x2="1643.0" y2="708.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1300.0" y1="890.0" x2="1300.0" y2="900.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1289.0" y1="900.0" x2="1311.0" y2="900.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1293.0" y1="904.0" x2="1307.0" y2="904.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1297.0" y1="908.0" x2="1303.0" y2="908.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1370.0" y1="890.0" x2="1370.0" y2="908.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1370.0" y1="952.0" x2="1370.0" y2="970.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M 1370.0,908.0 L 1363.0,911.7 L 1377.0,919.0 L 1363.0,926.3 L 1377.0,933.7 L 1363.0,941.0 L 1377.0,948.3 L 1370.0,952.0" stroke="#111" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1384.0" y="926.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">R4</text>
+<text x="1384.0" y="941.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">15k</text>
+<line x1="1370.0" y1="970.0" x2="1370.0" y2="980.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1359.0" y1="980.0" x2="1381.0" y2="980.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1363.0" y1="984.0" x2="1377.0" y2="984.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1367.0" y1="988.0" x2="1373.0" y2="988.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1210.0" y1="740.0" x2="1050.0" y2="740.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="1130" cy="740" r="3.6" fill="#1a1a1a"/>
+<line x1="1130.0" y1="740.0" x2="1130.0" y2="717.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1130.0" y1="673.0" x2="1130.0" y2="650.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M 1130.0,717.0 L 1137.0,713.3 L 1123.0,706.0 L 1137.0,698.7 L 1123.0,691.3 L 1137.0,684.0 L 1123.0,676.7 L 1130.0,673.0" stroke="#111" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1144.0" y="691.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">R6</text>
+<text x="1144.0" y="706.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">10k</text>
+<line x1="1130.0" y1="650.0" x2="1130.0" y2="638.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1120.0" y1="638.0" x2="1140.0" y2="638.0" stroke="#111" stroke-width="2.2" stroke-linecap="round"/>
+<text x="1130.0" y="632.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="middle" fill="#c62828" font-weight="bold">+3V3</text>
+<path d="M 1050.0,740.0 L 1042.0,731.0 L 918.8,731.0 L 918.8,749.0 L 1042.0,749.0 Z" stroke="#1f4e9c" stroke-width="1.3" fill="#eef3fb" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1039.0" y="744.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="end" fill="#1f4e9c" font-weight="bold">PHONE_VBUS_FLT</text>
+<text x="925.0" y="768.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">-&gt; GPIO15 (sheet 2)</text>
+<line x1="1210.0" y1="820.0" x2="1050.0" y2="820.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="1130" cy="820" r="3.6" fill="#1a1a1a"/>
+<line x1="1130.0" y1="820.0" x2="1130.0" y2="838.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1130.0" y1="882.0" x2="1130.0" y2="900.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M 1130.0,838.0 L 1123.0,841.7 L 1137.0,849.0 L 1123.0,856.3 L 1137.0,863.7 L 1123.0,871.0 L 1137.0,878.3 L 1130.0,882.0" stroke="#111" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1144.0" y="856.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">R5</text>
+<text x="1144.0" y="871.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">100k</text>
+<line x1="1130.0" y1="900.0" x2="1130.0" y2="910.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1119.0" y1="910.0" x2="1141.0" y2="910.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1123.0" y1="914.0" x2="1137.0" y2="914.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1127.0" y1="918.0" x2="1133.0" y2="918.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<path d="M 1050.0,820.0 L 1042.0,811.0 L 927.1,811.0 L 927.1,829.0 L 1042.0,829.0 Z" stroke="#1f4e9c" stroke-width="1.3" fill="#eef3fb" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1039.0" y="824.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="end" fill="#1f4e9c" font-weight="bold">PHONE_VBUS_EN</text>
+<text x="925.0" y="848.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">&lt;- GPIO7 (sheet 2)</text>
+<line x1="1450.0" y1="740.0" x2="1690.0" y2="740.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="1500" cy="740" r="3.6" fill="#1a1a1a"/>
+<circle cx="1570" cy="740" r="3.6" fill="#1a1a1a"/>
+<circle cx="1630" cy="740" r="3.6" fill="#1a1a1a"/>
+<line x1="1500.0" y1="740.0" x2="1500.0" y2="776.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1500.0" y1="784.0" x2="1500.0" y2="820.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1514.0" y1="776.0" x2="1486.0" y2="776.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<path d="M 1514.0,788.0 Q 1500.0,784.0 1486.0,788.0" stroke="#111" stroke-width="2.4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1512.0" y="771.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#111" font-weight="bold">+</text>
+<text x="1520.0" y="769.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">C7</text>
+<text x="1520.0" y="784.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">150uF</text>
+<text x="1520.0" y="799.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">10V</text>
+<line x1="1500.0" y1="820.0" x2="1500.0" y2="830.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1489.0" y1="830.0" x2="1511.0" y2="830.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1493.0" y1="834.0" x2="1507.0" y2="834.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1497.0" y1="838.0" x2="1503.0" y2="838.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1570.0" y1="740.0" x2="1570.0" y2="776.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1570.0" y1="784.0" x2="1570.0" y2="820.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1584.0" y1="776.0" x2="1556.0" y2="776.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<line x1="1584.0" y1="784.0" x2="1556.0" y2="784.0" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>
+<text x="1590.0" y="776.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" text-anchor="start" fill="#111" font-weight="bold">C8</text>
+<text x="1590.0" y="791.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#1f4e9c">100nF</text>
+<line x1="1570.0" y1="820.0" x2="1570.0" y2="830.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="1559.0" y1="830.0" x2="1581.0" y2="830.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1563.0" y1="834.0" x2="1577.0" y2="834.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1567.0" y1="838.0" x2="1573.0" y2="838.0" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+<line x1="1630.0" y1="740.0" x2="1630.0" y2="724.0" stroke="#1a1a1a" stroke-width="1.6" stroke-linecap="round"/>
+<circle cx="1630.0" cy="718.0" r="6" stroke="#111" fill="#fff6d5" stroke-width="1.6"/>
+<text x="1640.0" y="722.0" font-family="Helvetica, Arial, sans-serif" font-size="10.5" text-anchor="start" fill="#8d6e00" font-weight="bold">TP4</text>
+<path d="M 1690.0,740.0 L 1698.0,731.0 L 1777.9,731.0 L 1777.9,749.0 L 1698.0,749.0 Z" stroke="#1f4e9c" stroke-width="1.3" fill="#eef3fb" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1701.0" y="744.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#1f4e9c" font-weight="bold">VBUS_HEAD</text>
+<text x="1730.0" y="772.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="middle" fill="#666">-&gt; J2 (sheet 2)</text>
+<rect x="30.0" y="560.0" width="830.0" height="325.0" rx="4" stroke="#9aa5b8" fill="#f7f9fc" stroke-width="1.2"/>
+<text x="40.0" y="580.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#1f4e9c" font-weight="bold">Design notes - power</text>
+<text x="42.0" y="600.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111" font-weight="bold">PD contract: U1 CH224K requests 9 V (CFG1 = 6.8k). Single-resistor mode: 6.8k=9 V, 24k=12 V,</text>
+<text x="42.0" y="617.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">  56k=15 V, OPEN = 20 V(!) - an unfitted R2 asks for 20 V: D2 + F1 then protect the bucks.</text>
+<text x="42.0" y="634.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">  Charger without 9 V -&gt; CH224K stays at 5 V; firmware sees VIN_SENSE &lt; 7 V and refuses 'enable'.</text>
+<text x="42.0" y="651.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">  D1 'PD OK' lights when PG pulls low (contract accepted).</text>
+<text x="42.0" y="668.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111" font-weight="bold">Protection: F1 PTC (3 A hold / ~5 A trip) ahead of D2 SMBJ12A (13.3 V min breakdown) so a</text>
+<text x="42.0" y="685.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">  sustained over-voltage or reversed module wiring trips F1 instead of burning D2.</text>
+<text x="42.0" y="702.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">  C2 470 uF holds VIN through servo current steps; its (-) lead is the STAR GROUND.</text>
+<text x="42.0" y="719.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111" font-weight="bold">Buck A (servo rail): CC/CV module, trimmed to 5.10 V and CC 4.5 A -&gt; stall current limited at</text>
+<text x="42.0" y="736.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">  the source; C4 1000 uF low-ESR sits at the PCA9685 V+ terminal, not at the module.</text>
+<text x="42.0" y="753.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111" font-weight="bold">Buck B (logic): fixed 5 V (no trimmer to mis-set into the phone). D3 SS34 feeds the DevKit</text>
+<text x="42.0" y="770.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">  5V pin: blocks back-feed and lets a PC on the DevKit UART port win (Vf ~0.35 V).</text>
+<text x="42.0" y="787.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111" font-weight="bold">Phone VBUS: U4 TPS2553, R4 15k -&gt; I_OS ~1.7 A typ (&gt;= 1.5 A Rp advert, no nuisance trips).</text>
+<text x="42.0" y="804.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">  EN pulled low (R5) = phone unpowered at reset; /FAULT open-drain to GPIO15 (R6 pull-up).</text>
+<text x="42.0" y="821.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">  C7 &gt;= 120 uF on the downstream port (USB 2.0), soft-start in U4 limits inrush.</text>
+<text x="42.0" y="838.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111" font-weight="bold">Grounds: STAR = C2 (-) on the PB power board. Servo current returns A2 -&gt; U2 OUT- -&gt; U2 IN- -&gt; star.</text>
+<text x="42.0" y="855.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">Test points: TP1 VIN 8.6-9.4 V | TP2 V_SERVO 5.0-5.2 V | TP3 5V_LOGIC 4.9-5.1 V | TP4 VBUS_HEAD</text>
+<text x="42.0" y="872.0" font-family="Helvetica, Arial, sans-serif" font-size="11.5" text-anchor="start" fill="#111">  0 V (EN low) / 4.8-5.1 V (EN high). TP5..TP9 on sheet 2.</text>
+<rect x="1240.0" y="1030.0" width="540.0" height="102.0" rx="0" stroke="#111" fill="#fff" stroke-width="2"/>
+<line x1="1240.0" y1="1064.0" x2="1780.0" y2="1064.0" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="1240.0" y1="1098.0" x2="1780.0" y2="1098.0" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="1600.0" y1="1064.0" x2="1600.0" y2="1132.0" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="1690.0" y1="1098.0" x2="1690.0" y2="1132.0" stroke="#111" stroke-width="1.2" stroke-linecap="round"/>
+<text x="1250.0" y="1053.0" font-family="Helvetica, Arial, sans-serif" font-size="16" text-anchor="start" fill="#111" font-weight="bold">TAPPET desktop robot</text>
+<text x="1770.0" y="1053.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" fill="#666">hardware/electronics</text>
+<text x="1250.0" y="1087.0" font-family="Helvetica, Arial, sans-serif" font-size="15" text-anchor="start" fill="#1f4e9c" font-weight="bold">Power tree</text>
+<text x="1610.0" y="1087.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#111">Sheet 1 / 3</text>
+<text x="1250.0" y="1121.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" fill="#666">File: drawings/schematic_power.svg</text>
+<text x="1610.0" y="1121.0" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" fill="#111" font-weight="bold">Rev 0.1</text>
+<text x="1700.0" y="1121.0" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" fill="#111">2026-10-11</text>
+</svg>
