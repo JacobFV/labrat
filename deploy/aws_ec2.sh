@@ -73,6 +73,8 @@ for line in open(sys.argv[1]):
         v = v[1:-1]
     else:
         v = re.split(r"\s+#", v, maxsplit=1)[0].strip()
+        if v.startswith("#"):
+            v = ""
     out.append(f"{k}={v}")
 open(sys.argv[2], "w").write("\n".join(out) + "\n")
 PY
