@@ -11,19 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
       - run: |
-          mkdir -p /tmp/cad-deps/wheels /tmp/cad-deps/three
-          python -m pip download --no-deps -d /tmp/cad-deps/wheels build123d==0.11.1 ocpsvg==0.6.0 'ocp_gordon>=0.2,<0.3'
-          python -m pip install --dry-run --report /tmp/cad-deps/resolution.json 'cadquery==2.8.0' 'build123d==0.11.1' 'cadquery-ocp==7.9.3.1.1' 'cadquery-ocp-novtk==7.9.3.1.1' 'vtk==9.6.2' trimesh pillow matplotlib
-          cd /tmp/cad-deps/three
-          npm pack three@0.170.0
-          tar xzf three-*.tgz
-          rm three-*.tgz
+          mkdir -p /tmp/cad-deps/wheels
+          git archive --format=zip --output=/tmp/cad-deps/labrat-source.zip HEAD
+          git rev-parse HEAD > /tmp/cad-deps/source-commit.txt
+          python -m pip download --no-deps -d /tmp/cad-deps/wheels svgpathtools svgelements geomdl trianglesolver lib3mf 'webcolors==24.8.0' 'cadquery_ocp_proxy>=7.9,<8' pyserial serial_asyncio pytest-asyncio || true
+          python -m pip download --no-deps -d /tmp/cad-deps/wheels svgpathtools svgelements geomdl trianglesolver lib3mf 'webcolors==24.8.0' 'cadquery_ocp_proxy>=7.9,<8' pyserial pytest-asyncio
       - uses: actions/upload-artifact@v4
         with:
-          name: syringe-cad-viewer-deps
+          name: syringe-source-and-dependencies
           path: /tmp/cad-deps
           retention-days: 7
