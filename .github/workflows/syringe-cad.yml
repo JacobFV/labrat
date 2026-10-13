@@ -2,35 +2,23 @@ name: syringe CAD verification
 on:
   push:
     branches: [syringe-rack-integration]
-    paths:
-      - '.github/workflows/syringe-cad.yml'
-      - 'cad/**'
-      - 'bridge/**'
-      - 'server/**'
-      - 'web/**'
-      - 'tappet/firmware/**'
+    paths: ['.github/workflows/syringe-cad.yml']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   package:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Package reproducible native test dependencies
-        run: |
-          mkdir -p /tmp/syringe-artifact/wheels
-          python -m pip download --no-deps -d /tmp/syringe-artifact/wheels build123d==0.10.0 ocpsvg==0.5.0 svgpathtools trianglesolver lib3mf pyserial
-          git clone --depth 1 --branch v7.4.2 https://github.com/bblanchon/ArduinoJson.git /tmp/syringe-artifact/ArduinoJson
-          git clone --depth 1 --branch v2.6.1 https://github.com/ThrowTheSwitch/Unity.git /tmp/syringe-artifact/Unity
-          rm -rf /tmp/syringe-artifact/ArduinoJson/.git /tmp/syringe-artifact/Unity/.git
+      - run: |
+          mkdir -p /tmp/cad-deps
+          python -m pip download --no-deps -d /tmp/cad-deps ocp_gordon==0.1.17 svgelements geomdl
       - uses: actions/upload-artifact@v4
         with:
-          name: syringe-integration-deps
-          path: /tmp/syringe-artifact
+          name: syringe-cad-interpolation-deps
+          path: /tmp/cad-deps
           retention-days: 7
-          if-no-files-found: error
