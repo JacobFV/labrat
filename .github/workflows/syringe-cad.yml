@@ -21,14 +21,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Package tracked sources for reproducible integration
+      - name: Package reproducible native test dependencies
         run: |
           mkdir -p /tmp/syringe-artifact/wheels
-          git archive --format=zip HEAD -o /tmp/syringe-artifact/labrat-source.zip
-          python -m pip download --no-deps -d /tmp/syringe-artifact/wheels build123d ocpsvg svgpathtools trianglesolver lib3mf pyserial
+          python -m pip download --no-deps -d /tmp/syringe-artifact/wheels build123d==0.10.0 ocpsvg==0.5.0 svgpathtools trianglesolver lib3mf pyserial
+          git clone --depth 1 --branch v7.4.2 https://github.com/bblanchon/ArduinoJson.git /tmp/syringe-artifact/ArduinoJson
+          git clone --depth 1 --branch v2.6.1 https://github.com/ThrowTheSwitch/Unity.git /tmp/syringe-artifact/Unity
+          rm -rf /tmp/syringe-artifact/ArduinoJson/.git /tmp/syringe-artifact/Unity/.git
       - uses: actions/upload-artifact@v4
         with:
-          name: syringe-integration-source
+          name: syringe-integration-deps
           path: /tmp/syringe-artifact
           retention-days: 7
           if-no-files-found: error
