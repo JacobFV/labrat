@@ -7,22 +7,16 @@ on:
 permissions:
   contents: read
 jobs:
-  dependencies:
+  native-test-dependencies:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
       - run: |
-          mkdir -p /tmp/cad-deps/wheels
-          git archive --format=zip --output=/tmp/cad-deps/labrat-source.zip HEAD
-          git rev-parse HEAD > /tmp/cad-deps/source-commit.txt
-          python -m pip download --no-deps -d /tmp/cad-deps/wheels svgpathtools svgelements geomdl trianglesolver lib3mf 'webcolors==24.8.0' 'cadquery_ocp_proxy>=7.9,<8' pyserial serial_asyncio pytest-asyncio || true
-          python -m pip download --no-deps -d /tmp/cad-deps/wheels svgpathtools svgelements geomdl trianglesolver lib3mf 'webcolors==24.8.0' 'cadquery_ocp_proxy>=7.9,<8' pyserial pytest-asyncio
+          mkdir -p /tmp/native-deps
+          curl -fL https://codeload.github.com/bblanchon/ArduinoJson/tar.gz/refs/tags/v7.4.2 | tar xz -C /tmp/native-deps
+          curl -fL https://codeload.github.com/ThrowTheSwitch/Unity/tar.gz/refs/tags/v2.6.1 | tar xz -C /tmp/native-deps
       - uses: actions/upload-artifact@v4
         with:
-          name: syringe-source-and-dependencies
-          path: /tmp/cad-deps
+          name: syringe-native-test-headers
+          path: /tmp/native-deps
           retention-days: 7
