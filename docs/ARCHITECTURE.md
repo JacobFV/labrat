@@ -18,8 +18,13 @@ Physical layout: the 3018 CNC (carrying the syringe pipette in its spindle clamp
 Hardware, as bridge device ids (`bridge/labrat_bridge/bridge.py: ALL_IDS`):
 - `so_a`, `so_b` are SO-101 arms (Feetech STS3215 bus at 1 Mbps): plain manipulators with the stock gripper, `so_a` on one side of the CNC and `so_b` on the other. Named poses are `home`, `ready` and `rest`; the old `look_deck`/`look_user`/`look_plate` names are accepted as aliases for `ready`.
 - `tap_a` is the ESP32-S3 + PCA9685 Tappet board that drives the syringe servo (JSON lines over UART at 115200). `tap_b` and the Tappet arms are optional and not part of the demo setup.
-- `cnc` is a 3018 CNC running GRBL 1.1 at 115200.
-- `pipette` is a syringe pipette that replaces the spindle motor in the 3018's 52 mm clamp ([`cad/syringe`](../cad/syringe)): a disposable syringe with a 200 µL tip on a luer-to-tip adapter, its plunger driven through a 12:1 printed gear train and a rack on an MGN7 linear guide by a continuous-rotation FS90R servo on PCA9685 **channel 8** (`servo_raw`): 0.5 mm of plunger per servo radian. The servo has no position feedback: the bridge dead-reckons the plunger from calibrated speeds, re-zeroes with `home` (bottom stop) and accepts camera/NN estimates through `observe`.
+- `cnc` is a 3018 CNC running GRBL 1.1 at 115200. Its `probe` action uses the head's capacitive probe (G38.3).
+- The head is a small tool changer: a tool rail on its front takes modules (`cad/syringe/syrhead/tools.py`), today a
+  USB microscope (`microscope` device, `bridge/labrat_bridge/microscope.py`) and a capacitive liquid-level probe
+  (TTP223 → GRBL probe pin). Each tool has an offset from the syringe tip (`deck_cal` `tools`, nominal from
+  `cad/syringe/tools.json`); `server/labrat/tooling.py` moves the spindle to `target − offset` and the agent's
+  `tool` call does goto / snap / probe.
+- `pipette` is a syringe pipette that replaces the spindle motor in the 3018's 42 mm motor holder ([`cad/syringe`](../cad/syringe)): a disposable syringe with a 200 µL tip on a luer-to-tip adapter, its plunger driven through a 12:1 printed gear train and a rack (on a carriage that slides on a square bar moulded on the head body) by a continuous-rotation FS90R servo on PCA9685 **channel 8** (`servo_raw`): 0.5 mm of plunger per servo radian. The servo has no position feedback: the bridge dead-reckons the plunger from calibrated speeds, re-zeroes with `home` (bottom stop) and accepts camera/NN estimates through `observe`.
 
 ## 2. Topology
 
@@ -92,7 +97,7 @@ Replies are spoken by `agent.speak` → `voice.py:tts` (ElevenLabs `eleven_flash
 | POST | `/api/deck_cal` | patch the deck calibration (pipette offset, points) |
 | POST | `/api/deck_cal/teach` `{target, pos?}` | teach a deck target from the current CNC position (or an explicit `pos`) |
 | POST | `/api/jog` `{device:"cnc", dx, dy, dz, f}` | relative CNC jog (each step must be ≤ 50 mm) |
-| POST | `/api/camera_cal` `{corners, image_w, image_h}` | save the camera→plate homography corners (A1, A12, H12, H1) |
+| POST | `/api/camera_cal` `{corners, image_w, image_h}` | save the camera→deck homography corners (beakers A1, A7, F7, F1) |
 | GET | `/api/camera_cal` | read the camera calibration |
 | GET | `/api/camera_frame` | latest phone frame |
 | POST | `/api/runs/{run_id}/auto_observe?pose=` | vision observation now |
@@ -123,13 +128,19 @@ Static mounts: `/phone` → `phone/`, `/` → `web/`. Errors not handled elsewhe
 
 ## 6. Simulator (`server/labrat/sim.py`)
 
-- **Deck** (CNC machine coordinates, mm):
-  - tip rack: 8×12 grid at (20, 20), 9 mm pitch.
-  - 96-well plate: at (140, 20), 300 µL wells.
-  - reservoirs at x = 250: water y = 20, red y = 60, blue y = 100, yellow y = 140. Each holds 20 mL.
+- **Deck** (CNC machine coordinates, mm; source of truth [`cad/deck/deck.json`](../cad/deck), checked by `tests/test_sim.py`):
+  - tip rack: FT-200L-RS, 96 × 200 µL, 117 × 81.5 mm box; 8×12 grid with A1 at (17, 19.25), 9 mm pitch.
+  - beaker matrix (printed, `DECK-001`): 6 rows A–F × 8 columns of 15.3 × 50 mm beakers on a 19 mm pitch, A1 at
+    (153.25, 32). Columns 1–7 are the mixing beakers (the `plate` grid, wells A1–F7, 5 mL each); column 8 holds the
+    stocks: A8 water, B8 red, C8 yellow, D8 blue (the reservoirs, 4.5 mL each), E8/F8 free.
   - waste at (280, 170); eject bar at (10, 170).
-  - Z heights: safe 0, tip pick −38, well −30, reservoir −35.
+  - Z heights (the tip end is 55 mm above the bed at z = 0; beaker rims are at 51.2): safe 0, dispense −9 (5 mm inside
+    the rim), aspirate / mix −45 (tip end 10 mm above the bed), tip pick-up −45 (the travel limit; see below).
   - bounds: X 0..300, Y 0..180, Z −45..0.
+  - Reach: the tip only reaches liquid while a beaker holds about 1.23 mL (`REACH_UL`); aspirating below that is an
+    error, and a mix in a beaker with less is skipped with a warning.
+  - Tip pick-up does not fit the 3018's 45 mm of Z with the FT-200L-RS (seating needs about 49.5 mm and pulling a tip
+    out of the rack about 51 mm): `cad/deck/report.json`. Teach real `tip_rack` points once that is resolved.
 - **Ops:** `pick_tip`, `aspirate`, `dispense`, `mix`, `eject_tip`, `photo`, `wait`.
 - **Motion:** trapezoidal timing (accel 400 mm/s², 3000 mm/min XY, 600 mm/min Z). The pipette moves 100 µL/s.
 - **Liquid:** each well's composition is tracked in µL per dye. Colour is predicted by subtractive (Beer–Lambert) mixing from the per-dye absorbance (`mix_rgb`), with `VOL_GAIN` = actual ÷ commanded volume.
@@ -138,7 +149,7 @@ Static mounts: `/phone` → `phone/`, `/` → `web/`. Errors not handled elsewhe
   - XY travel below safe Z;
   - tip reuse or contamination;
   - tip overfill (200 µL);
-  - reservoir underflow;
+  - reservoir underflow, and aspirating below the reachable liquid level;
   - well overflow;
   - aspirate or dispense without a tip;
 - **Score:** 1 − (RGB distance to the goal colour) ÷ 441.7, multiplied by 0.1 if the variant failed. The output includes frames for the twin replay.
@@ -160,12 +171,12 @@ After each observation:
 
 - **Deck (`server/labrat/deck_cal.py`, UI `web/deck.js`):**
   - Taught points are CNC coordinates of the **pipette tip**, and `spindle = tip − pipette_offset`. The default offset is `{dx: 0, dy: 0, dz: 0}`: the syringe tip is on the spindle axis.
-  - Teachable targets are `tip_rack.A1/H12`, `plate.A1/H12`, the reservoirs, waste and eject bar.
-  - When both A1 and H12 of a grid are taught, pitch and rotation are derived from them. Otherwise the grid uses a nominal 9 mm, axis-aligned pitch.
+  - Teachable targets are `tip_rack.A1/H12`, `plate.A1/F7` (beaker matrix), the reservoirs, waste and eject bar.
+  - When both A1 and the far corner of a grid are taught, pitch and rotation are derived from them. Otherwise the grid uses its nominal, axis-aligned pitch (tip rack 9 mm, beakers 19 mm).
   - Workflow: jog with `POST /api/jog`, then save the position with `POST /api/deck_cal/teach`.
 - **Camera (`server/labrat/vision.py`, UI `web/camera_cal.js`):**
-  - The operator clicks the A1, A12, H12 and H1 well centres on a phone frame. `homography()` maps plate (col, row) to image pixels.
-  - The sampler takes the median of a small disk at the projected well centre and white-balances it against a blank well (scaled to 245).
+  - The operator clicks the A1, A7, F7 and F1 beaker centres on a phone frame. `homography()` maps grid (col, row) to image pixels.
+  - The sampler takes the median of a small disk at the projected beaker centre and white-balances it against an empty beaker (scaled to 245).
 
 ## 9. Safety invariants
 

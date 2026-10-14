@@ -1,9 +1,15 @@
-"""Design parameters for the 3018 syringe head and the layout derived from them.
+"""Design parameters for the 3018 syringe head (v2) and the layout derived from them.
 
 Frame (the head frame): machine axes, millimetres. +X = machine +X (operator's right), +Y = machine +Y (toward the
-gantry / Z plate), +Z up. Origin = syringe axis on the plane of the spindle clamp's TOP face (the plug lip sits on it).
-The CNC moves the spindle clamp, so this frame moves with machine Z; at CNC z = 0 the clamp top is 165 mm above the
-bed (cad/cnc3018/cnc3018.py: HOLDER_Y[1]).
+gantry / Z plate), +Z up. Origin = syringe axis on the plane of the spindle clamp's TOP face (the body's seat ring
+sits on it). The CNC moves the spindle clamp, so this frame moves with machine Z; at CNC z = 0 the clamp top is
+165 mm above the bed (cad/cnc3018/cnc3018.py: HOLDER_Y[1]).
+
+Architecture (v2, every part printable without supports):
+    z-stack:  plug (Ø42 x 34, in the spindle clamp)  ->  rectangular mid body (syringe barrel inside)  ->  top section
+    top section, an x-stack:  square guide bar | carriage (a sleeve on the bar) + plunger | gear plate 1 | gears | gear plate 2 | servo
+Gear axes run along +X. The carriage is a closed ring (jaw - block plate - top bridge - rack) whose two cross members
+pass through a window in gear plate 1, so the rack sits in the gear plane next to the output pinion.
 
 Everything here is either a measured / catalogue value (marked) or derived. Representative purchased-part numbers are
 "verify at procurement".
@@ -17,23 +23,25 @@ from dataclasses import dataclass, field
 @dataclass(frozen=True)
 class Spec:
     # ---------------- machine (cnc3018.py) ----------------
-    clamp_bore: float = 52.0          # spindle clamp bore (repo model; measure yours)
-    clamp_h: float = 26.0             # clamp height
+    clamp_bore: float = 42.0          # measured: the 3018's motor holder takes a 42.0 mm cylinder ...
+    clamp_h: float = 34.0             # ... 34.0 mm high
     clamp_top_above_bed: float = 165.0
     clamp_front_y: float = -34.0      # clamp block front face
     zplate_front_y: float = 32.0      # Z plate front face (moves with the head)
     zstep_front_y: float = 26.0       # Z stepper front face (on the X carriage, above the head at z >= 68)
     zstep_bottom_z: float = 68.0
-    safe_tip_h: float = 60.0          # tip end above bed at CNC z = 0 (twin SAFE_H, sim Z table)
-    # ---------------- plug ----------------
-    plug_od: float = 50.2             # user-specified; 0.9 mm radial to the 52 mm bore -> shim or change
-    lip_od: float = 56.0
-    lip_t: float = 3.0
+    z_travel: float = 45.0            # 3018 PRO Z travel (sim BOUNDS z -45 .. 0)
+    safe_tip_h: float = 55.0          # tip end above bed at CNC z = 0 (twin SAFE_H, sim Z table): clears the beaker
+    #                                   rims (51.2 mm) by 3.8 mm with a tip on; the lowest tip end is 10 mm above the bed
+    # ---------------- plug + seat ----------------
+    plug_od: float = 41.9             # 42.0 holder bore - 0.1 (slide fit, the holder clamps it)
+    seat_od: float = 41.9             # the plug flares out at 45 deg from its own OD: a conical seat on the holder's
+    #                                   bore edge (self-centring, and no flat ledge that would need support)
     # ---------------- syringe: 12 mL luer-slip, PP barrel, rubber stopper (representative) ----------------
     barrel_od: float = 20.2           # measured
     barrel_len: float = 80.0          # measured: flange underside -> barrel bottom face
     barrel_id: float = 17.8           # estimate (1.2 mm wall) -> 249 uL/mm
-    flange_l: float = 34.0            # finger flange, long axis (along X when installed)
+    flange_l: float = 34.0            # finger flange, long axis (along Y when installed)
     flange_w: float = 24.0            # flats
     flange_t: float = 2.2
     hub_d: float = 7.0                # nozzle hub
@@ -74,17 +82,21 @@ class Spec:
     backlash_cd: float = 0.08         # centre-distance increase per mesh
     w12: float = 4.0                  # face widths
     w34: float = 5.0
-    w5: float = 6.0
+    w5: float = 6.0                   # rack face width (G5 is 1 mm longer: the rack clears G4)
     # ---------------- purchased motion parts ----------------
-    rail_len: float = 70.0            # HIWIN MGNR7 cut length (5 holes on 15 mm pitch)
+    slide_clr: float = 0.15           # clearance per face between the guide bar and the carriage's sleeve
+    bar_a: float = 14.0               # guide bar: a plain square bar, set diamond-wise (rotated 45 deg about Z)
+    sleeve_wall: float = 3.0
+    guide_l: float = 32.0             # carriage bearing length on the rail
     pin_d: float = 3.0                # ISO 2338 3 m6 dowel
-    pin_len: float = 40.0
+    pin_len: float = 30.0
     brg_d: float = 3.0                # MR63ZZ
     brg_D: float = 6.0
     brg_B: float = 2.5
     # ---------------- printed-part rules ----------------
     wall: float = 2.4                 # structural FDM wall: 6 perimeters of a 0.4 mm nozzle
     clr: float = 0.2                  # FDM sliding / hole clearance (diametral 0.4)
+    run: float = 1.0                  # running clearance between a moving part and anything it passes
 
 
 S = Spec()
@@ -110,6 +122,12 @@ def tip_bore_d(s: Spec, depth: float) -> float:
     return s.tip_top_id - (s.tip_top_id - 0.5) * depth / s.tip_len
 
 
+def _polar(c, d, deg):
+    """point at distance d from c = (y, z), direction ``deg`` measured from +Z toward -Y."""
+    a = math.radians(deg)
+    return (c[0] - d * math.sin(a), c[1] + d * math.cos(a))
+
+
 def layout(s: Spec = S) -> Layout:
     L = Layout(s)
     v = L.v
@@ -120,6 +138,7 @@ def layout(s: Spec = S) -> Layout:
     k_cone = (s.adapter_cone_d0 - s.adapter_cone_d1) / s.adapter_cone_l
     d_seal = s.tip_top_id - 2 * s.tip_seal_gap
     v["cone_top_z"] = v["tip_top_z"] + (s.adapter_cone_d0 - d_seal) / k_cone
+    v["cone_end_z"] = v["cone_top_z"] - s.adapter_cone_l
     v["adapter_top_z"] = v["cone_top_z"] + s.adapter_body_l
     v["nozzle_end_z"] = v["adapter_top_z"] - s.adapter_luer_seat
     v["barrel_bottom_z"] = v["nozzle_end_z"] + s.luer_l + s.hub_l
@@ -128,7 +147,6 @@ def layout(s: Spec = S) -> Layout:
     # ---- body heights ----
     v["plug_bottom_z"] = -s.clamp_h
     v["table_top_z"] = v["flange_z"] + 1.0                          # flange sits 1.0 deep in a locating pocket
-    v["table_t"] = 4.0
     v["clampplate_bottom_z"] = v["table_top_z"] + 0.05
     v["clampplate_t"] = 4.0
     v["clampplate_top_z"] = v["clampplate_bottom_z"] + v["clampplate_t"]
@@ -142,56 +160,79 @@ def layout(s: Spec = S) -> Layout:
     v["cap_screws"] = [(-7.5, 12.8), (7.5, 12.8)]
     assert v["jaw0_bottom_z"] - v["clampplate_top_z"] >= 1.0, "carriage jaw would hit the flange clamp at pos 0"
     v["ul_per_mm"] = math.pi / 4 * s.barrel_id ** 2
-    # ---- carriage / rail (left side, -X) ----
+    # ---- carriage / rail (left side, -X). The carriage's back face (+Y) is one plane: it prints on it. ----
     v["jaw_x"] = (-14.5, 13.0)                                      # >= 1.2 mm walls beside the Ø20.4 disc seat
     v["jaw_y"] = (-11.5, 16.5)
-    v["mgn_H"], v["mgn_H1"], v["mgn_W"], v["mgn_L"], v["mgn_B"], v["mgn_C"] = 8.0, 1.5, 17.0, 22.5, 12.0, 8.0
-    v["rail_W"], v["rail_H"] = 7.0, 4.8
-    v["rail_face_x"] = v["jaw_x"][0] - v["mgn_H"]                   # spine face the rail is screwed to
-    v["spine_t"] = 6.0
-    v["mgn0_z"] = v["disc0_z"] + 16.0                               # MGN7C centre at pos 0
-    lo = v["mgn0_z"] - v["mgn_L"] / 2 - 2.0
-    hi = v["mgn0_z"] + s.stroke + v["mgn_L"] / 2 + 2.0
-    assert hi - lo <= s.rail_len, f"rail too short: need {hi - lo:.1f}"
-    v["rail_z0"] = lo - (s.rail_len - (hi - lo)) / 2
-    # ---- rack + output pinion ----
-    p3 = math.pi * s.m3
-    v["rack_x0"] = v["jaw_x"][1]                                    # rack back face on the jaw's right face
-    v["rack_body_t"] = 4.25
-    v["rack_root_x"] = v["rack_x0"] + v["rack_body_t"]
-    v["rack_tip_x"] = v["rack_root_x"] + 2.25 * s.m3
-    v["rack_pitch_x"] = v["rack_tip_x"] - s.m3
-    r5 = s.z5 * s.m3 / 2
-    v["C"] = (v["rack_pitch_x"] + r5 + s.backlash_cd, None)
-    v["rack0_z0"] = v["jaw0_bottom_z"]                              # rack bottom (pos 0) = jaw bottom
-    v["zc"] = v["rack0_z0"] + s.stroke + 3 * p3
-    v["rack_len"] = s.stroke + 5.5 * p3
-    v["C"] = (v["C"][0], v["zc"])
-    # ---- gear centres (XZ), axes along +Y ----
-    a_cb = math.radians(60.0)
-    d_cb = (s.z3 + s.z4) * s.m2 / 2 + s.backlash_cd
-    v["B"] = (v["C"][0] + d_cb * math.cos(a_cb), v["C"][1] + d_cb * math.sin(a_cb))
-    d_ba = (s.z1 + s.z2) * s.m1 / 2 + s.backlash_cd
-    v["A"] = (v["B"][0] - d_ba, v["B"][1])
-    v["ratio"] = (s.z2 / s.z1) * (s.z4 / s.z3)
-    v["mm_per_servo_rad"] = r5 / v["ratio"]
-    # ---- Y planes (front = -Y) ----
-    v["y_rack"] = (-s.w5 / 2, s.w5 / 2)
-    v["y_g4"] = (-13.5 - s.w34, -13.5)                              # G3/G4 plane, 2 mm in front of the jaw
-    v["y_g2"] = (v["y_g4"][0] - 1.3 - s.w12, v["y_g4"][0] - 1.3)    # G2 plane (1.3 axial to G4: motion clearance)
-    v["g1_w"] = s.w12 + 0.4                                          # G1 is 0.4 wider toward the servo, so G2's
-    v["g1_back"] = v["y_g2"][0] - 0.4                               # back face clears the servo tower by 1.2
-    # servo stack (FS90R / SG90 family): tab top on the cover's front face
+    v["y_back"] = v["jaw_y"][1]
+    # guide: no purchased rail and no profile - a plain square bar stands on the mid body, set diamond-wise so all four
+    # faces are at 45 deg; the carriage's guide block is a sleeve with the same square hole (+ slide_clr per face). The
+    # sleeve drops onto the bar from the top. Both print without support (the bar upright with the body, the
+    # carriage on its back).
+    d = s.bar_a / math.sqrt(2)                                       # half-diagonal of the bar
+    sleeve_half = d + s.slide_clr * math.sqrt(2) + s.sleeve_wall     # square guide block around the hole
+    v["bar_half_diag"] = d
+    v["sleeve_half"] = sleeve_half
+    v["bar_c"] = (v["jaw_x"][0] + 2.5 - sleeve_half, 0.0)            # the sleeve's +X face carries the jaw plate
+    v["spine_back_x"] = v["bar_c"][0] - d - 2.0                      # mid body's -X end
+    v["guide_z"] = (v["jaw0_bottom_z"], v["jaw0_bottom_z"] + s.guide_l)        # carriage guide block at pos 0
+    v["spine_top_z"] = v["guide_z"][1] + s.stroke + 3.0             # top of the guide bar (and of the back wall)
+    # ---- body outline ----
+    v["body_x"] = (v["spine_back_x"], None)                         # +X end = gear plate 1 outer face (below)
+    v["body_y"] = (-25.0, 24.9)                                     # back < zstep_front_y - 1 everywhere
+    v["back_wall_y"] = (22.5, v["body_y"][1])
+    # ---- X planes of the gear section (gear axes along +X) ----
+    v["plate1_x"] = (v["jaw_x"][1] + 2.0, v["jaw_x"][1] + 8.0)      # 6 thick: dowel seats + M3 inserts
+    x1 = v["plate1_x"][1]
+    v["body_x"] = (v["spine_back_x"], x1)
+    v["x_rack"] = (x1 + s.run, x1 + s.run + s.w5)                   # rack face width, 1.0 off plate 1 and G4
+    v["x_g5"] = (v["x_rack"][0], v["x_rack"][1] + s.run)            # output pinion (moves with G4)
+    v["x_g4"] = (v["x_g5"][1], v["x_g5"][1] + s.w34)
+    v["x_g3"] = (v["x_g4"][0], v["x_g4"][1] + s.run)                # G3 runs straight into G2: no neck
+    v["x_g2"] = (v["x_g3"][1], v["x_g3"][1] + s.w12)
+    v["g1_w"] = s.w12
+    v["x_g1"] = v["x_g2"]                                           # G1 and G2 share the plane
+    # servo stack (FS90R / SG90 family): tab top on gear plate 2's outer face, output toward -X
     v["servo"] = dict(L=22.8, W=12.4, case_h=22.7, tab_from_bottom=15.9, tab_t=2.5, tab_len=32.2, tab_pitch=27.8,
                       tab_hole=2.2, shaft_from_end=5.9, tower_d=11.8, tower_h=2.0, spline_d=4.8, spline_h=2.0,
                       horn_hub_d=7.0, horn_arm_t=1.6, horn_over_spline=0.6, horn_trim_r=4.6, horn_arm_w=4.2)
     sv = v["servo"]
     sv["above_tab"] = sv["case_h"] - sv["tab_from_bottom"] - sv["tab_t"]          # 4.3
     sv["spline_top_above_tab"] = sv["above_tab"] + sv["tower_h"] + sv["spline_h"]  # 8.3
-    v["cover_t"] = 3.0
-    v["cover_front_y"] = v["g1_back"] + 0.2 - (sv["spline_top_above_tab"] + sv["horn_over_spline"] - sv["horn_arm_t"])
-    v["cover_back_y"] = v["cover_front_y"] + v["cover_t"]
-    v["back_plate_y"] = (6.0, 10.0)
+    # the output tower clears the G1/G2 servo faces by 1.2; the trimmed horn arms then stand 0.2 proud of G1's face
+    # (1.0 from the tower) and sit in a 1.4 deep pocket
+    v["servo_tab_x"] = v["x_g2"][1] + 1.2 + sv["above_tab"] + sv["tower_h"]
+    v["plate2_t"] = 3.5
+    v["plate2_x"] = (v["servo_tab_x"] - v["plate2_t"], v["servo_tab_x"])
+    v["horn_pocket"] = v["x_g1"][1] - (v["servo_tab_x"] - sv["spline_top_above_tab"] - sv["horn_over_spline"])
+    # ---- rack (teeth toward -Y) + output pinion ----
+    p3 = math.pi * s.m3
+    v["rack_pitch_y"] = 2.0
+    v["rack_tip_y"] = v["rack_pitch_y"] - s.m3
+    v["rack_root_y"] = v["rack_pitch_y"] + 1.25 * s.m3
+    v["rack0_z0"] = v["jaw0_bottom_z"]                              # rack bottom (pos 0) = jaw bottom
+    v["zc"] = v["rack0_z0"] + s.stroke + 3 * p3
+    v["rack_len"] = s.stroke + 5.5 * p3
+    v["rack0_z1"] = v["rack0_z0"] + v["rack_len"]
+    r5 = s.z5 * s.m3 / 2
+    v["C"] = (v["rack_pitch_y"] - r5 - s.backlash_cd, v["zc"])
+    # ---- gear centres (Y, Z), axes along +X: B nearly above C (clear of the rack), A down-forward of B ----
+    d_cb = (s.z3 + s.z4) * s.m2 / 2 + s.backlash_cd
+    d_ba = (s.z1 + s.z2) * s.m1 / 2 + s.backlash_cd
+    v["B"] = _polar(v["C"], d_cb, 12.0)
+    v["A"] = _polar(v["B"], d_ba, 180.0 - 65.0)
+    v["ratio"] = (s.z2 / s.z1) * (s.z4 / s.z3)
+    v["mm_per_servo_rad"] = r5 / v["ratio"]
+    v["r_tip"] = {"g1": (s.z1 + 2) * s.m1 / 2, "g2": (s.z2 + 2) * s.m1 / 2, "g3": (s.z3 + 2) * s.m2 / 2,
+                  "g4": (s.z4 + 2) * s.m2 / 2, "g5": (s.z5 + 2) * s.m3 / 2}
+    # ---- gear plate 1 window: the carriage's bottom arm and top bridge pass through it ----
+    v["arm_y"] = (v["rack_root_y"] + 0.75, v["y_back"])             # carriage cross members (y band)
+    v["window_y"] = (v["arm_y"][0] - s.run, v["arm_y"][1] + s.run)
+    v["window_z"] = (v["jaw0_bottom_z"] - s.run, v["rack0_z1"] + s.stroke + s.run)
+    # ---- standoffs plate 2 -> plate 1 (Y, Z): clear of every gear disc, the rack and the carriage ----
+    v["standoffs"] = [(21.0, 50.0), (21.0, v["window_z"][1] + 5.5), (-25.0, 58.0)]
+    v["standoff_d"] = 6.6
+    # ---- servo case (outside plate 2), its long axis along -Z from the output shaft ----
+    v["servo_case_c"] = (v["A"][0], v["A"][1] - (sv["L"] / 2 - sv["shaft_from_end"]))
     return L
 
 

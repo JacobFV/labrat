@@ -52,7 +52,7 @@ async def emit_experiment(exp: dict) -> None:
 
 
 async def create_experiment(goal: str, n_variants: int = 12, variants: list[dict] | None = None, source: str = "deterministic") -> dict:
-    n_variants = max(1, min(int(n_variants or 12), 96))
+    n_variants = max(1, min(int(n_variants or 12), sim.PLATE["rows"] * sim.PLATE["cols"]))
     vs = variants or sim.generate_variants(goal, n_variants, seed=int(time.time()) % 10000)
     exp = store.put("experiments", {
         "id": "exp_" + uuid.uuid4().hex[:6], "goal": goal, "status": "designed", "source": source,

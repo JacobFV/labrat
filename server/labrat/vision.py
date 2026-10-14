@@ -1,8 +1,9 @@
 """Automatic observation: phone photo -> target-well RGB -> learn.observe (closes the RSI loop without a human).
 
 Two estimators:
- 1. Calibrated: a camera->plate homography from 4 clicked well centres (A1, A12, H12, H1) stored as doc `camera_cal`.
-    Sample a small disk at the projected target-well centre (median), white-balanced against a blank well.
+ 1. Calibrated: a camera->deck homography from 4 clicked beaker centres (the mixing grid's corners A1, A7, F7, F1)
+    stored as doc `camera_cal`. Sample a small disk at the projected target-beaker centre (median), white-balanced
+    against an empty beaker.
  2. LLM vision: ask Claude for the target well's RGB as JSON.
 Neither available -> skip (operator can still rate/observe manually).
 
@@ -30,8 +31,10 @@ from .store import store
 from .telemetry import track
 
 CAL_ID = "camera_cal"
-CORNER_WELLS = ("A1", "A12", "H12", "H1")
-BLANK_PREF = ("H12", "H1", "A12", "A1", "H11", "G12")
+_LAST_ROW, _LAST_COL = sim.ROWS[sim.PLATE["rows"] - 1], sim.PLATE["cols"]
+CORNER_WELLS = ("A1", f"A{_LAST_COL}", f"{_LAST_ROW}{_LAST_COL}", f"{_LAST_ROW}1")   # A1, A7, F7, F1
+BLANK_PREF = (CORNER_WELLS[2], CORNER_WELLS[3], CORNER_WELLS[1], "A1", f"{_LAST_ROW}{_LAST_COL - 1}",
+              f"{sim.ROWS[sim.PLATE['rows'] - 2]}{_LAST_COL}")
 BG = 245.0  # sim's white-plate background level
 
 router = APIRouter()
@@ -56,7 +59,7 @@ def get_cal() -> dict | None:
 
 def set_cal(corners: list[list[float]], image_w: int, image_h: int) -> dict:
     if len(corners) != 4 or any(len(p) != 2 for p in corners):
-        raise ValueError("need 4 corners [[x,y],...] in order A1, A12, H12, H1")
+        raise ValueError(f"need 4 corners [[x,y],...] in order {', '.join(CORNER_WELLS)}")
     _coll()
     doc = {"id": CAL_ID, "corners": [[float(x), float(y)] for x, y in corners], "image_w": int(image_w), "image_h": int(image_h),
            "wells": list(CORNER_WELLS), "H": homography(corners).tolist(), "created_at": time.time()}
@@ -74,7 +77,7 @@ def _plate_cr(well: str) -> tuple[float, float]:
 
 
 def homography(corners_img: list[list[float]]) -> np.ndarray:
-    """DLT: plate (col,row) of A1,A12,H12,H1 -> image px."""
+    """DLT: grid (col,row) of the 4 corner beakers -> image px."""
     src = [_plate_cr(w) for w in CORNER_WELLS]
     A = []
     for (u, v), (x, y) in zip(src, corners_img):
@@ -144,8 +147,9 @@ async def llm_rgb(jpeg_b64: str, well: str) -> list[int] | None:
         return None
     from .agent import _anthropic
 
-    prompt = (f"This photo shows a 96-well plate (rows A-H, columns 1-12) on a lab deck. Estimate the colour of the liquid in well "
-              f"{well} as seen from above, white-balanced so an empty well on the white plate reads about (245,245,245). "
+    prompt = (f"This photo shows a lab deck with a printed rack of small clear beakers in 6 rows (A-F, front to back) and "
+              f"8 columns (1-8, left to right; column 8 holds the stock dyes). Estimate the colour of the liquid in beaker "
+              f"{well} as seen from above, white-balanced so an empty beaker reads about (245,245,245). "
               'Reply with JSON only: {"rgb":[r,g,b],"confidence":0..1}')
     msg = await _anthropic().messages.create(model=ANTHROPIC_MODEL, max_tokens=200, messages=[{"role": "user", "content": [
         {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": jpeg_b64}},

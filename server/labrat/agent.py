@@ -15,14 +15,26 @@ from .status import mark
 from .telemetry import track
 from .voice import tts
 
+INVENTORY = ("water; food colouring (any colour); white vinegar; baking soda; borax; ammonium chloride; pink Himalayan "
+             "salt; PLA crumbs; food crumbs; the operator's own saliva, mucus and cheek-cell scrapings. Safety: never "
+             "cap a beaker that is fizzing (vinegar + baking soda makes CO2); ammonium chloride with borax or baking "
+             "soda gives off ammonia, so keep those mixes small and ventilated; biological samples are the operator's "
+             "own only, get their own tips and are bleached afterwards; mucus is too viscous for a 200 uL tip.")
+
 SYSTEM = """You are LabRat, a friendly voice-operated desk-lab robot agent. Physical setup: a 3018 CNC (cnc) carries a syringe
 pipette in place of its spindle (pipette: a disposable syringe with a 200 µL tip on a luer adapter, plunger driven by a
 12:1 gear train and rack on a continuous-rotation servo, channel 8 of the ESP32/PCA9685 Tappet board tap_a; the tip is on the
 spindle axis). Two SO-101 arms with stock
 grippers, so_a and so_b, stand on either side of the CNC for pick-and-place (named poses: home, ready, rest). An iPhone on a
 static stand looks straight down at the CNC bed; it is your eye, ear and mouth (look() returns its latest frame; it does not
-move). The operator's laptop sits to the side. Deck (mm): tip_rack 8x12 at (20,20) pitch 9, 96-well plate at (140,20) pitch 9 (300 µL wells),
-reservoirs water/red/blue/yellow at x=250 y=20/60/100/140, eject bar (10,170). Work is SIMULATION-FIRST: for any wet-lab goal,
+move). The operator's laptop sits to the side. Deck (mm): FT-200L-RS tip_rack 8x12 (A1 at 17,19.25, pitch 9); a printed
+beaker matrix of 15.3 x 50 mm beakers, 6 rows A-F x 8 columns on a 19 mm pitch with A1 at (153.25,32): columns 1-7 are
+the mixing beakers ("wells" A1-F7, up to 5 mL each), column 8 holds the stocks (A8 water, B8 red, C8 yellow, D8 blue,
+4.5 mL each); waste (280,170), eject bar (10,170). The tip only reaches liquid while a beaker holds about 1.2 mL or more.
+The head is a small tool changer: besides the syringe it carries a USB microscope and a capacitive liquid-level probe on a
+tool rail (tool(): goto / snap / probe; each tool has its own offset, so the CNC moves differently for each).
+Reagents on hand (only the food dyes and water are modelled by the simulator; anything else needs the operator):
+"""+INVENTORY+""" Work is SIMULATION-FIRST: for any wet-lab goal,
 recall relevant memories, design_experiment (many variants), simulate, select the best variant with a reason, then run_variant
 (this requests human approval). Never move hardware into unsafe positions. Keep spoken replies short (1-2 sentences) since
 they are read aloud on the phone. Use say() only for interim spoken updates; your final text reply is spoken automatically."""
@@ -46,6 +58,14 @@ TOOLS: list[dict] = [
                       "required": ["device"]}},
     {"name": "cnc_move", "description": "Move the CNC syringe head (absolute mm) or home it (home=true).",
      "input_schema": {"type": "object", "properties": {"x": {"type": "number"}, "y": {"type": "number"}, "z": {"type": "number"}, "f": {"type": "number"}, "home": {"type": "boolean"}}}},
+    {"name": "tool", "description": "Head tool rail: put a tool over a deck target (goto), take a USB-microscope picture "
+     "(snap: optionally over a target first), or probe a beaker's liquid surface with the capacitive probe (probe -> "
+     "surface height + estimated volume). Tools: pipette (the syringe tip), microscope, probe.",
+     "input_schema": {"type": "object", "properties": {
+         "action": {"type": "string", "enum": ["goto", "snap", "probe", "plan"]},
+         "tool": {"type": "string", "enum": ["pipette", "microscope", "probe"]},
+         "target": {"type": "string", "description": "beaker A1-F7, a stock (water/red/yellow/blue), waste"},
+         "x": {"type": "number"}, "y": {"type": "number"}, "z": {"type": "number"}}, "required": ["action"]}},
     {"name": "pipette", "description": "Syringe pipette action: home (drive plunger to its bottom stop), prime (plunger to the ready air cushion; do it above the liquid), aspirate/dispense (ul), blowout, move (plunger height mm, 0..stroke).",
      "input_schema": {"type": "object", "properties": {"action": {"type": "string", "enum": ["home", "prime", "aspirate", "dispense", "blowout", "move"]}, "ul": {"type": "number"}, "mm": {"type": "number"}},
                       "required": ["action"]}},
@@ -110,7 +130,7 @@ async def _llm_variants(goal: str, n: int) -> list[dict] | None:
             if not dyes or len(ratios) != len(dyes):
                 continue
             total = max(60.0, min(280.0, float(it.get("total_ul", 200))))
-            well = f"{sim.ROWS[i % 8]}{i // 8 + 1}"
+            well = f"{sim.ROWS[i % sim.PLATE['rows']]}{i // sim.PLATE['rows'] + 1}"
             out.append({"id": f"v{i + 1:02d}", "params": {"dyes": dyes, "ratios": ratios, "total_ul": total, "well": well},
                         "protocol": sim.protocol_from_ratios(dyes, ratios, total, well)})
         return out or None
@@ -180,6 +200,18 @@ async def _run_tool(name: str, a: dict) -> Any:
             if not lo <= v <= hi:
                 raise ValueError(f"{ax}={v} outside [{lo},{hi}]")
         return await hub.cmd("cnc", "move", {"x": x, "y": y, "z": z, "f": float(a.get("f", 2000))}, timeout=60)
+    if name == "tool":
+        from . import tooling
+        act, tool = a["action"], a.get("tool") or {"snap": "microscope", "probe": "probe"}.get(a["action"], "pipette")
+        if act == "plan":
+            return tooling.plan(tool, a.get("target"), a.get("x"), a.get("y"), a.get("z"))
+        if act == "goto":
+            return await tooling.goto(tool, a.get("target"), a.get("x"), a.get("y"), a.get("z"))
+        if act == "snap":
+            return await tooling.snap(a.get("target"), a.get("x"), a.get("y"), a.get("z"))
+        if act == "probe":
+            return await tooling.probe_level(a["target"])
+        raise ValueError(f"unknown tool action {act}")
     if name == "pipette":
         act = a["action"]
         args = {"ul": a["ul"]} if act in ("aspirate", "dispense") else ({"mm": float(a.get("mm", 0))} if act == "move" else {})
@@ -235,7 +267,8 @@ async def _anthropic_loop(text: str) -> str:
                 continue
             out = await run_tool(b.name, b.input or {})
             if isinstance(out, dict) and out.get("_image"):
-                content = [{"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": out["_image"]}},
+                content = [{"type": "image", "source": {"type": "base64", "media_type": out.get("_mime", "image/jpeg"),
+                                                        "data": out["_image"]}},
                            {"type": "text", "text": f"camera frame {out.get('w')}x{out.get('h')}, {out.get('age_s')} s old"}]
             else:
                 content = json.dumps(out, default=str)[:8000]

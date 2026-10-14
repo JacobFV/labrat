@@ -1,8 +1,9 @@
-// Camera -> plate calibration: click the centres of wells A1, A12, H12, H1 on the latest phone frame.
+// Camera -> deck calibration: click the centres of the mixing-grid corner beakers A1, A7, F7, F1 on the latest phone frame
+// (server/labrat/vision.py CORNER_WELLS).
 // Self-contained (adds its own button to the top bar + a modal). POSTs /api/camera_cal.
 const qs = new URLSearchParams(location.search);
 const TOKEN = qs.get('token') || (() => { try { return localStorage.getItem('labrat_token'); } catch { return null; } })() || 'labrat';
-const WELLS = ['A1', 'A12', 'H12', 'H1'];
+const WELLS = ['A1', 'A7', 'F7', 'F1'];
 
 async function api(path, opts = {}) {
   const r = await fetch(path + (path.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(TOKEN), {
@@ -34,7 +35,7 @@ function open() {
   const save = back.querySelector('[data-a=save]');
   let pts = [];
   const prompt = () => {
-    msg.textContent = pts.length < 4 ? `Click the centre of well ${WELLS[pts.length]} (${pts.length + 1}/4)` : 'All 4 set. Save to store the homography.';
+    msg.textContent = pts.length < 4 ? `Click the centre of beaker ${WELLS[pts.length]} (${pts.length + 1}/4)` : 'All 4 set. Save to store the homography.';
     save.disabled = pts.length < 4;
   };
   const draw = () => {
@@ -79,7 +80,7 @@ function open() {
 }
 
 const btn = document.createElement('button');
-btn.className = 'btn ghost'; btn.textContent = 'Calibrate cam'; btn.title = 'Click 4 plate corner wells on the latest phone frame';
+btn.className = 'btn ghost'; btn.textContent = 'Calibrate cam'; btn.title = 'Click the 4 corner beakers on the latest phone frame';
 btn.addEventListener('click', open);
 const host = document.querySelector('.topright');
 if (host) host.insertBefore(btn, host.querySelector('#abortBtn')); else document.body.appendChild(btn);

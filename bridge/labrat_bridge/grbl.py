@@ -15,6 +15,8 @@ DEFAULT_FEED = 1000.0
 RX_BUF = 127
 ALLOWED = {"G0", "G1", "G4", "G90", "G91", "G21", "G28", "M3", "M5", "$H", "$X"}
 DEFAULT_CALIB = {"zero_after_home": [0.0, 0.0, 0.0], "home_if_enabled": True}
+PROBE_FEED_MAX = 200.0
+_PRB = re.compile(r"\[PRB:([-\d.]+),([-\d.]+),([-\d.]+):(\d)\]")
 
 _WORD = re.compile(r"([A-Z])\s*([-+]?\d*\.?\d+)")
 
@@ -154,6 +156,20 @@ class GrblBase(Device):
     def a_status(self):
         return dict(self.st)
 
+    def a_probe(self, dz: float = -20.0, f: float = 60.0, retract: bool = True):
+        """Probe straight down by up to |dz| (G38.3: no alarm when nothing triggers) with the tool-rail capacitive probe
+        (TTP223 OUT on the GRBL probe pin, $6=1). Returns {hit, z (work z of the trigger), start_z}; retracts to the
+        start height. Use it for liquid surfaces and the bed."""
+        dz, f = -abs(float(dz)), min(abs(float(f)), PROBE_FEED_MAX)
+        z0 = self.pos[2]
+        zt = max(LIMITS["z"][0], z0 + dz)
+        check_bounds(self.pos[0], self.pos[1], zt)
+        self._abort.clear()
+        hit, z = self._probe(zt, f)
+        if retract:
+            self.a_move(z=z0)
+        return {"hit": hit, "z": round(z, 3) if hit else None, "start_z": z0, "target_z": zt}
+
     def state(self):
         return dict(self.st)
 
@@ -187,6 +203,15 @@ class MockGrbl(GrblBase):
                 time.sleep(s[1] / self.speedup)
             elif s == ("sys", "$H"):
                 self.a_home()
+
+    def _probe(self, zt, f):
+        """mock: a surface at LABRAT_MOCK_PROBE_Z (work z, default -30)."""
+        import os
+        surf = float(os.environ.get("LABRAT_MOCK_PROBE_Z", "-30"))
+        x, y, _ = self.pos
+        stop = max(zt, surf)
+        self._execute(["G1"], [("move", (x, y, stop), f)])
+        return (surf >= zt), stop
 
     def a_home(self):
         self.st["state"] = "Home"
@@ -347,6 +372,19 @@ class Grbl(GrblBase):
         else:  # homing disabled: assume zeroed; go to work origin via safe Z
             self._execute([f"G90 G21 G1 Z0 F{FEED_Z_MAX:g}", f"G1 X0 Y0 F{FEED_XY_MAX:g}"], [])
         return dict(self.st)
+
+    def _probe(self, zt, f):
+        self.info_lines.clear()
+        r = self._send(f"G90 G21 G38.3 Z{zt:g} F{f:g}", timeout=120)
+        if r != "ok":
+            raise DeviceError(f"probe: {r}")
+        self._send("G4 P0", timeout=120)                   # wait for the probe move to finish
+        for line in reversed(self.info_lines):
+            m = _PRB.search(line)
+            if m:
+                wco = self.st.get("wco", [0.0, 0.0, 0.0])
+                return m.group(4) == "1", float(m.group(3)) - wco[2]
+        raise DeviceError("probe: no [PRB] report")
 
     def a_zero(self, x=0, y=0, z=0):
         """Declare the current position as work (x, y, z), default 0,0,0 (use when homing is disabled).

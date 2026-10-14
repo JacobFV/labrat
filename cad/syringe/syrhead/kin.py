@@ -4,8 +4,10 @@
 * mesh      - the coupled drive train (rack -> G5/G4 -> G3/G2 -> G1) swept over the stroke with exact OCCT booleans:
               every mesh pair must have zero overlap AND stay engaged (minimum tooth distance below the backlash bound)
 * sweep     - every moving part against every static part over the stroke (exact booleans after an AABB prefilter),
-              except contacts the design declares (bearings on pins / spacers, stopper in the barrel, block on rail)
+              except contacts the design declares (bearings on pins / spacers, stopper in the barrel)
 * machine   - clearance to the 3018: Z plate (moves with the head), Z stepper (above the head at CNC z = 0), clamp
+* print     - every FDM part in its print orientation (parts.PRINT_ORIENT): no face that needs support (downward faces
+              flatter than 45 deg, other than the bed face), i.e. the part prints without supports
 Pure build123d: runs in CI without microfab.
 """
 from __future__ import annotations
@@ -19,7 +21,7 @@ from .assembly import build, group_motion, kin
 from .spec import LAY, S
 
 OVERLAP_MM3 = 0.05
-DECLARED = [("bearing_*", "spacer_*"), ("bearing_*", "pin_*"), ("stopper", "barrel"), ("mgn_*", "rail"), ("mgn_*", "scr_rail_*"),
+DECLARED = [("bearing_*", "spacer_*"), ("bearing_*", "pin_*"), ("stopper", "barrel"),
             ("plunger", "barrel"), ("lead_*", "servo"), ("servo_spline", "servo"), ("servo_horn", "servo"),
             ("lead_*", "lead_tie"), ("disc_cap", "plunger"), ("carriage", "plunger")]
 MESHES = [("gear_a", "gear_b"), ("gear_b", "gear_c"), ("gear_c", "carriage")]
@@ -179,6 +181,13 @@ def machine_checks():
                 worst_y_above = max(worst_y_above, _max_y_above(s, S.zstep_bottom_z))
             if bb.min.Z < 49.0 and bb.max.Z > -43.0:
                 worst_y_plate = max(worst_y_plate, bb.max.Y)
+    # X envelope: the gantry uprights (cnc3018.py UP_X0 = 170 from the machine centre) limit how far the spindle can go
+    xs = [b for i in H.insts if H.parts[i.pn].make for b in [posed(i, 0.0).bounding_box()]]
+    xmin, xmax = min(b.min.X for b in xs), max(b.max.X for b in xs)
+    lo, hi = max(0.0, 150.0 - 170.0 - xmin), min(300.0, 150.0 + 170.0 - xmax)
+    out.append({"check": "machine", "name": "usable spindle X travel next to the gantry uprights (info)", "ok": True,
+                "value": [round(lo, 1), round(hi, 1)], "need": "info (0..300 nominal; head x extent "
+                f"{xmin:.0f}..{xmax:.0f})"})
     out.append({"check": "machine", "name": "max Y above the Z stepper bottom (z > 68)", "ok": worst_y_above < S.zstep_front_y - 1.0,
                 "value": round(worst_y_above, 2), "need": f"< {S.zstep_front_y - 1.0}"})
     out.append({"check": "machine", "name": "max Y beside the Z plate (-43 < z < 49)", "ok": worst_y_plate < S.zplate_front_y - 1.0,
@@ -198,5 +207,38 @@ def _max_y_above(s, z0):
         return bb.max.Y
 
 
+PRINT_MAX_DEG = 45.0              # overhang limit from the horizontal (45 deg chamfers / teardrops / flare pass)
+PRINT_TESS_DEG = 3.0              # facets of a tessellated 45 deg cone read up to ~48 deg
+PRINT_TOL_MM2 = 2.0
+
+
+def print_checks():
+    import numpy as np
+    import trimesh
+
+    from .parts import PRINT_ORIENT
+    H = build()
+    out = []
+    lim = -math.sin(math.radians(PRINT_MAX_DEG + PRINT_TESS_DEG))
+    for pn, d in H.parts.items():
+        if d.process != "fdm_print":
+            continue
+        v, t = d.make().tessellate(0.01, 0.04)          # fine: a coarse facet on a 45 deg cone reads steeper
+        m = trimesh.Trimesh(np.array([tuple(p) for p in v]), np.array(t), process=True)
+        if pn in PRINT_ORIENT:
+            ax, deg = PRINT_ORIENT[pn]
+            m.apply_transform(trimesh.transformations.rotation_matrix(math.radians(deg), ax))
+        z0 = m.bounds[0][2]
+        n = m.face_normals
+        bed = np.all(np.abs(m.vertices[m.faces][:, :, 2] - z0) < 0.05, axis=1)
+        sel = (n[:, 2] < lim) & ~bed
+        area = float(m.area_faces[sel].sum())
+        where = m.triangles_center[sel][np.argmax(m.area_faces[sel])].round(1).tolist() if sel.any() else None
+        out.append({"check": "print", "name": f"{pn} {d.name}: overhang needing support (mm2, print frame)",
+                    "ok": area <= PRINT_TOL_MM2, "value": round(area, 2), "need": f"<= {PRINT_TOL_MM2}",
+                    "where": where})
+    return out
+
+
 def run_all(n=25):
-    return spec_checks() + mesh_and_sweep(n) + machine_checks()
+    return spec_checks() + print_checks() + mesh_and_sweep(n) + machine_checks()

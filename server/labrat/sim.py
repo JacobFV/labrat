@@ -11,15 +11,30 @@ import numpy as np
 from . import deck_cal
 
 # ---------------- deck ----------------
+# cad/deck/deck.json (python deck.py) is the source of these numbers; server/tests/test_sim.py checks they agree.
+# Tip rack: FT-200L-RS, 96 x 200 uL, 117 x 81.5 mm box. "plate": the mixing grid = columns 1-7 of the printed beaker
+# matrix DECK-001 (6 rows A-F x 8 columns on 19 mm, 15.3 x 50 mm beakers); its column 8 holds the stock beakers.
 ROWS = "ABCDEFGH"
-TIP_RACK = {"name": "tip_rack", "origin": (20.0, 20.0), "pitch": 9.0, "rows": 8, "cols": 12}
-PLATE = {"name": "plate", "origin": (140.0, 20.0), "pitch": 9.0, "rows": 8, "cols": 12, "cap_ul": 300.0}
-RESERVOIRS = {"water": (250.0, 20.0), "red": (250.0, 60.0), "blue": (250.0, 100.0), "yellow": (250.0, 140.0)}
-RES_CAP_UL = 20000.0
+TIP_RACK = {"name": "tip_rack", "origin": (17.0, 19.25), "pitch": 9.0, "rows": 8, "cols": 12}
+PLATE = {"name": "plate", "label": "beaker", "origin": (153.25, 32.0), "pitch": 19.0, "rows": 6, "cols": 7,
+         "cap_ul": 5000.0}
+_STOCK_X = PLATE["origin"][0] + 7 * PLATE["pitch"]
+RESERVOIRS = {"water": (_STOCK_X, 32.0), "red": (_STOCK_X, 51.0), "yellow": (_STOCK_X, 70.0), "blue": (_STOCK_X, 89.0)}
+RES_CAP_UL, RES_FILL_UL = 5000.0, 4500.0
 WASTE = (280.0, 170.0)
 EJECT_BAR = (10.0, 170.0)
-Z_SAFE, Z_TIP, Z_WELL, Z_RES = 0.0, -38.0, -30.0, -35.0
+# Z table (spindle z, 0 = top). Tip end at z = 0 is 55 mm above the bed (cad/syringe spec.safe_tip_h); beaker rims are
+# at 51.2. Dispense from 5 mm inside the rim; aspirate / mix as deep as Z goes (tip end 10 mm above the bed, 7.6 mm
+# above a beaker's inside floor). Tip pick-up from the FT-200L-RS needs more than the 3018's 45 mm of Z (see
+# cad/deck/report.json): Z_TIP is the travel limit and the taught tip_rack points override it.
+SAFE_TIP_H = 55.0
+Z_SAFE, Z_TIP, Z_WELL, Z_RES = 0.0, -45.0, -9.0, -45.0
+Z_MIX = -45.0
 BOUNDS = {"x": (0.0, 300.0), "y": (0.0, 180.0), "z": (-45.0, 0.0)}
+BEAKER_UL_PER_MM = math.pi / 4 * 13.5 ** 2          # 15.3 OD beaker, ~0.9 wall
+BEAKER_FLOOR_H = 2.4                                 # inside floor above the bed (1.2 holder floor + 1.2 beaker bottom)
+# liquid the tip can reach: the surface must stay >= 1 mm above the lowest tip end
+REACH_UL = (SAFE_TIP_H + BOUNDS["z"][0] + 1.0 - BEAKER_FLOOR_H) * BEAKER_UL_PER_MM
 TIP_CAP_UL = 200.0
 FEED_XY, FEED_Z = 3000.0, 600.0  # mm/min
 ACCEL = 400.0  # mm/s^2
@@ -70,7 +85,7 @@ def well_xy(name: str, grid: dict) -> tuple[float, float]:
     if not m:
         raise ValueError(f"bad well {name}")
     r, c = ROWS.index(m.group(1).upper()), int(m.group(2)) - 1
-    if not (0 <= c < grid["cols"]):
+    if not (0 <= c < grid["cols"] and r < grid["rows"]):
         raise ValueError(f"bad well {name}")
     ox, oy = grid["origin"]
     nom = (ox + c * grid["pitch"], oy + r * grid["pitch"])
@@ -86,7 +101,7 @@ def well_xyz(name: str, grid: dict, z_nom: float) -> tuple[float, float, float]:
     if not m:
         raise ValueError(f"bad well {name}")
     r, c = ROWS.index(m.group(1).upper()), int(m.group(2)) - 1
-    if not (0 <= c < grid["cols"]):
+    if not (0 <= c < grid["cols"] and r < grid["rows"]):
         raise ValueError(f"bad well {name}")
     ox, oy = grid["origin"]
     return deck_cal.grid_spindle(grid["name"], r, c, (ox + c * grid["pitch"], oy + r * grid["pitch"]), z_nom)
@@ -105,6 +120,11 @@ def loc(name: str) -> tuple[str, float, float, float]:
     if n == "waste":
         return ("waste", *deck_cal.point_spindle("waste", (WASTE[0], WASTE[1], -10.0)))
     return ("well", *well_xyz(name, PLATE, Z_WELL))
+
+
+def _dive(z_work: float) -> float:
+    """aspirate / mix height in a mixing beaker: the dispense height lowered to the deep (reach) height."""
+    return max(BOUNDS["z"][0], z_work + (Z_MIX - Z_WELL))
 
 
 def mix_rgb(comp: dict[str, float]) -> list[int]:
@@ -156,7 +176,7 @@ class Sim:
         self.tip: dict | None = None  # {"id","vol","comp":{}, "touched": set}
         self.used_tips: set[str] = set()
         self.wells: dict[str, dict] = {}
-        self.res = {k: {"vol": RES_CAP_UL * 0.5, "comp": {k: 1.0}} for k in RESERVOIRS}
+        self.res = {k: {"vol": RES_FILL_UL, "comp": {k: 1.0}} for k in RESERVOIRS}
         self.errors: list[str] = []
         self.warnings: list[str] = []
         self.frames: list[dict] = []
@@ -245,6 +265,11 @@ class Sim:
                 if ul > c["vol"] + 1e-6:
                     self.errors.append(f"step {i}: aspirate {ul} µL but {src} has {c['vol']:.0f} µL")
                     ul = c["vol"]
+                elif c["vol"] - ul < REACH_UL - 1e-6:
+                    self.errors.append(f"step {i}: aspirate {ul:.0f} µL from {src} ({c['vol']:.0f} µL): the tip only "
+                                       f"reaches liquid while a beaker holds >= {REACH_UL:.0f} µL")
+                if kind == "well":
+                    z = _dive(z)
                 self._goto(x, y, z, i, "aspirate")
                 take = _take(c, ul * VOL_GAIN)
                 _add(self.tip, take, ul * VOL_GAIN)
@@ -276,10 +301,14 @@ class Sim:
                     self.errors.append(f"step {i}: mix without tip")
                     return
                 c = self._container(w)
+                if c["vol"] < REACH_UL:
+                    self.warnings.append(f"step {i}: mix skipped: {w} holds {c['vol']:.0f} µL, the tip reaches liquid "
+                                         f"from {REACH_UL:.0f} µL")
+                    return
                 if ul > c["vol"]:
                     self.warnings.append(f"step {i}: mix volume {ul} > well volume {c['vol']:.0f}")
                 _, x, y, z = loc(w)
-                self._goto(x, y, z, i, "mix")
+                self._goto(x, y, _dive(z), i, "mix")
                 self.t += n * 2 * (ul / PIPETTE_UL_PER_S + 0.2)
                 self.tip["sources"].add(w.lower())
                 self._frame(i, "mix", [w.upper()])
@@ -393,7 +422,7 @@ def protocol_from_ratios(dyes: list[str], ratios: list[float], total_ul: float, 
             steps.append({"op": "aspirate", "src": d, "ul": chunk})
             steps.append({"op": "dispense", "dst": well, "ul": chunk})
             remaining -= chunk
-        if mix and j == len(active) - 1:
+        if mix and j == len(active) - 1 and total_ul >= REACH_UL:
             steps.append({"op": "mix", "well": well, "ul": min(100, total_ul / 2), "n": 3})
         steps.append({"op": "eject_tip"})
     steps.append({"op": "photo", "target": "plate"})
@@ -414,7 +443,7 @@ def generate_variants(goal: str, n: int = 12, seed: int = 0) -> list[dict]:
         else:
             ratios = list(rng.dirichlet(np.ones(k)))
         total = float(rng.choice([120, 150, 180, 200, 240]))
-        well = f"{ROWS[i % 8]}{i // 8 + 1}"
+        well = f"{ROWS[i % PLATE['rows']]}{i // PLATE['rows'] + 1}"
         proto = protocol_from_ratios(dyes, ratios, total, well, tip_start=0)
         out.append({
             "id": f"v{i + 1:02d}",

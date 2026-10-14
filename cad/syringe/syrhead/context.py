@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import trimesh
-from build123d import Align, Box, BuildPart, BuildSketch, Cylinder, Location, Locations, Mode, Plane, Polygon, Rectangle, RectangleRounded, extrude, fillet
+from build123d import Align, Box, BuildPart, Locations, Mode
 
 from .spec import LAY, S
 
@@ -28,7 +28,6 @@ MAT_MAP = {"alu": "aluminum_6063_t5_clear_anodized", "black": "aluminum_6061_t6_
            "rubber": "epdm_rubber", "pcb": "pcb_green", "chip": "abs_black", "purple": "syr_heatsink_purple",
            "terminal": "terminal_green_yellow", "label": "label_vinyl", "labeltxt": "print_black",
            "copper": "copper_c101_ofhc"}
-DECK = {"tip_rack": (20.0, 20.0), "plate": (140.0, 20.0), "res": {"water": (250, 20), "red": (250, 60), "blue": (250, 100), "yellow": (250, 140)}}
 
 
 def _split_smooth(m: trimesh.Trimesh, angle=35.0) -> trimesh.Trimesh:
@@ -47,62 +46,14 @@ def _tess(shape, tol=0.02, ang=0.12) -> trimesh.Trimesh:
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-# labware (deck frame: x, y on the bed, z up from the bed top)
+# labware: cad/deck/deck.py (deck frame: machine x, y on the bed, z up from the bed top)
 # ---------------------------------------------------------------------------------------------------------------------
-def tip_rack():
-    """96-position 200 uL rack (SBS footprint): box 58 deep, deck plate at 54 holding the tips by their collars."""
-    H, PZ = 58.0, 54.0
-    with BuildPart() as box:
-        with Locations((49.5, 31.5, 0)):
-            Box(122.0, 80.0, H, align=(Align.CENTER, Align.CENTER, Align.MIN))
-            with Locations((0, 0, 1.6)):
-                Box(118.8, 76.8, H, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
-    with BuildPart() as deckp:
-        with Locations((49.5, 31.5, PZ)):
-            Box(121.0, 79.0, 1.4, align=(Align.CENTER, Align.CENTER, Align.MIN))
-        for r in range(8):
-            for c in range(12):
-                with Locations((c * 9.0, r * 9.0, PZ)):
-                    Cylinder(3.2, 3, mode=Mode.SUBTRACT)       # tip body 6.0 passes, collar 6.9 rests on the plate
-    return box.part, deckp.part, PZ + 1.4 + 1.6        # tip rim height above the bed (collar on the plate)
-
-
-def well_plate():
-    with BuildPart() as bp:
-        with Locations((49.5, 31.5, 0)):
-            Box(127.8, 85.5, 14.4, align=(Align.CENTER, Align.CENTER, Align.MIN))
-        with Locations((49.5, 31.5, 2.5)):
-            Box(124.0, 81.5, 14.4, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
-        for r in range(8):
-            for c in range(12):
-                with Locations((c * 9.0, r * 9.0, 2.5)):
-                    Cylinder(3.6, 11.9, align=(Align.CENTER, Align.CENTER, Align.MIN))
-                with Locations((c * 9.0, r * 9.0, 3.6)):
-                    Cylinder(3.3, 12, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
-    return bp.part
-
-
-def well_liquid(c, r, ul=180.0):
-    h = ul / (math.pi * 3.3 ** 2)
-    with BuildPart() as bp:
-        with Locations((c * 9.0, r * 9.0, 3.6)):
-            Cylinder(3.28, h, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    return bp.part
-
-
-def reservoir():
-    with BuildPart() as bp:
-        Box(30.0, 34.0, 26.0, align=(Align.CENTER, Align.CENTER, Align.MIN))
-        with Locations((0, 0, 1.6)):
-            Box(26.8, 30.8, 26.0, align=(Align.CENTER, Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
-    return bp.part
-
-
-def reservoir_liquid(level=14.0):
-    with BuildPart() as bp:
-        with Locations((0, 0, 1.6)):
-            Box(26.78, 30.78, level, align=(Align.CENTER, Align.CENTER, Align.MIN))
-    return bp.part
+def _deck():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("labrat_deck", ROOT / "cad" / "deck" / "deck.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def laptop():
@@ -166,40 +117,44 @@ def write_context(out: Path, cnc=(150.0, 60.0, -10.0), tips_used=("A1", "A2", "B
         m.apply_transform(T)
         place(f"cnc_{gname}", f"CTX-CNC-{gname}", _split_smooth(m), MAT_MAP.get(mat, "aluminum_6061_t6_machined"),
               tags=("context", "cnc"))
-    # ---- labware ----
-    box, deckp, rim = tip_rack()
-    tx, ty = DECK["tip_rack"]
-    place("tip_rack_box", "CTX-TIPRACK-BOX", _tess(box), "syr_pp_blue", deck_M(tx, ty))
-    place("tip_rack_plate", "CTX-TIPRACK-PLATE", _tess(deckp), "syr_pp_blue", deck_M(tx, ty))
+    # ---- labware (cad/deck) ----
+    D = _deck()
+    tray, plate, lid = D.tip_rack()
+    place("tip_rack_box", "CTX-TIPRACK-BOX", _tess(tray), "syr_pp_blue", deck_M(0, 0))
+    place("tip_rack_plate", "CTX-TIPRACK-PLATE", _tess(plate), "syr_pp_natural", deck_M(0, 0))
+    place("tip_rack_lid", "CTX-TIPRACK-LID", _tess(lid), "syr_pp_blue", deck_M(0, 0))
     from .vendor import pipette_tip
-    tipm = _tess(pipette_tip(), 0.01, 0.1)
-    _write_npz(parts / "CTX-TIP.npz", tipm)
+    _write_npz(parts / "CTX-TIP.npz", _tess(pipette_tip(), 0.01, 0.1))
     ROWS = "ABCDEFGH"
+    ax, ay = D.TIPRACK_A1
     for r in range(8):
         for c in range(12):
             if f"{ROWS[r]}{c + 1}" in tips_used:
                 continue
-            M = deck_M(tx + c * 9.0, ty + r * 9.0, rim)
-            inst[f"tip_{ROWS[r]}{c + 1}"] = {"prim": f"/context/tip_{ROWS[r]}{c + 1}", "path": f"context/tip", "pn": "CTX-TIP",
+            M = deck_M(ax + c * 9.0, ay + r * 9.0, D.TIPRACK["rim_h"])
+            inst[f"tip_{ROWS[r]}{c + 1}"] = {"prim": f"/context/tip_{ROWS[r]}{c + 1}", "path": "context/tip", "pn": "CTX-TIP",
                                              "name": "tip", "finish": "syr_tip_yellow", "material": "syr_tip_yellow", "kind": "buy",
                                              "process": "purchased", "category": "consumable", "tags": ["context", "tips"],
                                              "matrix": M.tolist()}
-    px, py = DECK["plate"]
-    place("well_plate", "CTX-PLATE96", _tess(well_plate()), "syr_ps_clear", deck_M(px, py))
-    liquid_wells = liquid_wells or {"A1": "syr_dye_red", "A2": "syr_dye_yellow", "A3": "syr_dye_blue", "B1": "syr_dye_red",
-                                    "B2": "syr_dye_yellow"}
-    for w, fin in liquid_wells.items():
-        r, c = ROWS.index(w[0]), int(w[1:]) - 1
-        place(f"liq_{w}", f"CTX-LIQ-{w}", _tess(well_liquid(c, r)), fin, deck_M(px, py), tags=("context", "liquid"))
-    resm = _tess(reservoir())
-    _write_npz(parts / "CTX-RES.npz", resm)
-    liqm = _tess(reservoir_liquid())
-    _write_npz(parts / "CTX-RES-LIQ.npz", liqm)
-    for k, (rx, ry) in DECK["res"].items():
-        for nm, pn, fin in ((f"res_{k}", "CTX-RES", "syr_pp_natural"), (f"res_{k}_liq", "CTX-RES-LIQ", "syr_water" if k == "water" else f"syr_dye_{k}")):
-            inst[nm] = {"prim": f"/context/{nm}", "path": f"context/{nm}", "pn": pn, "name": nm, "finish": fin, "material": fin,
-                        "kind": "buy", "process": "purchased", "category": "fluidics", "tags": ["context"],
-                        "matrix": deck_M(rx, ry).tolist()}
+    holder, labels = D.matrix_holder()
+    place("beaker_matrix", "DECK-001", _tess(holder, 0.03, 0.15), "syr_petg_white", deck_M(0, 0))
+    place("beaker_matrix_labels", "DECK-001-LBL", _tess(labels, 0.02, 0.1), "print_black", deck_M(0, 0))
+    _write_npz(parts / "CTX-BEAKER.npz", _split_smooth(_tess(D.beaker(), 0.02, 0.12)))
+    liquid_wells = liquid_wells or {"A1": ("syr_dye_red", 2400), "A2": ("syr_dye_orange", 2600), "A3": ("syr_dye_yellow", 2400),
+                                    "B1": ("syr_dye_orange", 1800), "B2": ("syr_dye_green", 2200), "C1": ("syr_dye_purple", 2000)}
+    stocks = {"A8": "syr_water", "B8": "syr_dye_red", "C8": "syr_dye_yellow", "D8": "syr_dye_blue"}
+    floor = D.M["floor"]
+    for r in range(D.M["rows"]):
+        for c in range(D.M["cols"]):
+            w = f"{'ABCDEF'[r]}{c + 1}"
+            x, y = D.well_xy(w)
+            inst[f"beaker_{w}"] = {"prim": f"/context/beaker_{w}", "path": "context/beaker", "pn": "CTX-BEAKER",
+                                   "name": "beaker", "finish": "syr_pp_clear", "material": "syr_pp_clear", "kind": "buy",
+                                   "process": "purchased", "category": "fluidics", "tags": ["context"],
+                                   "matrix": deck_M(x, y, floor).tolist()}
+            fin, ul = (stocks[w], 4500) if w in stocks else liquid_wells.get(w, (None, 0))
+            if fin:
+                place(f"liq_{w}", f"CTX-LIQ-{w}", _tess(D.liquid(ul)), fin, deck_M(x, y, floor), tags=("context", "liquid"))
     # ---- bench top under the feet (twin Y = -72) + laptop to the operator's right ----
     feet_z = -72.0 - (S.clamp_top_above_bed + z)
     bench = trimesh.creation.box(extents=[1500.0, 800.0, 30.0])

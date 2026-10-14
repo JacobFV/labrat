@@ -25,9 +25,6 @@ syr_cable_red:
 syr_cable_orange:
   name: PVC lead, orange
   render: {shader: rubber, base: [0.88, 0.36, 0.03], rough: 0.38, wear: [dust], wear_amount: 0.3}
-syr_ps_clear:
-  name: polystyrene 96-well plate
-  render: {shader: glass, base: [0.97, 0.98, 0.99], rough: 0.04, ior: 1.59, transmission: 0.95, wear: [smudge, dust], wear_amount: 0.3}
 syr_pp_blue:
   name: PP tip-rack box, blue
   render: {shader: plastic, base: [0.04, 0.22, 0.62], rough: 0.35, wear: [smudge, dust], wear_amount: 0.4}
@@ -55,3 +52,15 @@ syr_heatsink_purple:
 syr_backdrop:
   name: photo sweep, matte grey
   render: {shader: plastic, base: [0.42, 0.43, 0.45], rough: 0.85, wear: [], wear_amount: 0.0}
+syr_dye_orange:
+  name: orange dye mix
+  render: {shader: liquid, base: [0.95, 0.42, 0.04], rough: 0.02, ior: 1.33, transmission: 0.75, wear: [], wear_amount: 0.0}
+syr_dye_green:
+  name: green dye mix
+  render: {shader: liquid, base: [0.10, 0.55, 0.18], rough: 0.02, ior: 1.33, transmission: 0.75, wear: [], wear_amount: 0.0}
+syr_dye_purple:
+  name: purple dye mix
+  render: {shader: liquid, base: [0.42, 0.10, 0.55], rough: 0.02, ior: 1.33, transmission: 0.75, wear: [], wear_amount: 0.0}
+syr_pcb_red:
+  name: FR4 PCB, red solder mask
+  render: {shader: plastic, base: [0.62, 0.06, 0.05], rough: 0.35, wear: [dust], wear_amount: 0.2}

@@ -1,0 +1,42 @@
+{
+ "frame": "offset = tool point - syringe tip end, machine axes (mm); spindle = target - offset",
+ "rail_index_x": [
+  -28.0,
+  -20.0,
+  -11.0,
+  -2.0,
+  8.5,
+  16.0
+ ],
+ "tools": {
+  "pipette": {
+   "kind": "syringe",
+   "module": "head",
+   "offset": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "microscope": {
+   "kind": "usb_microscope",
+   "module": "TM-110",
+   "offset": [
+    -20.0,
+    -63.0,
+    25.0
+   ],
+   "note": "lens front; focus it on the target at this offset, then teach"
+  },
+  "probe": {
+   "kind": "cap_probe",
+   "module": "TM-120",
+   "offset": [
+    8.5,
+    -42.5,
+    0.0
+   ],
+   "note": "electrode tip; TTP223 OUT -> GRBL probe pin, $6=1 (active high)"
+  }
+ }
+}

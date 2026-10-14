@@ -26,7 +26,7 @@ def make_variant(i):
     red = random.randint(20, 150); yel = 200 - red
     rgb = mix(red, yel)
     score = 1 - abs(red / 200 - 0.35) * 1.6 + random.uniform(-0.05, 0.05)
-    well = f"{ROWS[i // 12]}{i % 12 + 1}"
+    well = f"{ROWS[i % 6]}{i // 6 + 1}"                       # beaker matrix: rows A-F, mixing columns 1-7
     steps = [{"op": "pick_tip", "rack_well": f"A{i + 1}"}, {"op": "aspirate", "src": "R2", "ul": red}, {"op": "dispense", "dst": well, "ul": red},
              {"op": "eject_tip"}, {"op": "pick_tip", "rack_well": f"B{i + 1}"}, {"op": "aspirate", "src": "R4", "ul": yel}, {"op": "dispense", "dst": well, "ul": yel},
              {"op": "mix", "well": well, "ul": 100, "n": 3}, {"op": "eject_tip"}, {"op": "photo", "target": "plate"}]
@@ -38,12 +38,12 @@ def make_variant(i):
 
 def sim_frames(v):
     frames, t = [], 0.0
-    red_xy, yel_xy = (250, 60), (250, 140)
+    red_xy, yel_xy = (286.25, 51), (286.25, 70)                # stock beakers B8, C8 (server/labrat/sim.py)
     r, c = ROWS.index(v["well"][0]), int(v["well"][1:]) - 1
-    well_xy = (140 + c * 9, 20 + r * 9)
+    well_xy = (153.25 + c * 19, 32 + r * 19)
     vol = {"r": 0, "y": 0}
-    path = [((20 + int(v["id"][1:]) * 9 - 9, 20), "pick_tip"), (red_xy, "aspirate red"), (well_xy, "dispense"), ((10, 170), "eject"),
-            ((20 + int(v["id"][1:]) * 9 - 9, 29), "pick_tip"), (yel_xy, "aspirate yellow"), (well_xy, "dispense"), (well_xy, "mix"), ((10, 170), "eject")]
+    path = [((17 + int(v["id"][1:]) * 9 - 9, 19.25), "pick_tip"), (red_xy, "aspirate red"), (well_xy, "dispense"), ((10, 170), "eject"),
+            ((17 + int(v["id"][1:]) * 9 - 9, 28.25), "pick_tip"), (yel_xy, "aspirate yellow"), (well_xy, "dispense"), (well_xy, "mix"), ((10, 170), "eject")]
     pos = (150, 90); tip = False; pv = 0
     for (tx, ty), label in path:
         for k in range(8):

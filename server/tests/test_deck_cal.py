@@ -14,9 +14,13 @@ def tmp_cal(tmp_path, monkeypatch):
 
 
 def test_uncalibrated_is_nominal():
-    assert sim.well_xy("A1", sim.PLATE) == (140.0, 20.0)
-    assert sim.well_xyz("H12", sim.PLATE, sim.Z_WELL) == (140.0 + 99, 20.0 + 63, sim.Z_WELL)
-    assert sim.loc("red")[1:] == (250.0, 60.0, sim.Z_RES)
+    assert sim.well_xy("A1", sim.PLATE) == (153.25, 32.0)
+    assert sim.well_xyz("F7", sim.PLATE, sim.Z_WELL) == (153.25 + 6 * 19, 32.0 + 5 * 19, sim.Z_WELL)
+    assert sim.loc("red")[1:] == (153.25 + 7 * 19, 51.0, sim.Z_RES)        # stock beaker B8
+    with pytest.raises(ValueError):
+        sim.well_xy("G1", sim.PLATE)                                        # 6 rows
+    with pytest.raises(ValueError):
+        sim.well_xy("A8", sim.PLATE)                                        # column 8 = stocks
     assert sim.eject_xyz() == (10.0, 170.0, -20.0)
 
 
@@ -32,9 +36,9 @@ def test_offset_roundtrip():
 def test_teach_single_corner_nominal_pitch():
     tip = deck_cal.teach("plate.a1", (150.0, 70.0, -30.0))  # spindle
     assert (tip["x"], tip["y"], tip["z"]) == (150.0, 70.0, -30.0)
-    # spindle back out for A1, nominal 9 mm pitch for others
+    # spindle back out for A1, nominal 19 mm beaker pitch for others
     assert sim.well_xyz("A1", sim.PLATE, -99) == pytest.approx((150.0, 70.0, -30.0))
-    assert sim.well_xyz("B3", sim.PLATE, -99) == pytest.approx((168.0, 79.0, -30.0))
+    assert sim.well_xyz("B3", sim.PLATE, -99) == pytest.approx((188.0, 89.0, -30.0))
 
 
 def test_two_corners_rotation_and_pitch():

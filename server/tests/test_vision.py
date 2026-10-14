@@ -9,7 +9,7 @@ from labrat import lab, sim, vision
 from labrat.hub import hub
 from labrat.store import store
 
-# image px of well centres A1, A12, H12, H1 (slightly keystoned, like a phone looking down at an angle)
+# image px of beaker centres A1, A7, F7, F1 (slightly keystoned, like a phone looking down at an angle)
 CORNERS = [[100.0, 80.0], [520.0, 90.0], [530.0, 380.0], [90.0, 370.0]]
 CAST = np.array([0.92, 1.0, 1.08])  # warm/cool camera colour cast to be white-balanced away
 
@@ -20,13 +20,13 @@ def synth_plate(colors: dict[str, tuple[int, int, int]], w=640, h=480) -> np.nda
     yy, xx = np.mgrid[0:h, 0:w]
     # white plate body
     x0, y0 = vision.project(H, "A1")
-    x1, y1 = vision.project(H, "H12")
+    x1, y1 = vision.project(H, "F7")
     img[int(y0 - 25):int(y1 + 25), int(min(x0, 90) - 25):int(max(x1, 520) + 25)] = 245.0
-    for r in "ABCDEFGH":
-        for c in range(1, 13):
+    for r in sim.ROWS[:sim.PLATE["rows"]]:
+        for c in range(1, sim.PLATE["cols"] + 1):
             wname = f"{r}{c}"
             cx, cy = vision.project(H, wname)
-            m = (xx - cx) ** 2 + (yy - cy) ** 2 <= 12 ** 2
+            m = (xx - cx) ** 2 + (yy - cy) ** 2 <= 26 ** 2   # beaker ID 13.5 on a 19 mm pitch (~70 px here)
             img[m] = colors.get(wname, (245, 245, 245))
     img = np.clip(img * CAST, 0, 255).astype(np.uint8)
     return img
@@ -49,14 +49,14 @@ def test_sample_well_white_balanced():
     target = (230, 120, 30)
     img = vision.decode(to_b64(synth_plate({"C5": target})))
     cal = vision.set_cal(CORNERS, 640, 480)
-    s = vision.sample_well(img, cal, "C5", blank="H12")
+    s = vision.sample_well(img, cal, "C5", blank="F7")
     assert np.max(np.abs(np.array(s["rgb"]) - (np.array(target) * 245 / 245))) <= 8, s
     # without white balance the cast is visible
     raw = vision.sample_well(img, cal, "C5")
     assert abs(raw["rgb"][2] - target[2] * CAST[2]) <= 6
     # calibration done at another resolution still maps (scaled)
     small = np.asarray(Image.fromarray(img).resize((320, 240)))
-    s2 = vision.sample_well(small, cal, "C5", blank="H12")
+    s2 = vision.sample_well(small, cal, "C5", blank="F7")
     assert np.max(np.abs(np.array(s2["rgb"]) - np.array(target))) <= 12, s2
 
 

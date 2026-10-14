@@ -7,10 +7,10 @@
 Outputs (cad/syringe/):
     step/<PN>.step, step/syringe_head_assembly.step   editable solids (make parts) + the assembly at pos 0
     stl/<PN>.stl                                       FDM parts in print orientation
-    dxf/SYR-101.dxf                                    laser-cut cover (outline, holes, slots)
-    plate_fdm.3mf                                      small FDM parts on one 220 x 220 plate (the body prints alone)
+    plate_fdm_<n>.3mf                                  FDM parts except the body, packed onto 220 x 220 plates
     bom.csv                                            purchased + make parts, rolled up by product
     twin/*.stl + twin/rig.json                         meshes per motion group / finish for cad/cnc3018 + the web twin
+    tools.json                                         tool offsets (syringe, microscope, probe) for server/deck_cal
     report.json                                        spec, coupled mesh/sweep and machine checks (fails the build)
 """
 from __future__ import annotations
@@ -23,15 +23,13 @@ from pathlib import Path
 
 import numpy as np
 import trimesh
-from build123d import Axis, Compound, ExportDXF, export_step
+from build123d import Compound, export_step
 
 from .assembly import SRC_HASH, build, kin
+from .parts import PRINT_ORIENT
 from .spec import LAY, S
 
 HERE = Path(__file__).resolve().parent.parent
-PRINT_ORIENT = {   # part frame -> print bed frame (rotation about X in degrees); body/clamp/gears already print in z
-    "SYR-103": 90.0,   # carriage on its side: rack tooth profile in the XY plane
-}
 
 
 def tess(shape, tol=0.03, ang=0.15):
@@ -43,7 +41,6 @@ def exports():
     H = build()
     (HERE / "step").mkdir(exist_ok=True)
     (HERE / "stl").mkdir(exist_ok=True)
-    (HERE / "dxf").mkdir(exist_ok=True)
     for f in list((HERE / "step").glob("*.step")) + list((HERE / "stl").glob("*.stl")):
         f.unlink()
     shapes = {}
@@ -61,9 +58,9 @@ def exports():
         export_step(s, str(HERE / "step" / f"{pn}.step"))
         if d.process == "fdm_print":
             m = tess(s, 0.02, 0.1)
-            rx = PRINT_ORIENT.get(pn, 0.0)
-            if rx:
-                m.apply_transform(trimesh.transformations.rotation_matrix(math.radians(rx), [1, 0, 0]))
+            if pn in PRINT_ORIENT:
+                ax, deg = PRINT_ORIENT[pn]
+                m.apply_transform(trimesh.transformations.rotation_matrix(math.radians(deg), ax))
             m.apply_translation(-np.array([m.bounds[0][0], m.bounds[0][1], m.bounds[0][2]]))
             m.export(HERE / "stl" / f"{pn}.stl")
             if pn != "SYR-100":
@@ -74,15 +71,10 @@ def exports():
                     plate.add_geometry(mm, geom_name=f"{pn}_{_}")
                     x_cursor += m.extents[0] + 6.0
     # wrap the small parts into rows on a 220 x 220 bed
-    _pack(plate)
-    plate.export(HERE / "plate_fdm.3mf")
-    # cover DXF (laser): the part's z = 0 face section
-    cov = shapes["SYR-101"]
-    back = cov.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0]          # cut profile = the back face (outline + holes)
-    dxf = ExportDXF()
-    dxf.add_layer("CUT")
-    dxf.add_shape(back.wires(), layer="CUT")
-    dxf.write(str(HERE / "dxf" / "SYR-101.dxf"))
+    for f in HERE.glob("plate_fdm*.3mf"):
+        f.unlink()
+    for k, sc in enumerate(_pack(plate), 1):
+        sc.export(HERE / f"plate_fdm_{k}.3mf")
     # assembly STEP at pos 0 (purchased parts included, library fasteners as simple bodies)
     insts = []
     for i in H.insts:
@@ -95,21 +87,41 @@ def exports():
     export_step(Compound(children=insts, label="syringe_head"), str(HERE / "step" / "syringe_head_assembly.step"))
     bom(H)
     twin(H, shapes)
+    tools_json()
+
+
+def tools_json():
+    """tool points (relative to the syringe tip end) + rail index positions -> tools.json, for the server's deck_cal
+    tool offsets and the bridge."""
+    from . import tools as TL
+    out = {"frame": "offset = tool point - syringe tip end, machine axes (mm); spindle = target - offset",
+           "rail_index_x": TL.RAIL_INDEX, "tools": {}}
+    for k, t in TL.TOOLS.items():
+        out["tools"][k] = {**t, "offset": [round(v, 3) for v in t["offset"]]}
+    (HERE / "tools.json").write_text(json.dumps(out, indent=1))
 
 
 def _pack(scene: trimesh.Scene, bed=215.0, gap=6.0):
+    """shelf-pack the parts (largest first) onto as many bed-sized plates as needed; returns the plates."""
+    plates = [trimesh.Scene()]
     x = y = row_h = 0.0
-    for name in list(scene.geometry):
-        g = scene.geometry[name]
+    items = sorted(scene.geometry.items(), key=lambda kv: -kv[1].extents[1])
+    for name, g in items:
+        g = g.copy()
         g.apply_translation(-g.bounds[0])
         w, h = g.extents[0], g.extents[1]
+        if w > bed or h > bed:
+            raise SystemExit(f"{name}: {w:.0f} x {h:.0f} does not fit a {bed} mm bed")
         if x + w > bed:
             x, y, row_h = 0.0, y + row_h + gap, 0.0
+        if y + h > bed:
+            plates.append(trimesh.Scene())
+            x = y = row_h = 0.0
         g.apply_translation([x, y, 0])
+        plates[-1].add_geometry(g, geom_name=name)
         x += w + gap
         row_h = max(row_h, h)
-    if y + row_h > bed:
-        raise SystemExit(f"plate_fdm.3mf: parts do not fit a {bed} mm bed")
+    return plates
 
 
 def bom(H):
@@ -172,7 +184,7 @@ def twin(H, shapes):
            "stroke_mm": S.stroke, "modelled_pos_mm": 0.0, "ul_per_mm": LAY.ul_per_mm, "ratio": LAY.ratio,
            "mm_per_servo_rad": LAY.mm_per_servo_rad, "tip_end_z": LAY.tip_end_z,
            "groups": {"carriage": {"type": "translate", "axis": [0, 0, 1], "per_mm": 1.0},
-                      **{g: {"type": "rotate", "axis": [0, 1, 0], "pivot": [c[0], 0.0, c[1]], "deg_per_mm": k1[g]}
+                      **{g: {"type": "rotate", "axis": [1, 0, 0], "pivot": [0.0, c[0], c[1]], "deg_per_mm": k1[g]}
                          for g, c in (("gear_a", LAY.A), ("gear_b", LAY.B), ("gear_c", LAY.C))}},
            "files": files}
     (tw / "rig.json").write_text(json.dumps(rig, indent=1))

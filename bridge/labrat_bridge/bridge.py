@@ -10,9 +10,12 @@ from urllib.parse import urlencode
 from .common import Device, load_json, log, save_json
 from .grbl import Grbl, MockGrbl, probe_grbl
 from .so101 import So101, probe_feetech
+from .microscope import Microscope
 from .tappet import Syringe, Tappet, probe_tappet
 
-ALL_IDS = ["so_a", "so_b", "tap_a", "tap_b", "cnc", "pipette"]
+ALL_IDS = ["so_a", "so_b", "tap_a", "tap_b", "cnc", "pipette", "microscope"]
+# extra syringe modules on the tool rail: calib/tools.json {"syringes": [{"id": "pipette2", "channel": 9}, ...]}
+DEFAULT_TOOLS = {"syringes": []}
 WATCHDOG_S = 3.0
 STATE_HZ = 5.0
 
@@ -119,6 +122,11 @@ def build_devices(mock: set[str], ports: str = "auto", so_a: str | None = None, 
         devs["pipette"] = Syringe("pipette", None)
     else:
         devs["pipette"] = Syringe("pipette", host)
+    for sy in load_json("tools.json", DEFAULT_TOOLS).get("syringes", []):   # more syringe modules, own channel + calib
+        sid = sy["id"]
+        devs[sid] = Syringe(sid, None if (sid in mock or host is None) else host, channel=int(sy["channel"]),
+                            calib=sy.get("calib", f"{sid}.json"))
+    devs["microscope"] = Microscope("microscope", mock="microscope" in mock)
 
     print_table("Devices", [(d.id, d.kind, d.status, str(d.info.get("port", d.info.get("host", "")))) for d in devs.values()],
                 ("id", "kind", "status", "port/host"))

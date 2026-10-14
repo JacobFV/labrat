@@ -46,18 +46,20 @@ def V(eye, target, lens=50.0, fstop=None):
 
 
 # head frame, mm. Operator stands at -Y; +X right.
-BENCH = {   # head on the 3018, bench context
+BENCH = {   # head on the 3018, bench context (tip rack left of the head, beaker matrix right)
     "bench_full":      V((-560, -1050, 430), (60, 60, -70), 35),
-    "bench_deck":      V((-250, -380, 30), (-10, 40, -120), 40),
-    "head_on_machine": V((-260, -420, 160), (15, -10, 30), 40),
-    "head_tip":        V((90, -170, -60), (0, 0, -70), 50),
+    "bench_deck":      V((-120, -430, 60), (20, 40, -130), 35),
+    "head_on_machine": V((-280, -440, 170), (15, -10, 40), 40),
+    "head_tip":        V((110, -190, -60), (0, 0, -85), 50),
 }
 STUDIO = {  # head alone (no machine): every part visible
-    "studio_front_left":  V((-300, -430, 140), (15, -10, 25), 40),
-    "studio_gearbox":     V((120, -260, 170), (30, -20, 95), 55),
-    "studio_rear_left":   V((-300, 230, 150), (5, 0, 40), 42),
-    "studio_carriage":    V((-170, -150, 120), (-5, 0, 80), 70),
-    "studio_tip":         V((60, -120, -40), (0, 0, -60), 60),
+    "studio_front_left":  V((-320, -450, 170), (15, -10, 45), 40),
+    "studio_gearbox":     V((300, -330, 200), (34, -12, 88), 50),
+    "studio_servo_side":  V((420, 160, 150), (48, -10, 85), 50),
+    "studio_rear_left":   V((-300, 260, 170), (0, 0, 50), 42),
+    "studio_carriage":    V((-150, -190, 150), (0, 0, 72), 60),
+    "studio_tip":         V((70, -130, -50), (0, 0, -75), 60),
+    "studio_tool_rail":   V((150, -330, 30), (-8, -45, -35), 45),
 }
 
 

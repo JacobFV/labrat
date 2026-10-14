@@ -142,3 +142,22 @@ def test_syringe_dead_reckoning():
     assert s.us_for(0) == 1500 and s.us_for(1) > 1500 > s.us_for(-1)
     s.a_blowout()
     assert s.pos == 0 and s.state()["us"] == 1500
+
+
+def test_probe_and_microscope_mock(monkeypatch):
+    import base64
+
+    from labrat_bridge.grbl import MockGrbl
+    from labrat_bridge.microscope import Microscope
+
+    monkeypatch.setenv("LABRAT_MOCK_PROBE_Z", "-12.5")
+    cnc = MockGrbl(speedup=200)
+    cnc.a_move(x=50, y=40, z=-5)
+    r = cnc.a_probe(dz=-20, f=100)
+    assert r["hit"] and r["z"] == -12.5 and cnc.pos[2] == -5.0          # retracted to the start height
+    r = cnc.a_probe(dz=-3)                                              # surface out of range: no hit, no alarm
+    assert not r["hit"] and r["z"] is None
+    m = Microscope(mock=True)
+    s = m.a_snap(width=64, height=48)
+    assert s["mime"] == "image/png" and (s["w"], s["h"]) == (64, 48)
+    assert base64.b64decode(s["image_b64"])[:8] == b"\x89PNG\r\n\x1a\n"

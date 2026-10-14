@@ -8,15 +8,15 @@
    "per_mm": 1.0
   },
   "syringe_gear_a": {
-   "prop": "rotation.z",
+   "prop": "rotation.x",
    "per_mm": -2.0016339869281046
   },
   "syringe_gear_b": {
-   "prop": "rotation.z",
+   "prop": "rotation.x",
    "per_mm": 0.6805555555555556
   },
   "syringe_gear_c": {
-   "prop": "rotation.z",
+   "prop": "rotation.x",
    "per_mm": -0.16666666666666666
   }
  }

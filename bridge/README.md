@@ -27,6 +27,9 @@ At startup it probes each USB port in parallel: GRBL banner (115200) -> Tappet `
 | Tappet ESP32 board `tap_a` (drives the syringe servo; `tap_b`/arms optional) | USB-UART 115200, JSON lines | bridge pings every 1 s (fw watchdog parks after 5 s) |
 | Syringe servo (continuous-rotation 9 g, rack and pinion on the plunger) | ESP32 PCA9685 **ch 8** on `tap_a` | `enable` is sent automatically before the first `servo_raw` (this also energizes ch 0..7) |
 | 3018 CNC | GRBL 1.1 USB 115200 | syringe head in the spindle clamp (tip on the spindle axis); work zero = top-left-front, Z0 = safe height |
+| Capacitive probe (tool rail TM-120: TTP223 + stainless electrode) | 3018 board probe header: GND, 5 V, OUT → probe pin (A5) | set `$6=1` once (TTP223 OUT is active HIGH); `cnc.probe` runs G38.3 and retracts |
+| USB microscope (tool rail TM-110, generic "1000x 8-LED") | laptop USB (UVC) | `uv sync --extra microscope` (OpenCV); set `calib/microscope.json` `{"index": N}` (the laptop's own webcam is usually 0); mock frames otherwise |
+| More syringe modules (optional) | PCA9685 channels on `tap_a` | `calib/tools.json` `{"syringes": [{"id": "pipette2", "channel": 9}]}`; each gets `calib/<id>.json` |
 
 Arm port mapping: `--so-a/--so-b` override > `calib/ports.json` (USB serial numbers, persisted automatically) > sorted
 port order. If the arms swap, run once with `--so-a/--so-b`; the mapping is saved.

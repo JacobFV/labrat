@@ -128,12 +128,14 @@ class Syringe(Device):
     kind = "servo_syringe"
     unlocked = ("stop", "observe")  # stop must not queue behind a running move
 
-    def __init__(self, dev_id: str = "pipette", host: Tappet | None = None, info: dict | None = None):
+    def __init__(self, dev_id: str = "pipette", host: Tappet | None = None, info: dict | None = None,
+                 channel: int = PIPETTE_CH, calib: str = "syringe.json"):
         mock = host is None or host.client is None
         super().__init__(dev_id, mock, info)
         self.host = host
-        self.cal = load_json("syringe.json", DEFAULT_SYR)
-        self.info.update(host=host.id if host else None, channel=PIPETTE_CH, ul_per_mm=round(self.ul_per_mm, 2))
+        self.channel = int(channel)
+        self.cal = load_json(calib, DEFAULT_SYR)
+        self.info.update(host=host.id if host else None, channel=self.channel, ul_per_mm=round(self.ul_per_mm, 2))
         self.pos = 0.0          # dead-reckoned plunger height (mm)
         self.homed = False
         self.vol_ul = 0.0       # liquid in the tip
@@ -163,7 +165,7 @@ class Syringe(Device):
             if not self._enabled:
                 self.host.request("enable")
                 self._enabled = True
-            r = self.host.request("servo_raw", ch=PIPETTE_CH, us=int(us))
+            r = self.host.request("servo_raw", ch=self.channel, us=int(us))
             if not r.get("ok", True):
                 raise DeviceError(f"servo_raw failed: {r}")
         self.us_now = int(us)

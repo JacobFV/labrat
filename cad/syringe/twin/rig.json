@@ -1,12 +1,12 @@
 {
- "src": "e5b82dbf32eb",
+ "src": "04f37f1cc94a",
  "frame": "head frame: machine axes, origin = syringe axis on the clamp top face, mm",
  "stroke_mm": 30.0,
  "modelled_pos_mm": 0.0,
  "ul_per_mm": 248.84555409084754,
  "ratio": 12.009803921568627,
  "mm_per_servo_rad": 0.4995918367346939,
- "tip_end_z": -105.0,
+ "tip_end_z": -110.0,
  "groups": {
   "carriage": {
    "type": "translate",
@@ -20,42 +20,42 @@
   "gear_a": {
    "type": "rotate",
    "axis": [
-    0,
     1,
+    0,
     0
    ],
    "pivot": [
-    12.990000000000006,
     0.0,
-    114.34116814183085
+    -34.799492820752235,
+    101.40988604895249
    ],
    "deg_per_mm": 114.68517958092458
   },
   "gear_b": {
    "type": "rotate",
    "axis": [
-    0,
     1,
+    0,
     0
    ],
    "pivot": [
-    39.870000000000005,
     0.0,
-    114.34116814183085
+    -10.43793950520708,
+    112.76986492454249
    ],
    "deg_per_mm": -38.99296105751436
   },
   "gear_c": {
    "type": "rotate",
    "axis": [
-    0,
     1,
+    0,
     0
    ],
    "pivot": [
-    24.58,
     0.0,
-    87.85811129410271
+    -4.08,
+    82.85811129410271
    ],
    "deg_per_mm": 9.54929658551372
   }
@@ -70,11 +70,6 @@
    "group": "static",
    "finish": "petg_print",
    "file": "static__petg_print.stl"
-  },
-  {
-   "group": "static",
-   "finish": "acrylic_clear",
-   "file": "static__acrylic_clear.stl"
   },
   {
    "group": "static",
@@ -95,11 +90,6 @@
    "group": "tip",
    "finish": "syr_tip_yellow",
    "file": "tip__syr_tip_yellow.stl"
-  },
-  {
-   "group": "static",
-   "finish": "steel_hardened_ground",
-   "file": "static__steel_hardened_ground.stl"
   },
   {
    "group": "static",
@@ -147,21 +137,6 @@
    "file": "carriage__epdm_rubber.stl"
   },
   {
-   "group": "carriage",
-   "finish": "steel_hardened_ground",
-   "file": "carriage__steel_hardened_ground.stl"
-  },
-  {
-   "group": "carriage",
-   "finish": "abs_black",
-   "file": "carriage__abs_black.stl"
-  },
-  {
-   "group": "carriage",
-   "finish": "silicone_rubber_red",
-   "file": "carriage__silicone_rubber_red.stl"
-  },
-  {
    "group": "gear_c",
    "finish": "syr_petg_white",
    "file": "gear_c__syr_petg_white.stl"
@@ -187,14 +162,54 @@
    "file": "gear_a__polypropylene_white.stl"
   },
   {
+   "group": "gear_c",
+   "finish": "steel_hardened_ground",
+   "file": "gear_c__steel_hardened_ground.stl"
+  },
+  {
    "group": "gear_b",
    "finish": "steel_hardened_ground",
    "file": "gear_b__steel_hardened_ground.stl"
   },
   {
-   "group": "gear_c",
-   "finish": "steel_hardened_ground",
-   "file": "gear_c__steel_hardened_ground.stl"
+   "group": "static",
+   "finish": "polycarbonate_clear",
+   "file": "static__polycarbonate_clear.stl"
+  },
+  {
+   "group": "static",
+   "finish": "aluminum_6063_t5_clear_anodized",
+   "file": "static__aluminum_6063_t5_clear_anodized.stl"
+  },
+  {
+   "group": "static",
+   "finish": "pilot_white",
+   "file": "static__pilot_white.stl"
+  },
+  {
+   "group": "static",
+   "finish": "print_white",
+   "file": "static__print_white.stl"
+  },
+  {
+   "group": "static",
+   "finish": "cable_pvc_black",
+   "file": "static__cable_pvc_black.stl"
+  },
+  {
+   "group": "static",
+   "finish": "stainless_304_brushed",
+   "file": "static__stainless_304_brushed.stl"
+  },
+  {
+   "group": "static",
+   "finish": "syr_pcb_red",
+   "file": "static__syr_pcb_red.stl"
+  },
+  {
+   "group": "static",
+   "finish": "ic_epoxy_black",
+   "file": "static__ic_epoxy_black.stl"
   }
  ]
 }

@@ -267,87 +267,6 @@ def pipette_tip():
 
 
 # =====================================================================================================================
-# HIWIN MGN7 miniature rail + MGN7C carriage (representative; verify at procurement)
-# rail frame: z along the rail from 0, x = height (bottom face at x = 0), y = width
-# =====================================================================================================================
-def mgn7_rail(length: float = S.rail_len):
-    W, H = LAY.rail_W, LAY.rail_H
-    with BuildPart() as bp:
-        with BuildSketch(Plane.XY):
-            with Locations((H / 2, 0)):
-                Rectangle(H, W)
-            for sy in (-1, 1):                                # ball raceways (gothic arch) on both flanks
-                with Locations((H - 1.6, sy * W / 2)):
-                    Circle(0.65, mode=Mode.SUBTRACT)
-        extrude(amount=length)
-        n = int(round((length - 10) / 15)) + 1
-        for k in range(n):
-            z = 5.0 + 15.0 * k
-            with Locations(Location((H, 0, z), (0, 1, 0), 90)):
-                Cylinder(2.1, 2.3, align=CT, mode=Mode.SUBTRACT)   # counterbore from the top (x = H)
-                Cylinder(1.2, H + 1, align=CT, mode=Mode.SUBTRACT)
-    shp = bp.part
-    try:
-        shp = chamfer(shp.edges().filter_by(Axis.Z), 0.2)
-    except Exception:
-        pass
-    return shp
-
-
-def rail_hole_z(length: float = S.rail_len):
-    n = int(round((length - 10) / 15)) + 1
-    return [5.0 + 15.0 * k for k in range(n)]
-
-
-def mgn7c_block():
-    """steel carriage body (without end caps), frame = rail frame, centred at z = 0."""
-    W, H, H1, L1 = LAY.mgn_W, LAY.mgn_H, LAY.mgn_H1, 13.5
-    with BuildPart() as bp:
-        with Locations((H1 + (H - H1) / 2, 0, 0)):
-            Box(H - H1, W, L1)
-        with Locations((LAY.rail_H / 2 - 0.01, 0, 0)):
-            Box(LAY.rail_H + 0.4, LAY.rail_W + 0.3, L1 + 1, mode=Mode.SUBTRACT)
-        for sy in (-1, 1):
-            for sz in (-1, 1):
-                with Locations(Location((H, sy * LAY.mgn_B / 2, sz * LAY.mgn_C / 2), (0, 1, 0), 90)):
-                    Cylinder(0.8, 2.6, align=CT, mode=Mode.SUBTRACT)     # M2 tapped, tap-drill bore
-    shp = bp.part
-    try:
-        shp = chamfer(shp.edges().filter_by(Axis.Z).group_by(Axis.X)[-1], 0.3)
-    except Exception:
-        pass
-    return shp
-
-
-def mgn7c_endcaps():
-    W, H, H1, L1 = LAY.mgn_W, LAY.mgn_H, LAY.mgn_H1, 13.5
-    parts = []
-    for sz in (-1, 1):
-        with BuildPart() as bp:
-            with Locations((H1 + (H - H1 - 0.6) / 2, 0, sz * (L1 / 2 + 2.0))):
-                Box(H - H1 - 0.6, W - 0.6, 4.0)
-            with Locations((LAY.rail_H / 2 - 0.01, 0, sz * (L1 / 2 + 2.0))):
-                Box(LAY.rail_H + 0.4, LAY.rail_W + 0.2, 5, mode=Mode.SUBTRACT)
-            with Locations(Location((H - 2.2, 0, sz * (L1 / 2 + 4.0)), (0, 0, 1), 0)):
-                Cylinder(0.6, 1.0, align=CT if sz > 0 else CB, mode=Mode.SUBTRACT)  # lube port
-        parts.append(bp.part)
-    return Compound(children=parts)
-
-
-def mgn7c_seals():
-    W, H, H1, L1 = LAY.mgn_W, LAY.mgn_H, LAY.mgn_H1, 13.5
-    parts = []
-    for sz in (-1, 1):
-        with BuildPart() as bp:
-            with Locations((H1 + (H - H1 - 0.8) / 2, 0, sz * (L1 / 2 + 4.5))):
-                Box(H - H1 - 0.8, W - 1.0, 1.0)
-            with Locations((LAY.rail_H / 2 - 0.01, 0, sz * (L1 / 2 + 4.5))):
-                Box(LAY.rail_H + 0.2, LAY.rail_W + 0.05, 2, mode=Mode.SUBTRACT)
-        parts.append(bp.part)
-    return Compound(children=parts)
-
-
-# =====================================================================================================================
 # small hardware
 # =====================================================================================================================
 def mr63zz():
@@ -433,16 +352,18 @@ def wire(path_pts, d: float = 1.0, k: float = 0.0, n0=(0, 0, 1)):
     return bp.part
 
 
-def cable_tie(center, axis_dir=(0, 1, 0), inner=(3.6, 1.6), w=2.5, t=1.0):
-    """nylon cable tie loop around a bundle, loop plane normal = axis_dir (bundle direction is the tie's axis)."""
+def cable_tie(center, axis_dir=(0, 1, 0), inner=(3.6, 1.6), w=2.5, t=1.0, x_dir=(1, 0, 0)):
+    """nylon cable tie loop around a bundle, loop plane normal = axis_dir (bundle direction is the tie's axis); inner =
+    loop inside (along x_dir, along axis_dir x x_dir). The locking head sits on the +x_dir run (over the bundle)."""
     a, b = inner
+    pl = Plane(origin=center, x_dir=x_dir, z_dir=axis_dir)
     with BuildPart() as bp:
-        with BuildSketch(Plane(origin=center, z_dir=axis_dir)):
+        with BuildSketch(pl):
             Rectangle(a + 2 * t, b + 2 * t)
             Rectangle(a, b, mode=Mode.SUBTRACT)
         extrude(amount=w / 2, both=True)
-        with BuildSketch(Plane(origin=center, z_dir=axis_dir)):           # locking head on the front run
-            with Locations((0, -(b / 2 + t + 1.4))):
-                Rectangle(4.0, 2.8)
+        with BuildSketch(pl):
+            with Locations((a / 2 + t + 1.4, 0)):
+                Rectangle(2.8, 4.0)
         extrude(amount=2.0, both=True)
     return bp.part

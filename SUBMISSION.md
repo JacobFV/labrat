@@ -11,7 +11,7 @@ Lab automation is either rigid, with scripted liquid handlers that never learn, 
 3. **Design** N protocol variants (Claude, or a deterministic generator) and **simulate** each one in the digital twin: CNC timing, pipette volumes, tip reuse, Beer–Lambert dye mixing to RGB, and bounds/collision checks. Then score them.
 4. **Select and approve.** Only a sim-passing variant can be queued, and it waits for human approval.
 5. **Execute** through the USB bridge: 3018 CNC with a rack-and-pinion syringe pipette, plus an SO-101 gripper arm on each side of it.
-6. **Observe automatically.** The CNC parks out of view and the server waits for a fresh frame from the overhead iPhone (no arm moves). A camera→plate homography (from 4 clicked wells) samples the target well, white-balanced against an empty well; Claude vision is the fallback. The result goes into the learning loop.
+6. **Observe automatically.** The CNC parks out of view and the server waits for a fresh frame from the overhead iPhone (no arm moves). A camera→deck homography (from 4 clicked corner beakers) samples the target beaker, white-balanced against an empty one; Claude vision is the fallback. The result goes into the learning loop.
 7. **Self-improve.** The loop refits the simulator's dye absorbance and pipette gain, adopts the new parameters only if prediction error drops, re-scores past variants, and promotes the protocol to procedural memory.
 
 ## Architecture
@@ -79,7 +79,7 @@ Layout: the CNC in the middle, an SO-101 arm on each side, the iPhone on a fixed
 - The syringe servo (continuous rotation) is driven by PCA9685 channel 8 on an ESP32-S3 Tappet board (`tap_a`, our firmware in [`tappet/`](tappet/README.md)). The Tappet arms are optional and not part of the demo setup.
 - 2× SO-101 arms (Feetech STS3215), `so_a` and `so_b`: plain manipulators with stock grippers, one on each side of the CNC.
 - iPhone on a static stand (camera, mic, speaker, animated face); it never moves.
-- A laptop running the USB bridge and console, a 96-well plate, a tip rack, and dye reservoirs.
+- A laptop running the USB bridge and console, a tip rack, and a printed beaker matrix holding the stock dyes and the mixing beakers.
 
 ## Safety and governance
 - **Sim-before-actuation invariant:** `lab.request_run` refuses any variant whose simulation did not pass (volume caps, single-use tips, bounds and reach checks).

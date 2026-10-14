@@ -20,11 +20,15 @@ simulator**, and stores what it learned in typed memory (semantic / episodic / p
 ## Hardware
 Layout: the 3018 CNC is in the middle, `so_a` and `so_b` stand on either side of it, the iPhone is on a fixed
 stand looking straight down at the CNC bed, and the laptop sits to the side.
-- **3018 CNC** (GRBL 1.1) with a **syringe pipette head** in the spindle clamp: a disposable syringe with a 200 µL tip on a luer-to-tip adapter, plunger on a rack and an MGN7 linear guide, driven through a 12:1 gear train by a continuous-rotation FS90R servo (CAD in [`cad/syringe`](cad/syringe)).
+- **3018 CNC** (GRBL 1.1) with a **tool head** in the spindle holder (CAD in [`cad/syringe`](cad/syringe), every printed part support-free):
+  - a syringe pipette: a disposable syringe with a 200 µL tip on a luer-to-tip adapter, its plunger on a rack carriage that slides on a plain square bar moulded on the body, driven through a 12:1 gear train by a continuous-rotation FS90R servo;
+  - a tool rail with interchangeable modules: a USB microscope (snapshots of any beaker) and a capacitive liquid-level probe (TTP223 on the GRBL probe pin).
 - **Syringe servo driver:** an ESP32-S3 + PCA9685 Tappet board (`tap_a`, firmware in [`tappet/`](tappet), JSON lines over USB at 115200). PCA9685 **channel 8 drives the syringe servo**. The Tappet arms themselves are optional and not part of the demo setup.
 - **2× SO-101 arms** (Feetech STS3215), `so_a` and `so_b`: plain manipulators with the stock gripper, one on each side of the CNC.
 - **iPhone** on a static stand above the CNC bed: camera, mic, speaker and animated eyes. It does not move.
-- A **laptop** to the side running the USB bridge and the console, plus a 96-well plate, a tip rack and dye reservoirs.
+- A **laptop** to the side running the USB bridge and the console, plus an FT-200L-RS tip rack and a printed beaker
+  matrix (6 × 8 beakers of 15.3 × 50 mm; columns 1–7 for mixing, column 8 for the stock dyes and water), CAD in
+  [`cad/deck`](cad/deck).
 
 ## Architecture
 ```
@@ -63,7 +67,7 @@ Full system design (components, endpoints, memory, sim, learning loop, safety, s
 | [`cli/`](cli) | Terminal REPL (`labrat`): streams `/ws/ui`, chat, `/sim`, `/run`, `/approve`, `/abort` |
 | [`bridge/`](bridge) | USB bridge: SO-101 (Feetech STS), Tappet ESP32, GRBL CNC, rack-and-pinion syringe, each with a mock |
 | [`tappet/`](tappet) | Tappet hardware (merged from the former `JacobFV/tappet` repo): ESP32 firmware, Python host, Android head app, CAD, web UI, docs |
-| [`cad/`](cad) | Rack-and-pinion syringe head for the 3018 spindle clamp (CadQuery → STEP/STL/3MF) and the parametric 3018 + bench model / renders |
+| [`cad/`](cad) | Syringe head for the 3018's motor holder and the printed beaker matrix (build123d → STEP/STL/3MF, every printed part support-free), the parametric 3018 + bench model, renders |
 | [`deploy/`](deploy) | `aws_ec2.sh`: EC2 + Docker + Caddy HTTPS (`<ip>.sslip.io`, needed for iPhone camera/mic) |
 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | CI: server, bridge, JS syntax, Tappet host/firmware/Android/CAD |
 

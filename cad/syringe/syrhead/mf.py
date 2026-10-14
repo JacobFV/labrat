@@ -53,14 +53,14 @@ def mf_part(pn: str):
 JOINTS = {
     # group: (kind, axis, origin, lower, upper, contacts)
     "carriage": ("prismatic", (0, 0, 1), (0, 0, 0), 0.0, S.stroke,
-                 (("carriage", "gear_c"), ("stopper", "barrel"), ("plunger", "barrel"), ("mgn_*", "rail"),
-                  ("mgn_*", "scr_rail_*"),   # rail screws sit 0.3 mm below the rail top in HIWIN's counterbores
+                 (("carriage", "gear_c"), ("stopper", "barrel"), ("plunger", "barrel"),
+                  ("carriage", "body"),      # the guide bar: 0.15 mm per face in the sleeve, by design
                   ("disc_cap", "plunger"))),
-    "gear_c": ("revolute", (0, 1, 0), (LAY.C[0], 0, LAY.C[1]), 0.0, 360.0,
+    "gear_c": ("revolute", (1, 0, 0), (0, LAY.C[0], LAY.C[1]), 0.0, 360.0,
                (("gear_c", "carriage"), ("gear_c", "gear_b"), ("bearing_c*", "spacer_c*"), ("bearing_c*", "pin_c"))),
-    "gear_b": ("revolute", (0, 1, 0), (LAY.B[0], 0, LAY.B[1]), -360.0, 0.0,
+    "gear_b": ("revolute", (1, 0, 0), (0, LAY.B[0], LAY.B[1]), -360.0, 0.0,
                (("gear_b", "gear_c"), ("gear_b", "gear_a"), ("bearing_b*", "spacer_b*"), ("bearing_b*", "pin_b"))),
-    "gear_a": ("revolute", (0, 1, 0), (LAY.A[0], 0, LAY.A[1]), 0.0, 360.0,
+    "gear_a": ("revolute", (1, 0, 0), (0, LAY.A[0], LAY.A[1]), 0.0, 360.0,
                (("gear_a", "gear_b"),
                 # the FS90R's own output shaft turns in its case bore, and its horn rides 0.3 mm above the case
                 # tower: the vendor's clearances, inside the purchased product

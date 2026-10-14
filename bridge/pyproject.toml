@@ -5,6 +5,9 @@ description = "LabRat laptop hardware bridge (SO-101, Tappet ESP32, GRBL CNC, ra
 requires-python = ">=3.12"
 dependencies = ["websockets>=13", "pyserial>=3.5"]
 
+[project.optional-dependencies]
+microscope = ["opencv-python-headless>=4.8"]
+
 [dependency-groups]
 dev = ["pytest>=8"]
 

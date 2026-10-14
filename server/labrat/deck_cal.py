@@ -3,8 +3,8 @@
 Taught points are CNC machine coords of the PIPETTE TIP. The CNC moves the spindle, so
 spindle = tip - pipette_offset. Untaught targets fall back to the nominal deck (docs/ARCHITECTURE.md §6),
 whose numbers are spindle coords (so an uncalibrated deck behaves exactly as before).
-If both corners of a grid are taught (A1 + H12), pitch and rotation are derived from them;
-otherwise the nominal 9 mm pitch, axis-aligned, is used from the taught A1.
+If both corners of a grid are taught (A1 + the far corner: tip_rack.H12, plate.F7), pitch and rotation are derived from
+them; otherwise the grid's nominal pitch (tip rack 9 mm, beaker matrix 19 mm), axis-aligned, is used from the taught A1.
 
 Persistence: JSON file (server/data/deck_cal.json, or $LABRAT_DECK_CAL) and, when MongoDB is
 connected, the `config` collection doc with id "deck_calibration".
@@ -24,12 +24,18 @@ from .config import ROOT, log
 DOC_ID = "deck_calibration"
 PATH = Path(os.getenv("LABRAT_DECK_CAL") or (ROOT / "server" / "data" / "deck_cal.json"))
 ROWS = "ABCDEFGH"
-GRIDS = {"tip_rack": (8, 12), "plate": (8, 12)}
-NOMINAL_PITCH = 9.0
-TARGETS = ["tip_rack.A1", "tip_rack.H12", "plate.A1", "plate.H12",
+# grid: (rows, cols, nominal pitch). "plate" is the mixing grid: columns 1-7 of the printed beaker matrix (cad/deck,
+# DECK-001); its column 8 holds the stock beakers (the reservoirs).
+GRIDS = {"tip_rack": (8, 12, 9.0), "plate": (6, 7, 19.0)}
+TARGETS = ["tip_rack.A1", "tip_rack.H12", "plate.A1", "plate.F7",
            "reservoir.water", "reservoir.red", "reservoir.blue", "reservoir.yellow", "waste", "eject_bar"]
 
-DEFAULT = {"id": DOC_ID, "pipette_offset": {"dx": 0.0, "dy": 0.0, "dz": 0.0}, "points": {}}
+# Tool-rail modules (cad/syringe/tools.json): tool point relative to the syringe tip, nominal from the CAD.
+# Teach them like the pipette offset (jog the tool over a mark, then the syringe tip over the same mark).
+TOOLS_NOMINAL = {"microscope": {"dx": -20.0, "dy": -63.0, "dz": 25.0},   # lens front (TM-110 at rail index -20)
+                 "probe": {"dx": 8.5, "dy": -42.5, "dz": 0.0}}          # electrode tip (TM-120 at rail index +8.5)
+DEFAULT = {"id": DOC_ID, "pipette_offset": {"dx": 0.0, "dy": 0.0, "dz": 0.0}, "points": {},
+           "tools": copy.deepcopy(TOOLS_NOMINAL)}
 
 _cal: dict | None = None
 
@@ -66,6 +72,9 @@ def _normalize(c: dict) -> dict:
     for k in ("dx", "dy", "dz"):
         if k in off:
             out["pipette_offset"][k] = float(off[k])
+    for name, t in (c.get("tools") or {}).items():
+        out["tools"].setdefault(name, {"dx": 0.0, "dy": 0.0, "dz": 0.0})
+        out["tools"][name].update({k: float(t[k]) for k in ("dx", "dy", "dz") if k in t})
     for name, p in (c.get("points") or {}).items():
         out["points"][name] = {k: float(p[k]) for k in ("x", "y", "z") if k in p}
         if "ts" in p:
@@ -106,6 +115,9 @@ def update(patch: dict) -> dict:
     cal = copy.deepcopy(get())
     if "pipette_offset" in patch:
         cal["pipette_offset"].update({k: float(v) for k, v in patch["pipette_offset"].items() if k in ("dx", "dy", "dz")})
+    for name, t in (patch.get("tools") or {}).items():
+        cal["tools"].setdefault(name, {"dx": 0.0, "dy": 0.0, "dz": 0.0})
+        cal["tools"][name].update({k: float(v) for k, v in t.items() if k in ("dx", "dy", "dz")})
     for name, p in (patch.get("points") or {}).items():
         if p is None:
             cal["points"].pop(name, None)
@@ -141,27 +153,45 @@ def tip_to_spindle(x: float, y: float, z: float, cal: dict | None = None) -> tup
     return x - o["dx"], y - o["dy"], z - o["dz"]
 
 
+def tool_offset(tool: str, cal: dict | None = None) -> tuple[float, float, float]:
+    """a tool's point relative to the spindle reference (pipette offset + the tool's offset from the syringe tip)."""
+    cal = cal or get()
+    p = cal["pipette_offset"]
+    if tool in ("pipette", "", None):
+        return p["dx"], p["dy"], p["dz"]
+    t = cal["tools"].get(tool)
+    if t is None:
+        raise ValueError(f"unknown tool {tool!r} (known: pipette, {', '.join(cal['tools'])})")
+    return p["dx"] + t["dx"], p["dy"] + t["dy"], p["dz"] + t["dz"]
+
+
+def spindle_for_tool(tool: str, x: float, y: float, z: float, cal: dict | None = None) -> tuple[float, float, float]:
+    """spindle position that puts ``tool``'s point at deck point (x, y, z) (pipette-tip coordinates)."""
+    o = tool_offset(tool, cal)
+    return x - o[0], y - o[1], z - o[2]
+
+
 def spindle_to_tip(x: float, y: float, z: float, cal: dict | None = None) -> tuple[float, float, float]:
     o = (cal or get())["pipette_offset"]
     return x + o["dx"], y + o["dy"], z + o["dz"]
 
 
 def grid_frame(grid: str, cal: dict | None = None) -> dict | None:
-    """Derived grid frame in tip coords: {a1:(x,y,z), pitch, theta_deg, h12z?} or None if A1 untaught."""
+    """Derived grid frame in tip coords: {a1:(x,y,z), pitch, theta_deg, h12z? (far-corner z)} or None if A1 untaught."""
     cal = cal or get()
     a1 = cal["points"].get(f"{grid}.A1")
     if not a1:
         return None
-    rows, cols = GRIDS[grid]
+    rows, cols, nominal = GRIDS[grid]
     h12 = cal["points"].get(f"{grid}.{ROWS[rows - 1]}{cols}")
-    pitch, theta = NOMINAL_PITCH, 0.0
+    pitch, theta = nominal, 0.0
     if h12:
         vx, vy = h12["x"] - a1["x"], h12["y"] - a1["y"]
-        nx, ny = (cols - 1) * NOMINAL_PITCH, (rows - 1) * NOMINAL_PITCH
+        nx, ny = (cols - 1) * nominal, (rows - 1) * nominal
         n = math.hypot(nx, ny)
         m = math.hypot(vx, vy)
         if m > 1e-6:
-            pitch = NOMINAL_PITCH * m / n
+            pitch = nominal * m / n
             theta = math.atan2(vy, vx) - math.atan2(ny, nx)
     return {"a1": (a1["x"], a1["y"], a1.get("z", 0.0)), "h12z": h12.get("z") if h12 else None,
             "pitch": pitch, "theta": theta, "theta_deg": math.degrees(theta), "rows": rows, "cols": cols}

@@ -1,4 +1,5 @@
-// LabRat digital twin: CNC 3018 + syringe pipette head, deck, 96-well plate, 2x SO-101 (+ phone), optional Tappet arms.
+// LabRat digital twin: CNC 3018 + syringe pipette head, deck (FT-200L-RS tip rack, printed beaker matrix), 2x SO-101
+// (+ phone), optional Tappet arms.
 // Units: mm. Deck coords (x right 0..300, y back 0..180) map to three (X = x-150, Z = y-90). Up = +Y.
 // The desk is y=0. The CNC (web/models/cnc3018.glb, built by cad/cnc3018/cnc3018.py) sits in this.cncRoot,
 // raised so its bed top (= deck plane) is at cncRoot y=0. Like a real 3018 the BED moves in Y (deck items ride
@@ -11,7 +12,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { loadSO101, setSO101 } from './so101.js';
 
 const ROWS = 'ABCDEFGH';
-const SAFE_H = 60; // tip height above deck at cnc z=0
+const SAFE_H = 55; // tip height above deck at cnc z=0 (cad/syringe spec.safe_tip_h)
 const BED_H = 72; // desk -> bed top (GLB feet bottom at -72)
 const PIP_DY = 0; // pipette tip axis vs spindle axis (deck y): coaxial syringe head
 const SYR_STROKE = 30; // cad/syringe spec.stroke; node motion per mm comes from models/syringe_rig.json (cnc3018.py)
@@ -27,13 +28,17 @@ const PAN_OFF = 39;           // pan axis is ~39 mm along URDF +X from the base 
 // open. The URDF zero already renders that L pose; per-joint offsets (deg) are added here if a joint ever differs.
 const JOINT_ZERO = { shoulder_pan: 0, shoulder_lift: 0, elbow_flex: 0, wrist_flex: 0, wrist_roll: 0, gripper: 0 };
 const BENCH_H = 900; // lab floor -> bench top; everything on the bench lives in this.stage (bench-top frame)
+// deck = cad/deck/deck.json (DECK-001 beaker matrix, FT-200L-RS tip rack); server/labrat/sim.py uses the same numbers
 export const DECK = {
-  tip_rack: { x: 20, y: 20, pitch: 9 },
-  plate: { x: 140, y: 20, pitch: 9, cap: 300 },
-  reservoirs: [20, 60, 100, 140].map((y, i) => ({ name: `R${i + 1}`, x: 250, y })),
+  tip_rack: { x: 17, y: 19.25, pitch: 9, box: [8, 10], l: 117, w: 81.5, plate_h: 55.4, rim_h: 57 },
+  plate: { x: 153.25, y: 32, pitch: 19, rows: 6, cols: 7, cap: 5000 },        // mixing beakers A1-F7
+  matrix: { cols: 8, ext: [136.4, 296.1, 15.2, 136.8], top: 21.2, floor: 1.2 },
+  beaker: { od: 15.3, id: 13.5, h: 50, bottom: 1.2, ul_per_mm: Math.PI / 4 * 13.5 ** 2 },
+  reservoirs: [['water', 32], ['red', 51], ['yellow', 70], ['blue', 89]].map(([name, y]) => ({ name, x: 153.25 + 7 * 19, y })),
+  res_fill: 4500,
   waste: { x: 280, y: 170 }, eject_bar: { x: 10, y: 170 },
 };
-const RES_COLORS = ['#cfe8ff', '#e0312b', '#2a5bd7', '#f2c81d']; // water, red, blue, yellow
+const RES_COLORS = ['#cfe8ff', '#e0312b', '#f2c81d', '#2a5bd7']; // water, red, yellow, blue
 
 const P = (x, y) => new THREE.Vector3(x - 150, 0, y - 90);
 
@@ -105,34 +110,37 @@ export class Twin {
     this.bedBox = this._box(320, 6, 200, 0x111111, new THREE.Vector3(0, -3, 0), this.deck);
     const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(300, 0.1, 180)), new THREE.LineBasicMaterial({ color: 0x2a2a2a }));
     edges.position.y = 0.2; this.deck.add(edges);
-    // tip rack
-    const tr = DECK.tip_rack, rackC = P(tr.x + 49.5, tr.y + 31.5);
-    this._box(110, 30, 76, 0xe8508f, new THREE.Vector3(rackC.x, 15, rackC.z), this.deck, { roughness: .45 });
-    const tipGeo = new THREE.ConeGeometry(2.6, 22, 10); tipGeo.rotateX(Math.PI); tipGeo.translate(0, 11, 0);
-    const tipMat = this._mat(0xe8e2c8, { transparent: true, opacity: .85 });
+    // FT-200L-RS tip rack: blue tray, white deck plate, 96 tips hanging from their collars
+    const tr = DECK.tip_rack, rackC = P(tr.box[0] + tr.l / 2, tr.box[1] + tr.w / 2);
+    this._box(tr.l, tr.plate_h - 1.5, tr.w, 0x1f4fa8, new THREE.Vector3(rackC.x, (tr.plate_h - 1.5) / 2, rackC.z), this.deck, { roughness: .4 });
+    this._box(tr.l - .4, 1.5, tr.w - .4, 0xeef3fb, new THREE.Vector3(rackC.x, tr.plate_h - .75, rackC.z), this.deck, { roughness: .4 });
+    const tipGeo = new THREE.CylinderGeometry(3.45, .45, 51, 12); tipGeo.translate(0, -25.5, 0);
+    const tipMat = this._mat(0xf2c81d, { transparent: true, opacity: .85 });
     for (let r = 0; r < 8; r++) for (let c = 0; c < 12; c++) {
       const p = P(tr.x + c * tr.pitch, tr.y + r * tr.pitch); const t = new THREE.Mesh(tipGeo, tipMat);
-      t.position.set(p.x, 30, p.z); this.deck.add(t); this.tips[ROWS[r] + (c + 1)] = t;
+      t.position.set(p.x, tr.rim_h, p.z); this.deck.add(t); this.tips[ROWS[r] + (c + 1)] = t;
     }
-    // plate
-    const pl = DECK.plate, plC = P(pl.x + 49.5, pl.y + 31.5);
-    this._box(127, 14, 85, 0xd8d8dc, new THREE.Vector3(plC.x, 7, plC.z), this.deck, { transparent: true, opacity: .35 });
-    const wellGeo = new THREE.CylinderGeometry(3.3, 3.3, 1, 18); wellGeo.translate(0, .5, 0);
-    const rimGeo = new THREE.TorusGeometry(3.6, .35, 6, 18); rimGeo.rotateX(Math.PI / 2);
-    const rimMat = this._mat(0x555560);
-    for (let r = 0; r < 8; r++) for (let c = 0; c < 12; c++) {
-      const p = P(pl.x + c * pl.pitch, pl.y + r * pl.pitch);
-      const m = new THREE.Mesh(wellGeo, this._mat(0x1a1a1f, { roughness: .2, emissive: 0x000000 }));
-      m.position.set(p.x, 3, p.z); m.scale.y = .01; this.deck.add(m);
-      const rim = new THREE.Mesh(rimGeo, rimMat); rim.position.set(p.x, 14, p.z); this.deck.add(rim);
+    // printed beaker matrix (DECK-001) + 15.3 x 50 mm beakers; columns 1-7 mix, column 8 = stocks
+    const mx = DECK.matrix, bk = DECK.beaker, pl = DECK.plate;
+    const mC = P((mx.ext[0] + mx.ext[1]) / 2, (mx.ext[2] + mx.ext[3]) / 2);
+    this._box(mx.ext[1] - mx.ext[0], mx.top, mx.ext[3] - mx.ext[2], 0xe9e6dc, new THREE.Vector3(mC.x, mx.top / 2, mC.z), this.deck, { roughness: .7 });
+    const glassGeo = new THREE.CylinderGeometry(bk.od / 2, bk.od / 2, bk.h, 24, 1, true); glassGeo.translate(0, bk.h / 2, 0);
+    const glassMat = this._mat(0xf4f6f8, { transparent: true, opacity: .28, roughness: .15, side: THREE.DoubleSide, depthWrite: false });
+    const liqGeo = new THREE.CylinderGeometry(bk.id / 2, bk.id / 2, 1, 20); liqGeo.translate(0, .5, 0);
+    const floorH = mx.floor + bk.bottom;
+    const beakerAt = (x, y) => { const p = P(x, y); const g = new THREE.Mesh(glassGeo, glassMat); g.position.set(p.x, mx.floor, p.z); this.deck.add(g); return p; };
+    for (let r = 0; r < pl.rows; r++) for (let c = 0; c < pl.cols; c++) {
+      const p = beakerAt(pl.x + c * pl.pitch, pl.y + r * pl.pitch);
+      const m = new THREE.Mesh(liqGeo, this._mat(0x1a1a1f, { roughness: .2, emissive: 0x000000, transparent: true, opacity: .85 }));
+      m.position.set(p.x, floorH, p.z); m.scale.y = .01; this.deck.add(m);
       this.wells[ROWS[r] + (c + 1)] = m;
     }
-    // reservoirs
     this.reservoirs = DECK.reservoirs.map((rv, i) => {
-      const p = P(rv.x, rv.y);
-      this._box(30, 24, 34, 0xcccccc, new THREE.Vector3(p.x, 12, p.z), this.deck, { transparent: true, opacity: .22 });
-      return this._box(27, 16, 31, RES_COLORS[i], new THREE.Vector3(p.x, 8, p.z), this.deck, { transparent: true, opacity: .85 });
+      const p = beakerAt(rv.x, rv.y);
+      const m = new THREE.Mesh(liqGeo, this._mat(RES_COLORS[i], { transparent: true, opacity: .85, roughness: .1 }));
+      m.position.set(p.x, floorH, p.z); m.scale.y = DECK.res_fill / bk.ul_per_mm; this.deck.add(m); return m;
     });
+    for (const r of [4, 5]) beakerAt(DECK.reservoirs[0].x, pl.y + r * pl.pitch);  // E8, F8: spare stock beakers
     const w = P(DECK.waste.x, DECK.waste.y);
     this._box(30, 30, 18, 0x3a1515, new THREE.Vector3(w.x, 15, w.z), this.deck);
     const e = P(DECK.eject_bar.x, DECK.eject_bar.y);
@@ -184,7 +192,7 @@ export class Twin {
       this.headTip.material.visible = false; // the GLB has the real tip
       nodes.tip.visible = this.headTip.visible;
       this.cncNodes = nodes; this.cncModel = root;
-      for (const [, o] of nodes.syr) o.userData.rest = { y: o.position.y, rz: o.rotation.z };
+      for (const [, o] of nodes.syr) o.userData.rest = { y: o.position.y, rx: o.rotation.x, ry: o.rotation.y, rz: o.rotation.z };
       fetch(new URL('./models/syringe_rig.json', import.meta.url).href).then((r) => r.json()).then((rig) => { this.syrRig = rig; if (this.plungerPos != null) this.setPlunger(this.plungerPos); }).catch((e) => console.warn('syringe_rig.json', e));
       if (this.cnc) this.setCNC(this.cnc);
     }, undefined, (e) => console.warn('cnc3018.glb failed to load, using box fallback', e));
@@ -411,7 +419,7 @@ export class Twin {
     for (const [k, o] of this.cncNodes.syr) {
       const r = this.syrRig.nodes[k]; if (!r) continue;
       if (r.prop === 'position.y') o.position.y = o.userData.rest.y + r.per_mm * p;
-      else o.rotation.z = o.userData.rest.rz + r.per_mm * p;
+      else { const ax = r.prop.split('.')[1]; o.rotation[ax] = o.userData.rest['r' + ax] + r.per_mm * p; }   // rotation.x|y|z
     }
   }
   setWells(wells) {
@@ -421,7 +429,7 @@ export class Twin {
       const vol = +(w.vol ?? w.vol_ul ?? w.volume ?? 0);
       const c = parseColor(w.rgb ?? w.color);
       if (c) { m.material.color.copy(c); m.material.emissive.copy(c).multiplyScalar(.25); }
-      m.scale.y = Math.max(.01, Math.min(1, vol / DECK.plate.cap) * 11);
+      m.scale.y = Math.max(.01, Math.min(DECK.plate.cap, vol) / DECK.beaker.ul_per_mm);   // liquid height (mm)
     }
   }
   resetWells() { for (const m of Object.values(this.wells)) { m.scale.y = .01; m.material.color.set(0x1a1a1f); m.material.emissive.set(0); } for (const t of Object.values(this.tips)) t.visible = true; }

@@ -10,9 +10,9 @@ and the twin only has to set:
   cnc_x_carriage.position.x =  x - 150
   cnc_z.position.y          =  z            (0 .. -45)
   syringe_carriage.position.y = pos_mm        (plunger height above the bottomed stopper, 0 .. stroke)
-  syringe_gear_{a,b,c}.rotation.z = rz_per_mm * pos_mm   (web/models/syringe_rig.json, written here)
-The spindle motor is gone: the syringe head (cad/syringe, build123d) sits in the 52 mm clamp, coaxial with the old
-spindle, so the commanded XY is the tip XY (deck_cal pipette_offset 0,0,0). The tip end is 60 mm above the
+  syringe_gear_{a,b,c}.rotation.x = r_per_mm * pos_mm    (web/models/syringe_rig.json, written here)
+The spindle motor is gone: the syringe head (cad/syringe, build123d) sits in the 42 mm holder, coaxial with the old
+spindle, so the commanded XY is the tip XY (deck_cal pipette_offset 0,0,0). The tip end is 55 mm above the
 deck at z=0 (twin SAFE_H). The head meshes come from cad/syringe/twin (python -m syrhead.build), modelled at pos 0.
 
 This file models in (X = machine x - 150, Y = up, Z = machine y - 90): machine coordinates with Y/Z relabelled,
@@ -49,10 +49,11 @@ XROD_Z = 73.0
 XROD_Y = (120.0, 184.0); XSCREW_Y = 152.0
 BEAM_Z = (95.0, 115.0)        # 2040 X beam
 SPINDLE_Z = 0.0               # spindle/syringe axis (world Z) - commanded Y
-HOLDER_Y = (139.0, 165.0)     # 52 mm clamp, 26 tall
+HOLDER_Y = (131.0, 165.0)     # motor holder: 42.0 mm bore, 34.0 tall (measured)
+HOLDER_R = 21.0
 ZPLATE_Z = (32.0, 40.0); ZROD_Z = 47.0; ZROD_X = 28.0
 CARR_Z = (54.0, 61.0); CARR_Y = (70.0, 232.0)
-SAFE_H = 60.0                 # tip end above the deck at CNC z=0
+SAFE_H = 55.0                 # tip end above the deck at CNC z=0 (cad/syringe spec.safe_tip_h)
 SYTW = os.path.join(HERE, "..", "syringe", "twin")
 RIG = json.load(open(os.path.join(SYTW, "rig.json")))
 
@@ -96,6 +97,14 @@ MAT = {
     "syr_cable_brown":       ("#4A2412", 0.0, 0.45),
     "syr_cable_red":         ("#A10D08", 0.0, 0.45),
     "syr_cable_orange":      ("#E0630C", 0.0, 0.45),
+    "polycarbonate_clear":   ("#F4F8FA", 0.0, 0.05),
+    "aluminum_6063_t5_clear_anodized": ("#C4C7CA", 1.0, 0.3),
+    "pilot_white":           ("#FFFFFF", 0.0, 0.2),
+    "print_white":           ("#F4F4F4", 0.0, 0.5),
+    "syr_pcb_red":           ("#9E120C", 0.0, 0.35),
+    "ic_epoxy_black":        ("#121212", 0.0, 0.4),
+    "stainless_304_brushed": ("#B9BCBF", 1.0, 0.25),
+    "cable_pvc_black":       ("#141414", 0.0, 0.5),
     "tip":     ("#F2EEDC", 0.0, 0.25),
     "copper":  ("#B87333", 1.0, 0.35),
 }
@@ -398,10 +407,10 @@ for sx in (-ZROD_X, ZROD_X):
 s = Box(24, 18, 18) - Cylinder(4.5, 22, rotation=(90, 0, 0))
 shape(Z, "alu", s, trm([0, 175, ZROD_Z]))
 cyl(Z, "brass", 11, "y", (0, 184, ZROD_Z), 3, 32)
-# 52 mm spindle clamp
+# 42 mm motor holder (clamp)
 hb = Box(68, HOLDER_Y[1] - HOLDER_Y[0], ZPLATE_Z[0] - (SPINDLE_Z - 34))
 hb = Pos(0, 0, (ZPLATE_Z[0] + SPINDLE_Z - 34) / 2) * hb
-hb -= Pos(0, 0, SPINDLE_Z) * Cylinder(26, 60, rotation=(90, 0, 0))
+hb -= Pos(0, 0, SPINDLE_Z) * Cylinder(HOLDER_R, 60, rotation=(90, 0, 0))
 hb -= Pos(0, 0, SPINDLE_Z - 30) * Box(3, 60, 12)          # split
 hb = hb.fillet(1.5, []) if False else hb
 shape(Z, "black", hb, trm([0, sum(HOLDER_Y) / 2, 0]))
@@ -424,11 +433,18 @@ for f in RIG["files"]:
     if f["finish"] not in MAT:
         raise SystemExit(f"cnc3018.py: add a MAT entry for syringe finish {f['finish']!r}")
     add(SY_NODE[f["group"]], f["finish"], m)
-# twin rig: three.js node values per mm of plunger travel. Rotation about machine +Y = rotation about -Z here.
+# twin rig: three.js node values per mm of plunger travel. The relabel (y <-> z) is a reflection, so a rotation by
+# +a about a head axis is a rotation by -a about the relabelled axis here.
 _rig = {"stroke_mm": RIG["stroke_mm"], "ul_per_mm": RIG["ul_per_mm"], "ratio": RIG["ratio"],
         "nodes": {"syringe_carriage": {"prop": "position.y", "per_mm": 1.0}}}
+ROT_AXIS = {}
 for g in ("gear_a", "gear_b", "gear_c"):
-    _rig["nodes"][SY_NODE[g]] = {"prop": "rotation.z", "per_mm": -math.radians(RIG["groups"][g]["deg_per_mm"])}
+    ax = np.array(RIG["groups"][g]["axis"], float)
+    ax = (Th[:3, :3] @ ax)
+    k = int(np.argmax(np.abs(ax)))
+    ROT_AXIS[SY_NODE[g]] = np.eye(3)[k]
+    _rig["nodes"][SY_NODE[g]] = {"prop": "rotation." + "xyz"[k],
+                                 "per_mm": -float(np.sign(ax[k])) * math.radians(RIG["groups"][g]["deg_per_mm"])}
 
 # ================= assemble scene =================
 HIER = {"cnc_base": None, "cnc_y_bed": None, "cnc_x_carriage": None, "cnc_z": "cnc_x_carriage",
@@ -494,7 +510,7 @@ def posed(y=90, x=150, z=0, pos=0.0):
         if n == "syringe_carriage":
             V = V + np.array([0, pos, 0])
         elif n.startswith("syringe_gear_"):
-            V = trimesh.transform_points(V, NODE_M[n] @ rotm(_rig["nodes"][n]["per_mm"] * pos, [0, 0, 1]))
+            V = trimesh.transform_points(V, NODE_M[n] @ rotm(_rig["nodes"][n]["per_mm"] * pos, ROT_AXIS[n]))
         out.append((V + np.array(o), m.faces, mat))
     return out
 
