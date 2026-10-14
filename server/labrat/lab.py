@@ -10,7 +10,6 @@ from .store import store
 from .telemetry import track
 
 F_XY, F_Z = 3000, 600
-FIRST_STOP = 0.812  # pipette plunger first stop (matches bridge calibration)
 
 
 def flat_variant(var: dict) -> dict:
@@ -225,7 +224,7 @@ async def exec_step(s: dict, run: dict | None = None) -> str:
     if op == "aspirate":
         _, x, y, z = sim.loc(s["src"])
         await _goto(x, y, sim.Z_SAFE)  # above the liquid
-        await hub.cmd("pipette", "set", {"frac": FIRST_STOP}, timeout=10)  # press to first stop while above liquid
+        await hub.cmd("pipette", "prime", {}, timeout=15)  # plunger to its air-cushion ready height while above liquid
         await _mv(z=z, f=F_Z)
         await hub.cmd("pipette", "aspirate", {"ul": s["ul"]}, timeout=20)
         await _mv(z=sim.Z_SAFE, f=F_Z)
@@ -241,7 +240,7 @@ async def exec_step(s: dict, run: dict | None = None) -> str:
         _, x, y, z = sim.loc(s["well"])
         ul = min(float(s.get("ul", 50)), 190.0)
         await _goto(x, y, sim.Z_SAFE)
-        await hub.cmd("pipette", "set", {"frac": FIRST_STOP}, timeout=10)
+        await hub.cmd("pipette", "prime", {}, timeout=15)
         await _mv(z=z, f=F_Z)
         for _ in range(int(s.get("n", 3))):
             await hub.cmd("pipette", "aspirate", {"ul": ul}, timeout=20)

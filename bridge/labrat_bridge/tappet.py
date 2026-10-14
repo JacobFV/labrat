@@ -1,7 +1,9 @@
-"""Tappet ESP32 arms (JSON lines @115200) + the servo pipette on its PCA9685 channel 8."""
+"""Tappet ESP32 arms (JSON lines @115200) + the rack-and-pinion syringe servo on its PCA9685 channel 8."""
 from __future__ import annotations
 
 import json
+import math
+import os
 import threading
 import time
 
@@ -95,83 +97,215 @@ class Tappet(Device):
             self.client.close()
 
 
-DEFAULT_PIP = {"rest_us": 667, "full_us": 2283, "first_stop": 0.812,  # from cad/README.md cam table (MG90S)
-               "max_ul": 200, "settle_ms": 400}
+# Rack-and-pinion syringe (cad/syringe): continuous-rotation 9 g servo -> 12T m1.5 pinion (r 9 mm) -> rack -> plunger.
+# A continuous servo has no position feedback: us sets SPEED. Position is dead-reckoned from calibrated plunger
+# speeds, re-zeroed by `home` (drive down into the bottom stop) and corrected by `observe` (camera / NN estimate).
+# pos_mm = plunger height above its lowest point (0 = pressed, stroke_mm = fully drawn).
+DEFAULT_SYR = {
+    "neutral_us": 1500,       # servo stops here (trim the servo pot or this value until it does not creep)
+    "deadband_us": 40,        # |us - neutral| below this does not turn the servo
+    "span_us": 400,           # us above the deadband at full speed
+    "dir": 1,                 # +1: us > neutral raises the plunger (aspirates); flip if the rack runs the wrong way
+    "move_speed": 0.25,       # fraction of span for normal moves
+    "mm_per_s_up": 6.0,       # measured plunger speed at move_speed, raising
+    "mm_per_s_down": 6.0,     # ... lowering (load differs: calibrate both)
+    "backlash_mm": 0.15,      # extra travel added on direction reversal
+    "stroke_mm": 25.0,        # usable rack travel (cad/syringe syringe_stroke)
+    "syringe_id_mm": 17.8,    # barrel bore -> ul_per_mm = pi/4 * id^2
+    "ul_gain": 1.0,           # actual/geometric volume (air cushion compression, tip leakage), fit by weighing
+    "ready_mm": 2.0,          # air cushion kept below the liquid: aspirate starts here, dispense returns here
+    "max_ul": 200.0,          # tip capacity
+    "home_speed": 0.15,       # slow drive into the bottom stop
+    "home_s": 6.0,            # long enough to reach the stop from anywhere, short enough not to cook the servo
+    "settle_ms": 120,
+    "min_pulse_ms": 25,
+}
 
 
-class Pipette(Device):
-    kind = "servo_pipette"
+class Syringe(Device):
+    kind = "servo_syringe"
+    unlocked = ("stop", "observe")  # stop must not queue behind a running move
 
     def __init__(self, dev_id: str = "pipette", host: Tappet | None = None, info: dict | None = None):
         mock = host is None or host.client is None
         super().__init__(dev_id, mock, info)
         self.host = host
-        self.cal = load_json("pipette.json", DEFAULT_PIP)
-        self.info.update(host=host.id if host else None, channel=PIPETTE_CH)
-        self.frac = 0.0
-        self.vol_ul = 0.0
+        self.cal = load_json("syringe.json", DEFAULT_SYR)
+        self.info.update(host=host.id if host else None, channel=PIPETTE_CH, ul_per_mm=round(self.ul_per_mm, 2))
+        self.pos = 0.0          # dead-reckoned plunger height (mm)
+        self.homed = False
+        self.vol_ul = 0.0       # liquid in the tip
+        self.last_dir = 0
+        self.us_now = int(self.cal["neutral_us"])
+        self.last_obs: dict | None = None
+        self.moving = False
         self._enabled = False
         self._lk = threading.Lock()
 
-    def us(self, frac: float) -> int:
-        c = self.cal
-        return int(round(c["rest_us"] + (c["full_us"] - c["rest_us"]) * frac))
+    @property
+    def ul_per_mm(self) -> float:
+        d = float(self.cal["syringe_id_mm"])
+        return math.pi / 4 * d * d * float(self.cal["ul_gain"])
 
-    def _set(self, frac: float):
-        frac = max(0.0, min(1.0, float(frac)))
+    def us_for(self, speed: float) -> int:
+        """speed -1..1 (+ = plunger up) -> pulse width."""
+        c = self.cal
+        speed = max(-1.0, min(1.0, float(speed)))
+        if abs(speed) < 1e-6:
+            return int(c["neutral_us"])
+        mag = c["deadband_us"] + c["span_us"] * abs(speed)
+        return int(round(c["neutral_us"] + c["dir"] * math.copysign(mag, speed)))
+
+    def _pulse(self, us: int):
         if not self.mock:
             if not self._enabled:
                 self.host.request("enable")
                 self._enabled = True
-            r = self.host.request("servo_raw", ch=PIPETTE_CH, us=self.us(frac))
+            r = self.host.request("servo_raw", ch=PIPETTE_CH, us=int(us))
             if not r.get("ok", True):
                 raise DeviceError(f"servo_raw failed: {r}")
-        self.frac = frac
-        time.sleep(self.cal["settle_ms"] / 1000.0)
+        self.us_now = int(us)
 
-    def ul_to_frac(self, ul: float) -> float:
-        return float(ul) / float(self.cal["max_ul"]) * self.cal["first_stop"]
+    def _run(self, speed: float, seconds: float):
+        """drive at speed for seconds, then always return to neutral (also on errors)."""
+        try:
+            self.moving = True
+            self._pulse(self.us_for(speed))
+            time.sleep(max(0.0, seconds) / self._speedup())
+        finally:
+            self._pulse(self.us_for(0))
+            self.moving = False
+        time.sleep(self.cal["settle_ms"] / 1000.0 / self._speedup())
 
-    def a_set(self, frac: float):
-        self._set(frac)
+    def _speedup(self) -> float:
+        return float(os.environ.get("LABRAT_MOCK_SPEEDUP", "1")) if self.mock else 1.0
+
+    def _rate(self, up: bool, speed: float) -> float:
+        c = self.cal
+        base = c["mm_per_s_up"] if up else c["mm_per_s_down"]
+        return max(1e-3, base * speed / c["move_speed"])  # speed ~ linear in pulse offset above the deadband
+
+    def _move_to(self, target: float, speed: float | None = None):
+        c = self.cal
+        target = float(target)
+        if not (-1e-6 <= target <= c["stroke_mm"] + 1e-6):
+            raise DeviceError(f"plunger target {target:.2f} mm outside 0..{c['stroke_mm']}")
+        d = target - self.pos
+        if abs(d) < 1e-4:
+            return
+        up = d > 0
+        sp = float(speed or c["move_speed"])
+        dist = abs(d)
+        sign = 1 if up else -1
+        if self.last_dir and self.last_dir != sign:
+            dist += c["backlash_mm"]
+        t = dist / self._rate(up, sp)
+        if t * 1000 < c["min_pulse_ms"]:  # too short to resolve: slow down instead
+            sp = max(0.02, sp * t * 1000 / c["min_pulse_ms"])
+            t = dist / self._rate(up, sp)
+        self._run(sign * sp, t)
+        self.pos = target
+        self.last_dir = sign
+
+    # ---- actions ----
+    def a_home(self):
+        """drive slowly down into the bottom stop (fork on the barrel), then pos = 0."""
+        with self._lk:
+            self._run(-self.cal["home_speed"], self.cal["home_s"])
+            self.pos, self.homed, self.last_dir, self.vol_ul = 0.0, True, -1, 0.0
+        return self.state()
+
+    def a_zero(self, mm: float = 0.0):
+        """declare the current plunger height (after positioning by hand / drive)."""
+        self.pos, self.homed = float(mm), True
+        return self.state()
+
+    def a_observe(self, mm: float, conf: float = 1.0):
+        """external position estimate (camera + NN reading the rack): blend into the dead-reckoned position."""
+        mm, conf = float(mm), max(0.0, min(1.0, float(conf)))
+        err = mm - self.pos
+        self.pos = max(0.0, min(self.cal["stroke_mm"], self.pos + conf * err))
+        self.last_obs = {"mm": round(mm, 3), "conf": conf, "err_mm": round(err, 3), "ts": time.time()}
+        return self.state()
+
+    def a_move(self, mm: float, speed: float | None = None):
+        with self._lk:
+            self._move_to(mm, speed)
+        return self.state()
+
+    def a_jog(self, mm: float, speed: float | None = None):
+        with self._lk:
+            self._move_to(self.pos + float(mm), speed)
+        return self.state()
+
+    def a_drive(self, speed: float, ms: float):
+        """raw open-loop drive for calibration (position is NOT tracked: home/zero/observe afterwards)."""
+        ms = float(ms)
+        if not 0 < ms <= 5000:
+            raise DeviceError("ms must be in (0, 5000]")
+        with self._lk:
+            self._run(float(speed), ms / 1000.0)
+            self.homed = False
+        return self.state()
+
+    def a_prime(self):
+        """plunger to ready_mm (do this ABOVE the liquid): the air cushion the aspirate starts from."""
+        with self._lk:
+            if not self.homed:
+                self._run(-self.cal["home_speed"], self.cal["home_s"])
+                self.pos, self.homed, self.last_dir = 0.0, True, -1
+            self._move_to(self.cal["ready_mm"])
         return self.state()
 
     def a_aspirate(self, ul: float):
         ul = float(ul)
         if ul <= 0 or self.vol_ul + ul > self.cal["max_ul"] + 1e-6:
             raise DeviceError(f"aspirate {ul} uL exceeds capacity ({self.vol_ul}/{self.cal['max_ul']})")
-        fs = self.cal["first_stop"]
-        if self.vol_ul == 0 and self.frac < fs - 1e-3:
-            # Should be pressed above the liquid (server: set{frac:first_stop} before descending).
-            self._set(fs)
-        self._set(self.frac - self.ul_to_frac(ul))
-        self.vol_ul = round(self.vol_ul + ul, 2)
+        with self._lk:
+            if self.vol_ul == 0 and abs(self.pos - self.cal["ready_mm"]) > 1e-3:
+                raise DeviceError("prime first (plunger not at ready_mm above the liquid)")
+            self._move_to(self.pos + ul / self.ul_per_mm)
+            self.vol_ul = round(self.vol_ul + ul, 2)
         return self.state()
 
     def a_dispense(self, ul: float | None = None):
-        fs = self.cal["first_stop"]
-        if ul is None or float(ul) >= self.vol_ul:
-            self._set(fs)
-            self.vol_ul = 0.0
-        else:
-            self._set(min(fs, self.frac + self.ul_to_frac(ul)))
-            self.vol_ul = round(self.vol_ul - float(ul), 2)
+        with self._lk:
+            if ul is None or float(ul) >= self.vol_ul - 1e-6:
+                self._move_to(self.cal["ready_mm"])
+                self.vol_ul = 0.0
+            else:
+                ul = float(ul)
+                self._move_to(max(self.cal["ready_mm"], self.pos - ul / self.ul_per_mm))
+                self.vol_ul = round(self.vol_ul - ul, 2)
         return self.state()
 
     def a_blowout(self):
-        self._set(1.0)
-        self.vol_ul = 0.0
+        """push the air cushion out too (plunger to 0) to clear the last drop."""
+        with self._lk:
+            self._move_to(0.0)
+            self.vol_ul = 0.0
         return self.state()
 
     def a_rest(self):
-        self._set(0.0)
+        """stop the servo (neutral pulse). The rack holds through the servo gearbox."""
+        self._pulse(self.us_for(0))
         return self.state()
 
+    def a_stop(self):
+        if self.moving:  # interrupted mid-move: the dead-reckoned position is no longer trustworthy
+            self.homed = False
+        return self.a_rest()
+
     def state(self):
-        return {"frac": round(self.frac, 3), "vol_ul": self.vol_ul, "us": self.us(self.frac)}
+        return {"pos_mm": round(self.pos, 3), "stroke_mm": self.cal["stroke_mm"], "vol_ul": self.vol_ul,
+                "ul_per_mm": round(self.ul_per_mm, 2), "homed": self.homed, "moving": self.moving, "us": self.us_now, "obs": self.last_obs}
 
     def safe_stop(self):
         try:
-            self._set(0.0)
+            self._pulse(self.us_for(0))
         except Exception as e:
-            log.warning("pipette rest failed: %s", e)
+            log.warning("syringe stop failed: %s", e)
+            try:  # no pulses at all also stops a continuous servo
+                self.host.request("relax")
+            except Exception:
+                pass

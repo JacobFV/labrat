@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 from .common import Device, load_json, log, save_json
 from .grbl import Grbl, MockGrbl, probe_grbl
 from .so101 import So101, probe_feetech
-from .tappet import Pipette, Tappet, probe_tappet
+from .tappet import Syringe, Tappet, probe_tappet
 
 ALL_IDS = ["so_a", "so_b", "tap_a", "tap_b", "cnc", "pipette"]
 WATCHDOG_S = 3.0
@@ -116,9 +116,9 @@ def build_devices(mock: set[str], ports: str = "auto", so_a: str | None = None, 
 
     host = next((d for k, d in devs.items() if k.startswith("tap_") and isinstance(d, Tappet) and d.client), None)
     if "pipette" in mock or host is None:
-        devs["pipette"] = Pipette("pipette", None)
+        devs["pipette"] = Syringe("pipette", None)
     else:
-        devs["pipette"] = Pipette("pipette", host)
+        devs["pipette"] = Syringe("pipette", host)
 
     print_table("Devices", [(d.id, d.kind, d.status, str(d.info.get("port", d.info.get("host", "")))) for d in devs.values()],
                 ("id", "kind", "status", "port/host"))
@@ -199,7 +199,7 @@ class Bridge:
             await asyncio.sleep(0.25)
             if not self.connected and not self.safe_done and time.monotonic() - self.last_link > WATCHDOG_S:
                 self.safe_done = True
-                log.warning("server link down > %.0fs: stopping CNC, holding arms, pipette to rest", WATCHDOG_S)
+                log.warning("server link down > %.0fs: stopping CNC, holding arms, syringe servo to neutral", WATCHDOG_S)
                 await asyncio.gather(*(asyncio.to_thread(d.safe_stop) for d in self.devices.values()),
                                      return_exceptions=True)
 

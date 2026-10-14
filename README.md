@@ -14,14 +14,14 @@ Built for the Harness Engineering & Model Wrangling Hackathon (SF, 2026-10-11).
 Talk to it through an iPhone on a static stand looking down at the deck (its eyes, ears and voice), or
 chat with it on the laptop. It designs an experiment, **simulates many variants in a 3D digital twin**,
 picks the best one, asks for approval, and then runs it for real. The hardware is a 3018 CNC carrying a
-servo pipette, with an SO-101 gripper arm on each side. It then compares the result with its prediction, **refits its own
+rack-and-pinion syringe pipette in place of its spindle, with an SO-101 gripper arm on each side. It then compares the result with its prediction, **refits its own
 simulator**, and stores what it learned in typed memory (semantic / episodic / procedural / taxonomic).
 
 ## Hardware
 Layout: the 3018 CNC is in the middle, `so_a` and `so_b` stand on either side of it, the iPhone is on a fixed
 stand looking straight down at the CNC bed, and the laptop sits to the side.
-- **3018 CNC** (GRBL 1.1) carrying a **servo-actuated pipette** on the spindle mount (CAD in [`cad/`](cad)).
-- **Pipette servo driver:** an ESP32-S3 + PCA9685 Tappet board (`tap_a`, firmware in [`tappet/`](tappet), JSON lines over USB at 115200). PCA9685 **channel 8 drives the pipette plunger servo**. The Tappet arms themselves are optional and not part of the demo setup.
+- **3018 CNC** (GRBL 1.1) with a **syringe pipette head** in the spindle clamp: a disposable syringe with a 200 µL tip on its luer nozzle, plunger on a rack and pinion driven by a continuous-rotation 9 g servo (CAD in [`cad/syringe`](cad/syringe)).
+- **Syringe servo driver:** an ESP32-S3 + PCA9685 Tappet board (`tap_a`, firmware in [`tappet/`](tappet), JSON lines over USB at 115200). PCA9685 **channel 8 drives the syringe servo**. The Tappet arms themselves are optional and not part of the demo setup.
 - **2× SO-101 arms** (Feetech STS3215), `so_a` and `so_b`: plain manipulators with the stock gripper, one on each side of the CNC.
 - **iPhone** on a static stand above the CNC bed: camera, mic, speaker and animated eyes. It does not move.
 - A **laptop** to the side running the USB bridge and the console, plus a 96-well plate, a tip rack and dye reservoirs.
@@ -34,7 +34,7 @@ Terminal CLI (cli/) ───────wss /ws/ui──────┤   FastA
 Laptop USB bridge ─────────wss /ws/bridge──┘   sim twin, lab,       ├─ ElevenLabs     (TTS + STT)
   │                                            vision, learn (RSI)  ├─ Raindrop       (traces, rsi.update events)
   ├─ SO-101 ×2 gripper arms (Feetech STS)                           └─ Modelence      (Mission Control event ingest)
-  ├─ Tappet ESP32 board tap_a (pipette servo, PCA9685 ch 8)
+  ├─ Tappet ESP32 board tap_a (syringe servo, PCA9685 ch 8)
   └─ 3018 CNC (GRBL)
 ```
 Full system design (components, endpoints, memory, sim, learning loop, safety, sponsor map):
@@ -61,9 +61,9 @@ Full system design (components, endpoints, memory, sim, learning loop, safety, s
 | [`web/`](web) | Laptop console: chat, three.js digital twin, experiment gallery, Learning and Memory tabs, approvals, camera/deck calibration |
 | [`phone/`](phone) | Static overhead iPhone: animated eyes, camera frames, push-to-talk / VAD voice, TTS playback |
 | [`cli/`](cli) | Terminal REPL (`labrat`): streams `/ws/ui`, chat, `/sim`, `/run`, `/approve`, `/abort` |
-| [`bridge/`](bridge) | USB bridge: SO-101 (Feetech STS), Tappet ESP32, GRBL CNC, servo pipette, each with a mock |
+| [`bridge/`](bridge) | USB bridge: SO-101 (Feetech STS), Tappet ESP32, GRBL CNC, rack-and-pinion syringe, each with a mock |
 | [`tappet/`](tappet) | Tappet hardware (merged from the former `JacobFV/tappet` repo): ESP32 firmware, Python host, Android head app, CAD, web UI, docs |
-| [`cad/`](cad) | Servo pipette mount for the 3018 spindle (build123d to STL/3MF, cam travel table) |
+| [`cad/`](cad) | Rack-and-pinion syringe head for the 3018 spindle clamp (CadQuery → STEP/STL/3MF) and the parametric 3018 + bench model / renders |
 | [`deploy/`](deploy) | `aws_ec2.sh`: EC2 + Docker + Caddy HTTPS (`<ip>.sslip.io`, needed for iPhone camera/mic) |
 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | CI: server, bridge, JS syntax, Tappet host/firmware/Android/CAD |
 

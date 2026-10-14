@@ -19,7 +19,7 @@ an in-memory store, hashed bag-of-words embeddings, and text-only speech (the ph
 | `labrat/app.py` | FastAPI app: `/ws/bridge`, `/ws/phone`, `/ws/ui` (`?token=`), REST, static files |
 | `labrat/hub.py` | bridge command dispatch (futures and timeouts), device state, UI and phone broadcast |
 | `labrat/sim.py` | digital twin: deck, CNC trapezoid timing, tips, volumes, Beer–Lambert subtractive dye mixing → RGB, checks, frames, scoring, deterministic variant generator (50 variants in ~20 ms) |
-| `labrat/lab.py` | experiments, simulate, select, run approval, protocol → bridge commands (safe Z, pipette pressed to its first stop above the liquid) |
+| `labrat/lab.py` | experiments, simulate, select, run approval, protocol → bridge commands (safe Z, syringe primed to its air cushion above the liquid) |
 | `labrat/agent.py` | tool-use loop (Anthropic `claude-sonnet-5` by default; `LLM_PROVIDER=fireworks` for Llama via the OpenAI-compatible API) plus the rule-based fallback |
 | `labrat/learn.py` | RSI loop: observed vs predicted colour → ridge least squares fit of dye absorbance (and pipette gain) → versioned `sim_params` → re-score past variants → promote a procedure only if its prediction error improved |
 | `labrat/store.py`, `embed.py` | Mongo plus typed memory (semantic, episodic, procedural, taxonomic) and vector search |

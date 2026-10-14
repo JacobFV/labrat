@@ -1,9 +1,9 @@
-// LabRat digital twin: CNC 3018 + pipette, deck, 96-well plate, 2x SO-101 (+ phone), optional Tappet arms.
+// LabRat digital twin: CNC 3018 + syringe pipette head, deck, 96-well plate, 2x SO-101 (+ phone), optional Tappet arms.
 // Units: mm. Deck coords (x right 0..300, y back 0..180) map to three (X = x-150, Z = y-90). Up = +Y.
 // The desk is y=0. The CNC (web/models/cnc3018.glb, built by cad/cnc3018/cnc3018.py) sits in this.cncRoot,
 // raised so its bed top (= deck plane) is at cncRoot y=0. Like a real 3018 the BED moves in Y (deck items ride
-// on it), the X carriage moves along the gantry, and cnc pos is the SPINDLE axis; the pipette sits 45 mm in
-// front of it (deck_cal pipette_offset dy=-45).
+// on it), the X carriage moves along the gantry, and cnc pos is the SPINDLE axis. The rack-and-pinion syringe
+// (cad/syringe) replaces the spindle motor in its clamp, so the tip is on that axis (deck_cal pipette_offset 0).
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -13,7 +13,8 @@ import { loadSO101, setSO101 } from './so101.js';
 const ROWS = 'ABCDEFGH';
 const SAFE_H = 60; // tip height above deck at cnc z=0
 const BED_H = 72; // desk -> bed top (GLB feet bottom at -72)
-const PIP_DY = -45; // pipette axis vs spindle axis (deck y)
+const PIP_DY = 0; // pipette tip axis vs spindle axis (deck y): coaxial syringe head
+const SYR_STROKE = 25, SYR_PITCH_R = 9; // cad/syringe: plunger travel (mm), pinion pitch radius (mm)
 // SO-101 placement matches the real bench (operator stands at -Z, the CNC front): so_a = operator's LEFT,
 // so_b = operator's RIGHT, both at the CNC's front corners, zero-pose reach pointing to the machine BACK (+Z).
 // The CNC group is mirrored in X (cncRoot.scale.x = -1) so machine +x reads left->right for the operator, as on
@@ -147,7 +148,7 @@ export class Twin {
     this.carriage = new THREE.Group(); this.bridge.add(this.carriage);
     this._box(40, 50, 14, 0x222226, new THREE.Vector3(0, 125, -4), this.carriage);
     this.head = new THREE.Group(); this.carriage.add(this.head);
-    // servo pipette body
+    // syringe head (fallback boxes until the GLB loads)
     this.headBody = this._box(22, 60, 22, 0xf5d76e, new THREE.Vector3(0, 40, 0), this.head, { roughness: .4 });
     this.plunger = this._box(6, 18, 6, 0xeeeeee, new THREE.Vector3(0, 78, 0), this.head);
     const shaft = new THREE.Mesh(new THREE.CylinderGeometry(3, 2, 22, 12), this._mat(0xbbbbbb, { metalness: .5 }));
@@ -167,11 +168,11 @@ export class Twin {
     new GLTFLoader().load(new URL('./models/cnc3018.glb', import.meta.url).href, (g) => {
       const root = g.scene; root.name = 'cnc3018';
       const n = (k) => root.getObjectByName(k);
-      const nodes = { base: n('cnc_base'), bed: n('cnc_y_bed'), xc: n('cnc_x_carriage'), z: n('cnc_z'), plunger: n('pipette_plunger'), tip: n('pipette_tip') };
+      const nodes = { base: n('cnc_base'), bed: n('cnc_y_bed'), xc: n('cnc_x_carriage'), z: n('cnc_z'), rack: n('syringe_rack'), pinion: n('syringe_pinion'), tip: n('pipette_tip') };
       if (!nodes.bed || !nodes.xc || !nodes.z) { console.warn('cnc3018.glb: missing nodes, keeping fallback'); return; }
       root.traverse((m) => {
         if (!m.isMesh) return; m.castShadow = true; m.receiveShadow = true;
-        const mt = m.material; if (mt && mt.name === 'tip') { mt.transparent = true; mt.opacity = .8; m.castShadow = false; }
+        const mt = m.material; if (mt && (mt.name === 'tip' || mt.name === 'syringe')) { mt.transparent = true; mt.opacity = mt.name === 'tip' ? .8 : .45; mt.depthWrite = false; m.castShadow = false; }
       });
       this.cncRoot.add(root);
       this.fbGantry.visible = false; this.bedBox.visible = false;
@@ -388,13 +389,21 @@ export class Twin {
   }
   setPipette(p) {
     if (!p) return;
-    const tip = !!(p.tip ?? p.has_tip);
+    const tipKnown = p.tip !== undefined || p.has_tip !== undefined; // live bridge state has no tip flag
+    const tip = tipKnown ? !!(p.tip ?? p.has_tip) : this.headTip.visible;
     this.headTip.visible = tip; if (this.cncNodes?.tip) this.cncNodes.tip.visible = tip;
     const v = +(p.vol_ul ?? p.volume ?? 0);
     this.headLiquid.visible = tip && v > 0.5; this.headLiquid.scale.y = Math.max(.1, Math.min(18, v / 15)); this.headLiquid.position.y = -20 + this.headLiquid.scale.y / 2;
     if (p.rgb || p.color) { const c = parseColor(p.rgb || p.color); if (c) this.headLiquid.material.color.copy(c); }
-    if (p.frac != null) { this.plunger.position.y = 78 - 12 * p.frac; if (this.cncNodes?.plunger) this.cncNodes.plunger.position.y = -12 * p.frac; }
+    if (p.pos_mm != null) this.setPlunger(+p.pos_mm, +(p.stroke_mm ?? SYR_STROKE));
     if (typeof p.tip === 'string' && this.tips[p.tip]) this.tips[p.tip].visible = false;
+  }
+  // plunger height above its lowest point (bridge pipette.pos_mm): rack slides, pinion turns (GLB modelled at the top)
+  setPlunger(pos, stroke = SYR_STROKE) {
+    const d = Math.max(0, Math.min(stroke, pos)) - stroke;
+    this.plunger.position.y = 78 + 12 * d / stroke;
+    if (this.cncNodes?.rack) this.cncNodes.rack.position.y = d;
+    if (this.cncNodes?.pinion) this.cncNodes.pinion.rotation.z = d / SYR_PITCH_R;
   }
   setWells(wells) {
     if (!wells) return;

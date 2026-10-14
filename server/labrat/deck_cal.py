@@ -1,4 +1,4 @@
-"""Deck calibration: pipette-tip offset + taught deck positions -> spindle (CNC) coordinates.
+"""Deck calibration: pipette-tip offset (0,0,0 for the coaxial syringe head) + taught deck positions -> spindle (CNC) coordinates.
 
 Taught points are CNC machine coords of the PIPETTE TIP. The CNC moves the spindle, so
 spindle = tip - pipette_offset. Untaught targets fall back to the nominal deck (docs/ARCHITECTURE.md §6),
@@ -29,7 +29,7 @@ NOMINAL_PITCH = 9.0
 TARGETS = ["tip_rack.A1", "tip_rack.H12", "plate.A1", "plate.H12",
            "reservoir.water", "reservoir.red", "reservoir.blue", "reservoir.yellow", "waste", "eject_bar"]
 
-DEFAULT = {"id": DOC_ID, "pipette_offset": {"dx": 0.0, "dy": -45.0, "dz": 0.0}, "points": {}}
+DEFAULT = {"id": DOC_ID, "pipette_offset": {"dx": 0.0, "dy": 0.0, "dz": 0.0}, "points": {}}
 
 _cal: dict | None = None
 

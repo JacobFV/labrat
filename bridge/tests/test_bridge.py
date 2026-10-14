@@ -25,15 +25,23 @@ CMDS = [
     ("cnc", "jog", {"dx": 1}),
     ("cnc", "gcode", {"lines": ["G90 G21", "G0 X30 Y25", "G1 Z-10 F200", "G4 P0.1"]}),
     ("cnc", "status", {}),
-    ("pipette", "set", {"frac": 0.8}),
+    ("pipette", "home", {}),
+    ("pipette", "prime", {}),
     ("pipette", "aspirate", {"ul": 50}),
     ("pipette", "dispense", {"ul": 50}),
     ("pipette", "blowout", {}),
+    ("pipette", "move", {"mm": 10}),
+    ("pipette", "jog", {"mm": -2.5}),
+    ("pipette", "observe", {"mm": 7.0, "conf": 0.5}),
+    ("pipette", "drive", {"speed": 0.2, "ms": 100}),
+    ("pipette", "stop", {}),
 ]
 BAD = [
     ("cnc", "move", {"x": 400, "y": 0, "z": 0}),
     ("cnc", "gcode", {"lines": ["M8"]}),
     ("so_a", "pose", {"name": "nope"}),
+    ("pipette", "move", {"mm": 99}),
+    ("pipette", "aspirate", {"ul": 20}),  # drive{} dropped tracking and the plunger is not primed
     ("nope", "x", {}),
 ]
 
@@ -109,5 +117,28 @@ async def _run():
     assert got["states"] >= 3
     cnc = devs["cnc"].state()
     assert cnc["wpos"] == [30.0, 25.0, -10.0]
-    assert devs["pipette"].state()["frac"] == 0.0, "watchdog should rest the pipette"
+    syr = devs["pipette"].state()
+    assert syr["us"] == 1500 and not syr["moving"], "watchdog should stop the syringe servo"
+    assert syr["homed"] is False, "raw drive must invalidate the dead-reckoned position"
     assert br.safe_done
+
+
+def test_syringe_dead_reckoning():
+    from labrat_bridge.tappet import Syringe
+
+    s = Syringe("pipette", None)
+    s.a_home()
+    s.a_prime()
+    assert s.state()["pos_mm"] == s.cal["ready_mm"]
+    upm = s.ul_per_mm
+    s.a_aspirate(100)
+    assert abs(s.pos - (s.cal["ready_mm"] + 100 / upm)) < 1e-9 and s.vol_ul == 100
+    s.a_dispense(40)
+    assert abs(s.pos - (s.cal["ready_mm"] + 60 / upm)) < 1e-9 and s.vol_ul == 60
+    s.a_dispense()
+    assert s.pos == s.cal["ready_mm"] and s.vol_ul == 0
+    s.a_observe(s.pos + 1.0, conf=0.5)
+    assert abs(s.pos - (s.cal["ready_mm"] + 0.5)) < 1e-9
+    assert s.us_for(0) == 1500 and s.us_for(1) > 1500 > s.us_for(-1)
+    s.a_blowout()
+    assert s.pos == 0 and s.state()["us"] == 1500

@@ -22,6 +22,8 @@ def test_uncalibrated_is_nominal():
 
 def test_offset_roundtrip():
     s = (100.0, 50.0, -10.0)
+    assert deck_cal.spindle_to_tip(*s) == s  # default: syringe tip on the spindle axis
+    deck_cal.update({"pipette_offset": {"dy": -45.0}})  # an off-axis tool still works
     t = deck_cal.spindle_to_tip(*s)
     assert t == (100.0, 5.0, -10.0)
     assert deck_cal.tip_to_spindle(*t) == s
@@ -29,7 +31,7 @@ def test_offset_roundtrip():
 
 def test_teach_single_corner_nominal_pitch():
     tip = deck_cal.teach("plate.a1", (150.0, 70.0, -30.0))  # spindle
-    assert (tip["x"], tip["y"], tip["z"]) == (150.0, 25.0, -30.0)
+    assert (tip["x"], tip["y"], tip["z"]) == (150.0, 70.0, -30.0)
     # spindle back out for A1, nominal 9 mm pitch for others
     assert sim.well_xyz("A1", sim.PLATE, -99) == pytest.approx((150.0, 70.0, -30.0))
     assert sim.well_xyz("B3", sim.PLATE, -99) == pytest.approx((168.0, 79.0, -30.0))
@@ -46,11 +48,11 @@ def test_two_corners_rotation_and_pitch():
     f = deck_cal.grid_frame("tip_rack")
     assert f["pitch"] == pytest.approx(p)
     assert f["theta_deg"] == pytest.approx(2.0)
-    # C5 in tip coords -> spindle (dy=-45 => spindle y = tip y + 45)
+    # C5 in tip coords -> spindle (syringe is coaxial with the spindle clamp: offset 0)
     r, c = 2, 4
     ex = a1[0] + c * p * math.cos(th) - r * p * math.sin(th)
     ey = a1[1] + c * p * math.sin(th) + r * p * math.cos(th)
-    assert sim.well_xyz("C5", sim.TIP_RACK, 0) == pytest.approx((ex, ey + 45, -38))
+    assert sim.well_xyz("C5", sim.TIP_RACK, 0) == pytest.approx((ex, ey, -38))
 
 
 def test_persist_and_reload(tmp_path):
@@ -66,4 +68,4 @@ def test_sim_uses_calibrated_deck():
     prot = sim.protocol_from_ratios(["red", "yellow"], [0.5, 0.5], 100, "A1")
     r = sim.simulate(prot, "orange")
     xs = [(f["cnc"]["x"], f["cnc"]["y"]) for f in r["frames"]]
-    assert (150.0, 55.0) in xs
+    assert (150.0, 10.0) in xs

@@ -1,4 +1,4 @@
-"""3018 PRO-style desktop CNC + LabRat servo pipette, parametric (build123d + trimesh).
+"""3018 PRO-style desktop CNC + LabRat rack-and-pinion syringe head, parametric (build123d + trimesh).
 
 Frame = three.js / digital-twin frame, millimetres, Y UP:
   X = deck x - 150   (machine X, 0..300 -> -150..150)
@@ -9,14 +9,17 @@ and the twin only has to set:
   cnc_y_bed.position.z      = -(y - 90)     (bed moves, gantry fixed - like a real 3018)
   cnc_x_carriage.position.x =  x - 150
   cnc_z.position.y          =  z            (0 .. -45)
-  pipette_plunger.position.y = -travel_mm   (0 .. 15)
-The SPINDLE axis is the commanded XY (spindle lands at world Z=0 = deck y). The pipette sits 45 mm in
-front of it (deck_cal pipette_offset dy=-45). Pipette tip end is 60 mm above the deck at z=0 (twin SAFE_H).
+  syringe_rack.position.y   = pos_mm - stroke_mm   (plunger height above its lowest point, 0 .. stroke)
+  syringe_pinion.rotation.z = (pos_mm - stroke_mm) / pitch_r
+The spindle motor is gone: the syringe actuator (cad/syringe) sits in the 52 mm clamp, coaxial with the old
+spindle, so the commanded XY is the tip XY (deck_cal pipette_offset 0,0,0). The tip end is 60 mm above the
+deck at z=0 (twin SAFE_H). The models are modelled at the top of the stroke (pos_mm = stroke_mm).
 
-Run:  uv run --python 3.12 --with build123d --with trimesh --with matplotlib --with numpy \
+Run (after cad/syringe/syringe_3018_rack.py has written its STLs + report.json):
+      uv run --python 3.12 --with build123d --with trimesh --with matplotlib --with numpy \
         --with networkx --with lxml python cnc3018.py
 """
-import math, os, shutil
+import json, math, os, shutil
 import numpy as np
 import trimesh
 from trimesh.transformations import rotation_matrix as rotm, translation_matrix as trm
@@ -42,15 +45,14 @@ UP_TOP = 205.0
 XROD_Z = 73.0
 XROD_Y = (120.0, 184.0); XSCREW_Y = 152.0
 BEAM_Z = (95.0, 115.0)        # 2040 X beam
-SPINDLE_Z = 0.0               # spindle axis (world Z) - commanded Y
-PIP_DZ = -45.0                # pipette axis offset (front)
-RING_Y = 185.0                # mount ring bottom (pipette tip = RING_Y-125 = 60 = SAFE_H)
-HOLDER_Y = (139.0, 165.0)
-MOTOR_Y = (136.0, 202.0)      # 775 body, D44.5 x 66
-MOTOR_D = 44.5
+SPINDLE_Z = 0.0               # spindle/syringe axis (world Z) - commanded Y
+HOLDER_Y = (139.0, 165.0)     # 52 mm clamp, 26 tall
 ZPLATE_Z = (32.0, 40.0); ZROD_Z = 47.0; ZROD_X = 28.0
 CARR_Z = (54.0, 61.0); CARR_Y = (70.0, 232.0)
-SAFE_H = 60.0
+SAFE_H = 60.0                 # tip end above the deck at CNC z=0
+TIP_LEN, TIP_OVERLAP = 51.0, 5.0   # 200 uL tip, pressed 5 mm onto the luer nozzle
+_rep = json.load(open(os.path.join(HERE, "..", "syringe", "report.json")))
+SY = {**_rep["params"], "gear_center_x": _rep["gear_center_x"], "pitch_r": _rep["pitch_r"], "nozzle_end_z": _rep["nozzle_end_z"]}
 
 TOL, ATOL = 0.12, 0.35        # tessellation
 
@@ -71,11 +73,12 @@ MAT = {
     "terminal": ("#2E9E4F", 0.0, 0.6),
     "label":   ("#E8E8E8", 0.0, 0.6),
     "labeltxt": ("#202020", 0.0, 0.6),
-    "mount":   ("#E8772E", 0.0, 0.55),
-    "cam":     ("#F5D76E", 0.0, 0.5),
-    "servo":   ("#2F55B5", 0.0, 0.45),
-    "pipette": ("#ECECEA", 0.0, 0.35),
-    "pipdark": ("#2A4A7A", 0.0, 0.4),
+    "mount":   ("#2F6FBF", 0.0, 0.55),
+    "rack":    ("#F28A1E", 0.0, 0.5),
+    "pinion":  ("#D9473A", 0.0, 0.5),
+    "servo":   ("#1E3A8A", 0.0, 0.45),
+    "syringe": ("#E6ECF2", 0.0, 0.15),
+    "plunger": ("#B7BCC4", 0.0, 0.4),
     "tip":     ("#F2EEDC", 0.0, 0.25),
     "copper":  ("#B87333", 1.0, 0.35),
 }
@@ -388,91 +391,37 @@ shape(Z, "black", hb, trm([0, sum(HOLDER_Y) / 2, 0]))
 for yy in (HOLDER_Y[0] + 7, HOLDER_Y[1] - 7):
     cyl(Z, "steel", 2.8, "x", (12, yy, SPINDLE_Z - 30), 5, 16)
     cyl(Z, "steel", 1.6, "-x", (12, yy, SPINDLE_Z - 30), 24, 12)
-# sleeve 52 -> 44.5
-s = Cylinder(25.95, HOLDER_Y[1] - HOLDER_Y[0] + 6) - Cylinder(22.25, 60)
-shape(Z, "rubber", s, trm([0, sum(HOLDER_Y) / 2, SPINDLE_Z]) @ Rz2("y"))
-# 775 motor body with vents
-mot = Cylinder(MOTOR_D / 2, MOTOR_Y[1] - MOTOR_Y[0], align=(Align.CENTER, Align.CENTER, Align.MIN))
-for k in range(8):
-    a = k * 45
-    mot -= Rot(0, 0, a) * Pos(MOTOR_D / 2, 0, 52) * Box(6, 6, 10)
-    mot -= Rot(0, 0, a + 22.5) * Pos(MOTOR_D / 2, 0, 8) * Box(4, 7, 6)
-shape(Z, "spindle", mot, trm([0, MOTOR_Y[0], SPINDLE_Z]) @ Rz2("y"))
-cyl(Z, "rubber", 21.5, "y", (0, MOTOR_Y[0] + 42, SPINDLE_Z), 12, 48)   # inner fan seen through vents
-cyl(Z, "cap", 18, "y", (0, MOTOR_Y[1], SPINDLE_Z), 3, 48)              # end bell
-for sx in (-8, 8):
-    box(Z, "brass", sx - 1.5, sx + 1.5, MOTOR_Y[1] + 3, MOTOR_Y[1] + 11, SPINDLE_Z - 3, SPINDLE_Z + 3)
-cyl(Z, "spindle", 8.5, "-y", (0, MOTOR_Y[0], SPINDLE_Z), 4, 32)          # front boss
-cyl(Z, "steel", 2.5, "-y", (0, MOTOR_Y[0] - 4, SPINDLE_Z), 10, 16)       # shaft
-# ER11 extension + collet nut (knurled)
-cyl(Z, "collet", 8, "-y", (0, MOTOR_Y[0] - 10, SPINDLE_Z), 12, 40)
-nut = Cylinder(9.5, 11, align=(Align.CENTER, Align.CENTER, Align.MIN))
-for k in range(24):
-    nut -= Rot(0, 0, k * 15) * Pos(9.6, 0, -1) * Box(1.2, 1.2, 14, align=(Align.CENTER, Align.CENTER, Align.MIN))
-nut -= Pos(0, 0, -1) * Cylinder(3.5, 3)
-shape(Z, "collet", nut, trm([0, MOTOR_Y[0] - 22, SPINDLE_Z]) @ Rz2("-y"))
-cone(Z, "collet", 6.5, 9.5, "y", (0, MOTOR_Y[0] - 36, SPINDLE_Z), 3, 40)
-cyl(Z, "steel", 1.6, "-y", (0, MOTOR_Y[0] - 33, SPINDLE_Z), 22, 16)      # 1/8" bit
-cone(Z, "steel", 1.6, 0.2, "-y", (0, MOTOR_Y[0] - 55, SPINDLE_Z), 4, 16)
-
-# ---------------- LabRat servo pipette mount ----------------
-# mount-local frame: origin spindle axis at ring bottom, +X along arm, Z up  ->  world
-R = np.array([[0, -1, 0, 0], [0, 0, 1, RING_Y], [-1, 0, 0, SPINDLE_Z], [0, 0, 0, 1]], float)
-assert abs(np.linalg.det(R[:3, :3]) - 1) < 1e-9
-STL = os.path.join(ROOT, "cad", "stl")
-H = 16.0; XP = 45.0; PIP_D = 20.5; PIP_L = 95.0; Z_BODY_TOP = H + 4.0
-PLUNGER_D = 8.0; PLUNGER_PROTRUDE = 15.0; CAP_T = 3.0; CAP_RECESS = 1.2
-Z_CAP_TOP = Z_BODY_TOP + PLUNGER_PROTRUDE + CAP_T - CAP_RECESS
-CAM_R, CAM_E, CAM_T = 16.0, 8.5, 6.0
-ZS = Z_CAP_TOP + (CAM_R - CAM_E) + 0.5
-SV_L, SV_W, SV_TAB_L, SV_SHAFT_FROM_END = 22.5, 12.2, 32.3, 5.9
-SV_BELOW_TAB, SV_TAB_T, SV_ABOVE_TAB, SV_SPLINE_ABOVE_TAB = 15.9, 2.5, 4.3, 8.3
-TAB_TOP_Y = -CAM_T / 2 - (SV_SPLINE_ABOVE_TAB + 0.5 - 2.0) - 0.5
-PLATE_FRONT = TAB_TOP_Y - SV_TAB_T
-SV_CX = XP + (SV_L / 2 - SV_SHAFT_FROM_END)
-TIP_LEN = 50.0
-
-def addL(node, mat, m):
-    m = m.copy(); m.apply_transform(R); add(node, mat, m)
-
-body = trimesh.load(os.path.join(STL, "mount_body.stl")); addL(Z, "mount", body)
-camm = trimesh.load(os.path.join(STL, "cam.stl"))
-T = trimesh.transformations
-Mc = rotm(math.pi / 2, [0, 0, 1]); Mc = rotm(math.pi / 2, [1, 0, 0]) @ Mc
-Mc = trm([0, CAM_T / 2, 0]) @ Mc; Mc = trm([XP, 0, ZS]) @ Mc
-camm.apply_transform(Mc); addL(Z, "cam", camm)
-yb = PLATE_FRONT + SV_TAB_T
-addL(Z, "servo", trimesh.creation.box(bounds=[[XP - SV_SHAFT_FROM_END, PLATE_FRONT - SV_BELOW_TAB, ZS - SV_W / 2],
-                                               [XP - SV_SHAFT_FROM_END + SV_L, yb + SV_ABOVE_TAB, ZS + SV_W / 2]]))
-addL(Z, "servo", trimesh.creation.box(bounds=[[SV_CX - SV_TAB_L / 2, PLATE_FRONT, ZS - SV_W / 2],
-                                               [SV_CX + SV_TAB_L / 2, yb, ZS + SV_W / 2]]))
-sp = trimesh.creation.cylinder(2.5, 4, sections=16); sp.apply_transform(rotm(math.pi / 2, [1, 0, 0]))
-sp.apply_translation([XP, yb + SV_ABOVE_TAB + 1.5, ZS]); addL(Z, "collet", sp)
-# servo cable
-cab = trimesh.creation.box(bounds=[[XP + 14, PLATE_FRONT - 12, ZS - 2], [XP + 40, PLATE_FRONT - 8, ZS + 2]]); addL(Z, "rubber", cab)
-
-def zcyl(r0, r1, z0, z1, sections=48):
-    m = trimesh.creation.cylinder(1, z1 - z0, sections=sections)
-    s = np.where(m.vertices[:, 2] < 0, r0, r1)
-    m.vertices[:, 0] *= s; m.vertices[:, 1] *= s
-    m.apply_translation([XP, 0, (z0 + z1) / 2]); return m
-# pipette body (Ø20.5 x 95): grip barrel, dark volume window band, tapered nose
-addL(Z, "pipette", zcyl(PIP_D / 2, PIP_D / 2, -38, Z_BODY_TOP))
-addL(Z, "pipdark", zcyl(PIP_D / 2 + 0.15, PIP_D / 2 + 0.15, -10, 2))
-addL(Z, "pipette", zcyl(PIP_D / 2, 6.0, -62, -38))
-addL(Z, "pipdark", zcyl(6.0, 3.6, -75, -62))
-fh = trimesh.creation.box(bounds=[[XP - 4, -PIP_D / 2 - 9, -6], [XP + 4, -PIP_D / 2 + 1, 6]])  # finger hook
-addL(Z, "pipette", fh)
-# disposable tip (separate node so the twin can hide it)
-addL("pipette_tip", "tip", zcyl(3.6, 0.6, -75 - TIP_LEN, -75, 32))
-# plunger + cap (moves)
-addL("pipette_plunger", "pipette", zcyl(PLUNGER_D / 2, PLUNGER_D / 2, Z_BODY_TOP, Z_BODY_TOP + PLUNGER_PROTRUDE, 24))
-capm = trimesh.load(os.path.join(STL, "plunger_cap.stl"))
-capm.apply_transform(rotm(math.pi, [1, 0, 0])); capm.apply_translation([XP, 0, Z_CAP_TOP]); addL("pipette_plunger", "cam", capm)
+# ---------------- LabRat syringe actuator (replaces the 775 spindle; ../syringe/syringe_3018_rack.py) ----------------
+# part frame: z up from the plug bottom, syringe axis x=y=0, +y = toward the machine back (the clamp block),
+# rack/pinion at +x, servo plate at -y.  -> world: X=-x, Y=z+SY_Z0, Z=y (proper rotation, det +1)
+SY_Z0 = HOLDER_Y[1] - SY["plug_len"]   # the plug lip rests on the clamp top face
+Mp = np.array([[-1, 0, 0, 0], [0, 0, 1, SY_Z0], [0, 1, 0, SPINDLE_Z], [0, 0, 0, 1]], float)
+assert abs(np.linalg.det(Mp[:3, :3]) - 1) < 1e-9
+SYSTL = os.path.join(ROOT, "cad", "syringe", "stl")
+def sy(node, mat, fn, M=Mp):
+    m = trimesh.load(os.path.join(SYSTL, fn)); m.apply_transform(M); add(node, mat, m)
+sy(Z, "mount", "mount_body.stl")
+sy(Z, "servo", "mock_servo.stl")
+sy(Z, "syringe", "mock_syringe.stl")
+sy("syringe_rack", "rack", "rack.stl")              # rack + fork move with the plunger
+sy("syringe_rack", "plunger", "mock_plunger.stl")
+# pinion: node frame at the servo shaft so the twin only sets rotation.z (shaft axis = part y = world Z)
+PIVOT = Mp @ np.array([SY["gear_center_x"], 0, SY["servo_shaft_z"], 1.0])
+sy("syringe_pinion", "pinion", "pinion.stl", trm(-PIVOT[:3]) @ Mp)
+# servo lead
+box(Z, "rubber", -(SY["gear_center_x"] + 18), -(SY["gear_center_x"] + 14), SY_Z0 + SY["servo_shaft_z"] - 2,
+    SY_Z0 + SY["servo_shaft_z"] + 2, -40, -26)
+# disposable 200 uL tip pressed onto the luer nozzle (separate node so the twin can hide it)
+NOZZLE_Y = SY_Z0 + SY["nozzle_end_z"]
+TIP_Y = NOZZLE_Y + TIP_OVERLAP - TIP_LEN
+assert abs(TIP_Y - SAFE_H) < 0.5, f"tip end {TIP_Y:.1f} != SAFE_H {SAFE_H}: change syringe plug_len"
+cone("pipette_tip", "tip", 0.45, 2.75, "y", (0, TIP_Y, SPINDLE_Z), TIP_LEN - 8, 32)
+cone("pipette_tip", "tip", 2.75, 3.1, "y", (0, TIP_Y + TIP_LEN - 8, SPINDLE_Z), 8, 32)
 
 # ================= assemble scene =================
 HIER = {"cnc_base": None, "cnc_y_bed": None, "cnc_x_carriage": None, "cnc_z": "cnc_x_carriage",
-        "pipette_plunger": "cnc_z", "pipette_tip": "cnc_z"}
+        "syringe_rack": "cnc_z", "syringe_pinion": "cnc_z", "pipette_tip": "cnc_z"}
+NODE_M = {n: np.eye(4) for n in HIER}; NODE_M["syringe_pinion"] = trm(PIVOT[:3])
 
 def pbr(mat):
     c, met, rough = MAT[mat]
@@ -490,10 +439,17 @@ def merged():
 
 MER = merged()
 
+# clearance: everything on the syringe head above the clamp must stay in front of the Z plate / Z stepper
+_hv = np.vstack([m.vertices for (n, mat), m in MER.items() if n.startswith("syringe") or mat in ("mount", "servo", "syringe")])
+_hv[:, 1] += 0  # rack is modelled at its top position = worst case
+_up = _hv[_hv[:, 1] > HOLDER_Y[1] + 4]
+print(f"syringe head: max world Z above the clamp {_up[:, 2].max():.1f} (Z plate front {ZPLATE_Z[0]}), top Y {_hv[:, 1].max():.1f}")
+assert _up[:, 2].max() < ZPLATE_Z[0] - 2, "syringe head hits the Z plate / Z stepper"
+
 def build_scene():
     sc = trimesh.Scene(base_frame="cnc3018")
-    for n in ["cnc_base", "cnc_y_bed", "cnc_x_carriage", "cnc_z", "pipette_plunger", "pipette_tip"]:
-        sc.graph.update(frame_from=HIER[n] or "cnc3018", frame_to=n, matrix=np.eye(4))
+    for n in HIER:
+        sc.graph.update(frame_from=HIER[n] or "cnc3018", frame_to=n, matrix=NODE_M[n])
     for (node, mat), m in MER.items():
         g = m.copy()
         g.visual = trimesh.visual.TextureVisuals(material=pbr(mat))
@@ -515,10 +471,21 @@ import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
 
-def posed(y=90, x=150, z=0, plunger=0):
+def posed(y=90, x=150, z=0, pos=None):
+    """vertices posed like the twin does it; pos = plunger height above its lowest point (default: top)."""
+    stroke, pr = SY["syringe_stroke"], SY["pitch_r"]
+    pos = stroke if pos is None else pos
     off = {"cnc_base": [0, 0, 0], "cnc_y_bed": [0, 0, -(y - 90)], "cnc_x_carriage": [x - 150, 0, 0]}
-    off["cnc_z"] = [x - 150, z, 0]; off["pipette_tip"] = off["cnc_z"]; off["pipette_plunger"] = [x - 150, z - plunger, 0]
-    return [(m.vertices + np.array(off[n]), m.faces, mat) for (n, mat), m in MER.items()]
+    off["cnc_z"] = [x - 150, z, 0]
+    for n in ("pipette_tip", "syringe_pinion"): off[n] = off["cnc_z"]
+    off["syringe_rack"] = [x - 150, z + pos - stroke, 0]
+    out = []
+    for (n, mat), m in MER.items():
+        V = m.vertices
+        if n == "syringe_pinion":
+            V = trimesh.transform_points(V, trm(PIVOT[:3]) @ rotm((pos - stroke) / pr, [0, 0, 1]))
+        out.append((V + np.array(off[n]), m.faces, mat))
+    return out
 
 def render(path, items, azim, elev, zoom=1.0, center=None, size=(12, 9), dpi=130, fov_pad=1.05):
     a, e = math.radians(azim), math.radians(elev)
@@ -568,8 +535,8 @@ def render(path, items, azim, elev, zoom=1.0, center=None, size=(12, 9), dpi=130
     print("wrote", path)
 
 if os.environ.get("NORENDER") != "1":
-    it = posed(y=60, x=110, z=-10)
+    it = posed(y=60, x=110, z=-10, pos=SY["syringe_stroke"] * 0.6)
     render(os.path.join(REN, "cnc3018_iso.png"), it, azim=-145, elev=26)
     render(os.path.join(REN, "cnc3018_front.png"), it, azim=180, elev=8)
-    render(os.path.join(REN, "cnc3018_spindle_pipette.png"), it, azim=-130, elev=14, zoom=0.85,
-           center=(-40, 130, -25))
+    render(os.path.join(REN, "cnc3018_syringe_head.png"), it, azim=-130, elev=14, zoom=0.85,
+           center=(-40, 190, -25))

@@ -91,7 +91,7 @@ STATE = lambda: {"devices": {
     "so_a": {"kind": "so101", "status": "mock", "q": {"shoulder_pan": 20 * math.sin(time.time() / 3), "shoulder_lift": -20, "elbow_flex": 70, "wrist_flex": 30, "wrist_roll": 0, "gripper": 0}},
     "so_b": {"kind": "so101", "status": "mock", "q": {"shoulder_pan": -15, "shoulder_lift": -10 + 15 * math.sin(time.time() / 2), "elbow_flex": 50, "wrist_flex": 20, "wrist_roll": 0, "gripper": 40}},
     "tap_a": {"kind": "tappet", "status": "error"}, "cnc": {"kind": "grbl", "status": "mock", "x": 150 + 100 * math.sin(time.time() / 4), "y": 90, "z": -10},
-    "pipette": {"kind": "servo_pipette", "status": "mock", "vol_ul": 0, "tip": True}, "phone": {"status": "ok" if LATEST_FRAME["jpeg"] else "off"}},
+    "pipette": {"kind": "servo_syringe", "status": "mock", "vol_ul": 0, "tip": True}, "phone": {"status": "ok" if LATEST_FRAME["jpeg"] else "off"}},
     "services": {"mongo": {"ok": False, "fallback": "memory"}, "voyage": "mock", "raindrop": True, "elevenlabs": {"ok": True}, "modelence": "off", "aws": {"ok": True, "region": "us-west-2"}, "llm": {"ok": True, "provider": "anthropic"}}}
 
 

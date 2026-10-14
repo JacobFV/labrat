@@ -11,15 +11,15 @@ This is the single system-design document for LabRat. It was written from the co
 | **Laptop web app** | `web/` (`app.js`, `twin.js` three.js twin, `deck.js` deck calibration, `camera_cal.js`) | browser | chat, experiment gallery, 3D replay, device status, run approval, deck/camera calibration |
 | **Phone SPA** | `phone/` (`phone.js`) | iPhone on a static stand looking down at the CNC bed | camera frames and mic audio go up to the server; animated face and TTS audio come back |
 | **CLI** | `cli/labrat_cli/` (`uv run labrat --server http://127.0.0.1:8100 --token labrat`) | terminal | REPL over `/ws/ui` and REST |
-| **Tappet firmware/host** | `tappet/firmware`, `tappet/host` | ESP32-S3 + PCA9685 | in the demo setup, only drives the pipette servo (PCA9685 ch 8); the Tappet arms are optional. The bridge talks to them through the vendored client `bridge/labrat_bridge/tappet_client.py` (copied from `tappet/host/tappet/client.py`) |
+| **Tappet firmware/host** | `tappet/firmware`, `tappet/host` | ESP32-S3 + PCA9685 | in the demo setup, only drives the syringe servo (PCA9685 ch 8); the Tappet arms are optional. The bridge talks to them through the vendored client `bridge/labrat_bridge/tappet_client.py` (copied from `tappet/host/tappet/client.py`) |
 
-Physical layout: the 3018 CNC (carrying the servo pipette) is in the middle, an SO-101 arm stands on each side of it, the iPhone sits on a fixed stand looking straight down at the CNC bed, and the laptop (bridge + console) is off to the side. Nothing moves the camera.
+Physical layout: the 3018 CNC (carrying the syringe pipette in its spindle clamp) is in the middle, an SO-101 arm stands on each side of it, the iPhone sits on a fixed stand looking straight down at the CNC bed, and the laptop (bridge + console) is off to the side. Nothing moves the camera.
 
 Hardware, as bridge device ids (`bridge/labrat_bridge/bridge.py: ALL_IDS`):
 - `so_a`, `so_b` are SO-101 arms (Feetech STS3215 bus at 1 Mbps): plain manipulators with the stock gripper, `so_a` on one side of the CNC and `so_b` on the other. Named poses are `home`, `ready` and `rest`; the old `look_deck`/`look_user`/`look_plate` names are accepted as aliases for `ready`.
-- `tap_a` is the ESP32-S3 + PCA9685 Tappet board that drives the pipette servo (JSON lines over UART at 115200). `tap_b` and the Tappet arms are optional and not part of the demo setup.
+- `tap_a` is the ESP32-S3 + PCA9685 Tappet board that drives the syringe servo (JSON lines over UART at 115200). `tap_b` and the Tappet arms are optional and not part of the demo setup.
 - `cnc` is a 3018 CNC running GRBL 1.1 at 115200.
-- `pipette` is a servo pipette on the CNC head. It is driven through PCA9685 **channel 8** of a Tappet board with `servo_raw`.
+- `pipette` is a syringe pipette that replaces the spindle motor in the 3018's 52 mm clamp ([`cad/syringe`](../cad/syringe)): a disposable syringe with a 200 µL tip on its luer nozzle, its plunger driven by a rack and pinion on a continuous-rotation 9 g servo on PCA9685 **channel 8** (`servo_raw`). The servo has no position feedback: the bridge dead-reckons the plunger from calibrated speeds, re-zeroes with `home` (bottom stop) and accepts camera/NN estimates through `observe`.
 
 ## 2. Topology
 
@@ -32,7 +32,7 @@ Hardware, as bridge device ids (`bridge/labrat_bridge/bridge.py: ALL_IDS`):
    ├─ so_a (SO-101 gripper, left of CNC)        └───┬──────┬──────┬───────┬────────┬──────────┬───┘
    ├─ so_b (SO-101 gripper, right of CNC)           │      │      │       │        │          │
    ├─ tap_a (Tappet ESP32 board)                Anthropic Mongo  Voyage  ElevenLabs Raindrop  Modelence
-   │    └─ PCA9685 ch 8 → pipette servo          (LLM +  Atlas   (embed)  (TTS/STT) (events)  Mission Control
+   │    └─ PCA9685 ch 8 → syringe servo          (LLM +  Atlas   (embed)  (TTS/STT) (events)  Mission Control
    └─ cnc (3018 GRBL) carrying the pipette        vision)                                     (/api/events)
 ```
 
@@ -159,7 +159,7 @@ After each observation:
 ## 8. Deck and camera calibration
 
 - **Deck (`server/labrat/deck_cal.py`, UI `web/deck.js`):**
-  - Taught points are CNC coordinates of the **pipette tip**, and `spindle = tip − pipette_offset`. The default offset is `{dx: 0, dy: −45, dz: 0}`.
+  - Taught points are CNC coordinates of the **pipette tip**, and `spindle = tip − pipette_offset`. The default offset is `{dx: 0, dy: 0, dz: 0}`: the syringe tip is on the spindle axis.
   - Teachable targets are `tip_rack.A1/H12`, `plate.A1/H12`, the reservoirs, waste and eject bar.
   - When both A1 and H12 of a grid are taught, pitch and rotation are derived from them. Otherwise the grid uses a nominal 9 mm, axis-aligned pitch.
   - Workflow: jog with `POST /api/jog`, then save the position with `POST /api/deck_cal/teach`.
@@ -177,8 +177,8 @@ After each observation:
   - feed caps of 1500 mm/min XY and 500 mm/min Z;
   - G-code is validated and moves are segmented through safe Z;
   - SO-101 joints are clamped to their calibrated min/max (`so101.py: clamp`);
-  - the pipette fraction is clamped to 0..1.
-- **Watchdog.** If the server link is down for more than 3 s (`bridge.py: WATCHDOG_S`), the bridge calls `safe_stop` on every device: CNC feed hold, arms hold, pipette to rest. Tappet boards also get a 1 s heartbeat that keeps the firmware's 5 s watchdog fed.
+  - syringe plunger targets outside 0..`stroke_mm` are rejected, every servo drive ends with a neutral pulse, and `stop` is not queued behind a running move.
+- **Watchdog.** If the server link is down for more than 3 s (`bridge.py: WATCHDOG_S`), the bridge calls `safe_stop` on every device: CNC feed hold, arms hold, syringe servo to neutral (and the Tappet firmware relaxes all PWM after 5 s without commands, which also stops a continuous servo). Tappet boards also get a 1 s heartbeat that keeps the firmware's 5 s watchdog fed.
 - **Command timeouts.** Bridge commands time out. A bridge disconnect fails every pending command, which fails the run.
 - **REST jog** is limited to ≤ 50 mm per axis and only for `cnc`.
 - **Graceful degradation.** Every sponsor integration logs a warning once and falls back to the in-memory store, the rules agent, hashed embeddings, or browser TTS, so the demo never blocks.

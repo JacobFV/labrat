@@ -15,8 +15,10 @@ from .status import mark
 from .telemetry import track
 from .voice import tts
 
-SYSTEM = """You are LabRat, a friendly voice-operated desk-lab robot agent. Physical setup: a 3018 CNC (cnc) carries a servo
-pipette (pipette; its servo is driven on channel 8 of the ESP32/PCA9685 Tappet board tap_a). Two SO-101 arms with stock
+SYSTEM = """You are LabRat, a friendly voice-operated desk-lab robot agent. Physical setup: a 3018 CNC (cnc) carries a syringe
+pipette in place of its spindle (pipette: a disposable syringe with a 200 µL tip on its luer nozzle, plunger driven by a
+rack and pinion on a continuous-rotation 9 g servo, channel 8 of the ESP32/PCA9685 Tappet board tap_a; the tip is on the
+spindle axis). Two SO-101 arms with stock
 grippers, so_a and so_b, stand on either side of the CNC for pick-and-place (named poses: home, ready, rest). An iPhone on a
 static stand looks straight down at the CNC bed; it is your eye, ear and mouth (look() returns its latest frame; it does not
 move). The operator's laptop sits to the side. Deck (mm): tip_rack 8x12 at (20,20) pitch 9, 96-well plate at (140,20) pitch 9 (300 µL wells),
@@ -42,10 +44,10 @@ TOOLS: list[dict] = [
     {"name": "move_arm", "description": "Move an SO-101 gripper arm (so_a left of the CNC, so_b right) to a named pose (home, ready, rest) or joint angles (deg).",
      "input_schema": {"type": "object", "properties": {"device": {"type": "string"}, "pose": {"type": "string"}, "joints": {"type": "object"}, "ms": {"type": "integer"}},
                       "required": ["device"]}},
-    {"name": "cnc_move", "description": "Move the CNC pipette head (absolute mm) or home it (home=true).",
+    {"name": "cnc_move", "description": "Move the CNC syringe head (absolute mm) or home it (home=true).",
      "input_schema": {"type": "object", "properties": {"x": {"type": "number"}, "y": {"type": "number"}, "z": {"type": "number"}, "f": {"type": "number"}, "home": {"type": "boolean"}}}},
-    {"name": "pipette", "description": "Pipette action: aspirate/dispense (ul), blowout, set (frac 0..1).",
-     "input_schema": {"type": "object", "properties": {"action": {"type": "string", "enum": ["aspirate", "dispense", "blowout", "set"]}, "ul": {"type": "number"}, "frac": {"type": "number"}},
+    {"name": "pipette", "description": "Syringe pipette action: home (drive plunger to its bottom stop), prime (plunger to the ready air cushion; do it above the liquid), aspirate/dispense (ul), blowout, move (plunger height mm, 0..stroke).",
+     "input_schema": {"type": "object", "properties": {"action": {"type": "string", "enum": ["home", "prime", "aspirate", "dispense", "blowout", "move"]}, "ul": {"type": "number"}, "mm": {"type": "number"}},
                       "required": ["action"]}},
     {"name": "say", "description": "Speak a short sentence through the phone.", "input_schema": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}},
     {"name": "remember", "description": "Store a note in long-term memory.",
@@ -180,7 +182,7 @@ async def _run_tool(name: str, a: dict) -> Any:
         return await hub.cmd("cnc", "move", {"x": x, "y": y, "z": z, "f": float(a.get("f", 2000))}, timeout=60)
     if name == "pipette":
         act = a["action"]
-        args = {"ul": a["ul"]} if act in ("aspirate", "dispense") else ({"frac": a.get("frac", 0)} if act == "set" else {})
+        args = {"ul": a["ul"]} if act in ("aspirate", "dispense") else ({"mm": float(a.get("mm", 0))} if act == "move" else {})
         return await hub.cmd("pipette", act, args)
     if name == "say":
         await speak(a["text"])

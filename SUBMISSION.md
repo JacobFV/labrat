@@ -10,7 +10,7 @@ Lab automation is either rigid, with scripted liquid handlers that never learn, 
 2. **Recall** relevant typed memories through Voyage embeddings and MongoDB Atlas Vector Search.
 3. **Design** N protocol variants (Claude, or a deterministic generator) and **simulate** each one in the digital twin: CNC timing, pipette volumes, tip reuse, Beer–Lambert dye mixing to RGB, and bounds/collision checks. Then score them.
 4. **Select and approve.** Only a sim-passing variant can be queued, and it waits for human approval.
-5. **Execute** through the USB bridge: 3018 CNC with a servo pipette, plus an SO-101 gripper arm on each side of it.
+5. **Execute** through the USB bridge: 3018 CNC with a rack-and-pinion syringe pipette, plus an SO-101 gripper arm on each side of it.
 6. **Observe automatically.** The CNC parks out of view and the server waits for a fresh frame from the overhead iPhone (no arm moves). A camera→plate homography (from 4 clicked wells) samples the target well, white-balanced against an empty well; Claude vision is the fallback. The result goes into the learning loop.
 7. **Self-improve.** The loop refits the simulator's dye absorbance and pipette gain, adopts the new parameters only if prediction error drops, re-scores past variants, and promotes the protocol to procedural memory.
 
@@ -20,7 +20,7 @@ flowchart LR
   subgraph Clients
     P[iPhone SPA on a static overhead stand<br/>camera, mic, eyes, TTS]
     W[Laptop console<br/>chat, 3D twin, gallery, Learning, Memory, Calibrate cam]
-    B[USB bridge<br/>SO-101 x2, GRBL CNC, servo pipette via Tappet ESP32 board<br/>local limits + watchdog]
+    B[USB bridge<br/>SO-101 x2, GRBL CNC, syringe servo via Tappet ESP32 board<br/>local limits + watchdog]
   end
   subgraph Server["LabRat server (FastAPI; laptop today, AWS EC2 script ready)"]
     H[hub.py<br/>WS hubs and cmd futures]
@@ -75,8 +75,8 @@ Every integration degrades gracefully when its key is missing, so the demo never
 
 ## Hardware
 Layout: the CNC in the middle, an SO-101 arm on each side, the iPhone on a fixed stand looking down at the CNC bed, and the laptop off to the side.
-- 3018 CNC (GRBL 1.1) carrying a servo-actuated pipette (CAD in `cad/`) on the spindle mount.
-- The pipette servo is driven by PCA9685 channel 8 on an ESP32-S3 Tappet board (`tap_a`, our firmware in [`tappet/`](tappet/README.md)). The Tappet arms are optional and not part of the demo setup.
+- 3018 CNC (GRBL 1.1) carrying a rack-and-pinion syringe pipette (CAD in `cad/syringe`) in the spindle clamp.
+- The syringe servo (continuous rotation) is driven by PCA9685 channel 8 on an ESP32-S3 Tappet board (`tap_a`, our firmware in [`tappet/`](tappet/README.md)). The Tappet arms are optional and not part of the demo setup.
 - 2× SO-101 arms (Feetech STS3215), `so_a` and `so_b`: plain manipulators with stock grippers, one on each side of the CNC.
 - iPhone on a static stand (camera, mic, speaker, animated face); it never moves.
 - A laptop running the USB bridge and console, a 96-well plate, a tip rack, and dye reservoirs.

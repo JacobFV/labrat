@@ -1,0 +1,19 @@
+{
+  "neutral_us": 1500,
+  "deadband_us": 40,
+  "span_us": 400,
+  "dir": 1,
+  "move_speed": 0.25,
+  "mm_per_s_up": 6.0,
+  "mm_per_s_down": 6.0,
+  "backlash_mm": 0.15,
+  "stroke_mm": 25.0,
+  "syringe_id_mm": 17.8,
+  "ul_gain": 1.0,
+  "ready_mm": 2.0,
+  "max_ul": 200.0,
+  "home_speed": 0.15,
+  "home_s": 6.0,
+  "settle_ms": 120,
+  "min_pulse_ms": 25
+}

@@ -16,7 +16,7 @@ DEVICES = [
     {"id": "so_a", "kind": "so101", "status": "mock", "info": {}},
     {"id": "so_b", "kind": "so101", "status": "mock", "info": {}},
     {"id": "cnc", "kind": "grbl", "status": "mock", "info": {}},
-    {"id": "pipette", "kind": "servo_pipette", "status": "mock", "info": {}},
+    {"id": "pipette", "kind": "servo_syringe", "status": "mock", "info": {}},
 ]
 
 
