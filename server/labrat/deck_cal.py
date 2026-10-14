@@ -32,8 +32,8 @@ TARGETS = ["tip_rack.A1", "tip_rack.H12", "plate.A1", "plate.F7",
 
 # Tool-rail modules (cad/syringe/tools.json): tool point relative to the syringe tip, nominal from the CAD.
 # Teach them like the pipette offset (jog the tool over a mark, then the syringe tip over the same mark).
-TOOLS_NOMINAL = {"microscope": {"dx": -20.0, "dy": -63.0, "dz": 25.0},   # lens front (TM-110 at rail index -20)
-                 "probe": {"dx": 8.5, "dy": -42.5, "dz": 0.0}}          # electrode tip (TM-120 at rail index +8.5)
+TOOLS_NOMINAL = {"microscope": {"dx": -16.0, "dy": -63.0, "dz": 25.0},   # lens front (TM-110 at rail index -16)
+                 "probe": {"dx": 11.0, "dy": -42.5, "dz": 0.0}}         # electrode tip (TM-120 at rail index +11)
 DEFAULT = {"id": DOC_ID, "pipette_offset": {"dx": 0.0, "dy": 0.0, "dz": 0.0}, "points": {},
            "tools": copy.deepcopy(TOOLS_NOMINAL)}
 

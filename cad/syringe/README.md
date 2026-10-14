@@ -5,7 +5,7 @@
 This head replaces the 3018's spindle motor. A disposable 12 mL luer-slip syringe sits in the 3018's motor holder
 (Ø42.0 × 34), coaxial with the old spindle. A turned adapter carries a 200 µL tip on the syringe's luer nozzle. A
 continuous-rotation FS90R servo drives the plunger through a **12.01:1 printed gear train** and a rack on a carriage
-that **slides on a plain square bar** on the body (no purchased guide, no profile). A **tool rail** on the front of the head takes
+that **slides on its own back** against a rib right behind the mesh (no purchased guide). A **tool rail** on the front of the head takes
 interchangeable modules: a **USB microscope** and a **capacitive liquid-level probe** to start with.
 
 The design is parametric **build123d** in [`syrhead/`](syrhead), and every exported file is generated from it. Each
@@ -19,27 +19,28 @@ z-stack (bottom -> top)
   plug  Ø41.9 x 34 in the motor holder              (the syringe barrel runs through it)
   mid body  50 x 50 mm block, 38 tall               (barrel bore, flange pocket, flange clamp)
   top section, an x-stack (-X -> +X):
-     square guide bar | carriage (a sleeve on the bar) + plunger | gear plate 1 | gears | gear plate 2 | servo
+     carriage + plunger | gear plate 1 (+ the rack's guide rib) | gears | gear plate 2 | servo
   front of the mid body: tool rail (x -28 .. +19.5) with modules hanging in front of the holder
 ```
 
 - The **gear axes run along X**, between gear plate 1 (part of the body) and gear plate 2 (a separate print with three
   integral standoffs). Each compound gear turns on two MR63ZZ bearings on a Ø3 dowel that is pressed into gear plate 2
   and slips into gear plate 1.
-- The **carriage is one closed ring** in the XZ plane: jaw (holds the thumb disc) – sleeve on the guide bar – top
-  bridge – rack bar – bottom arm. Its bottom arm and top bridge run through a window in gear plate 1, so the rack sits
-  in the gear plane next to the output pinion.
+- The **carriage is an L**: jaw (holds the thumb disc), arm and rack bar. The arm runs through a window in gear
+  plate 1, so the rack sits in the gear plane next to the output pinion.
 - The **plug flares out at 45°** at the top of the holder. The cone seats on the holder's bore edge, which centres
   the head, sets its height and leaves no flat ledge to print over.
-- **Guide: a plain square bar.** No purchased rail and no profile: a 14 mm square bar, set diamond-wise (rotated
-  45° about Z), stands on the mid body. The carriage's guide block, 32 mm long, is a sleeve with the same square
-  hole plus 0.15 mm per face, and it drops onto the bar from the top. All four faces are at 45°, so the bar prints
-  upright with the body and the sleeve's hole prints with the carriage on its back, both without support. The rack's
-  separating force pushes the sleeve onto two of the bar's faces, so the clearance does not show up as backlash.
-  PLA on PLA slides well (PETG on PETG tends to stick); a smear of PTFE or silicone grease helps.
-- **Tool rail.** The front of the mid body carries a 45° dovetail (a square-ish bar with a flat front for the inserts), running along X, with M3 heat-set inserts
-  at six index positions (x = −28, −20, −11, −2, 8.5, 16). A module's saddle slides on from a rail end. One M3×10 into an
-  insert fixes it: the dovetail sets Y and Z, and the screw sets X. Every module's tool point has an offset from the
+- **Guide: the rack slides on its own back.** There is no rail and no guide far from the load. The rack's back face
+  carries a 90° V-groove, and it rides a matching V-ridge on a rib of gear plate 1 directly behind the rack, at the
+  pinion's height, spanning the mesh over the whole stroke (0.15 mm clearance). The gear's separating force pushes
+  the rack straight onto its support, so it creates no moment. The V locates the rack sideways, and the spur mesh
+  has no axial load. Both parts print without support: the rib prints upright with the body, and the groove's 45°
+  walls are on the carriage's bed face. Print in PLA (PLA on PLA slides well) and put a smear of PTFE or silicone
+  grease on the ridge.
+- **Tool rail.** The front of the mid body carries a plain trapezoid rail (45° flanks, flat front for the inserts), running along X, with M3 heat-set inserts
+  at five index positions (x = −24, −16, −7.5, 3, 11). A module's saddle slides on from a rail end. One M3×10 into an
+  insert pulls the saddle's matching groove onto the two 45° flanks: a V seat that sets Y and Z, while the screw
+  sets X. Every module's tool point has an offset from the
   syringe tip (`tools.json` → server `deck_cal` tools), so the CNC moves the spindle to `target − offset`.
 
 | | |
@@ -50,8 +51,8 @@ z-stack (bottom -> top)
 | speed | ≈ 5.8 mm/s at the servo's 110 rpm no-load; ≈ 1.4 mm/s at the default 25 % command |
 | pressure angle | 25° throughout (12T pinions mesh with 49T and the rack without undercut interference) |
 | contact ratios | 1.38 (G1/G2), 1.36 (G3/G4), 1.42 (G5/rack), including the 0.08 mm backlash centre-distance offset |
-| guide | plain 14 mm square bar (diamond-wise) on the body; the carriage is a 32 mm sleeve on it, 0.15 mm per face |
-| tools | syringe (tool 0, on the spindle axis); TM-110 USB microscope (lens at x −20, y −63, 25 mm above the tip end); TM-120 capacitive probe (electrode tip at x 8.5, y −42.5, level with the tip end) |
+| guide | the rack's back: a 90° V-groove on a V-ridge of gear plate 1, directly behind the mesh, 0.15 mm clearance |
+| tools | syringe (tool 0, on the spindle axis); TM-110 USB microscope (lens at x −16, y −63, 25 mm above the tip end); TM-120 capacitive probe (electrode tip at x 11, y −42.5, level with the tip end) |
 | tip height | tip end **55.0 mm** above the bed at CNC z = 0 (3.8 mm over the beaker rims of [`../deck`](../deck)) |
 | tip XY | on the spindle axis: `deck_cal` `pipette_offset` = 0, 0, 0 |
 | envelope | x −37 … +65 (servo), y −80 (microscope) … +25, z −137 (probe) … +134 from the holder's top face |
@@ -65,10 +66,10 @@ than 45°.
 
 | part | prints | notes |
 |---|---|---|
-| `SYR-100` head body | upright, on the plug | plug, flare, mid body, guide bar, tool rail, back wall, gear plate 1 with its carriage window |
+| `SYR-100` head body | upright, on the plug | plug, flare, mid body, tool rail, back wall, gear plate 1 with its carriage window and the rack's guide rib |
 | `SYR-101` gear plate 2 | on its outer face, standoffs up | servo cut-out + tab slots, dowel seats (press), cable-tie slots |
 | `SYR-102` flange clamp | upside down | relief pocket up |
-| `SYR-103` plunger carriage + rack | on its back face (+Y) | the ring frame is a flat extrusion; the m1 rack teeth stand up from the bar |
+| `SYR-103` plunger carriage + rack | on its back face (+Y) | an L; the m1 rack teeth stand up from the bar, the guide V-groove is on the bed face |
 | `SYR-105` thumb-disc cap | upside down | pocket up |
 | `SYR-110` G1 | gear face down, horn pocket up | no counterbore: the M2 horn screw's head bears on the face |
 | `SYR-111` G2/G3 | G2 on the bed | G3 stands straight on G2's face (no neck); one Ø6 bore with a bearing pressed flush into each end |
@@ -90,7 +91,7 @@ This is a summary. [`bom.csv`](bom.csv) has the full list with quantities, vendo
   standoffs (3× M3×30 to gear plate 1) and the cable-tie slots.
 - `SYR-102` **flange clamp**: 2× M2×8 clamp the finger flange into the table pocket. The flange's long axis runs
   along Y.
-- `SYR-103` **plunger carriage** with the m1 25° rack (0.04 mm backlash per flank). Its sleeve slides on the body's guide bar. Two Ø4.4 holes in the top bridge let the disc-cap screws and a hex key through.
+- `SYR-103` **plunger carriage** with the m1 25° rack (0.04 mm backlash per flank). The rack's back V-groove rides the rib behind it.
 - `SYR-105` **thumb-disc cap**: 2× M2×8 into inserts in the jaw. Its pocket lands on the disc and clears the jaw by
   0.1 mm, so tightening the screws clamps the disc with zero backlash.
 - `SYR-110` **G1** 17T m0.8 on the servo's cross horn. Trim the horn arms to r = 4.6 mm. An M2×6 screw goes through G1
@@ -105,7 +106,7 @@ This is a summary. [`bom.csv`](bom.csv) has the full list with quantities, vendo
   held by 2× 200 mm cable ties through tunnels in the arm. The lens front sits 85 mm below the holder top, which is
   30 mm above the syringe tip.
 - `TM-120` **capacitive probe module** + `TM-121` lid: a TTP223 touch module in a pocket, with its pad wired to a
-  Ø2 × 32 stainless electrode (`SYR-311`) pinched in the arm's foot (M2×8). The 3-way lead goes to the 3018 board:
+  Ø2 × 32 stainless electrode (`SYR-311`) pinched in the arm's foot (M2×8). A 3-core cable goes to the 3018 board:
   GND, 5 V, and OUT to the probe pin (A5), with `$6=1` so a HIGH output means triggered. The bridge runs
   `cnc.probe` (G38.3) to find liquid surfaces and the bed.
 
@@ -124,16 +125,15 @@ This is a summary. [`bom.csv`](bom.csv) has the full list with quantities, vendo
 
 ## Assembly
 1. **Inserts.** Heat-set the inserts at 230 °C (200 °C for PLA):
-   - body: 2× M2 in the table, 3× M3 in gear plate 1's outer face, M3 in the tool rail at x = −20 and 8.5;
+   - body: 2× M2 in the table, 3× M3 in gear plate 1's outer face, M3 in the tool rail at x = −16 and 11;
    - carriage: 2× M2 in the jaw;
    - probe module: M2 in the pinch block and M2 for the lid.
-2. **Guide.** Grease the guide bar lightly and drop the carriage's sleeve onto it from the top. It should run the
-   full length under its own weight, with no shake. If it binds, scrape the bar's faces.
+2. **Guide.** Grease the V-ridge on the rib behind the rack window lightly.
 3. **Syringe.** Drop the barrel through the table into the bore, with the flange's long axis along Y. Fit the flange
    clamp (2× M2×8).
-4. **Carriage.** The carriage's bottom arm and top bridge pass through gear plate 1's window. Draw the plunger up,
-   slide the thumb disc into the jaw pocket from the front, and fit the cap (2× M2×8, through the access holes in the
-   top bridge).
+4. **Carriage.** Pass the carriage's arm through gear plate 1's window from the jaw side, with the rack's V-groove on
+   the rib's ridge. Draw the plunger up, slide the thumb disc into the jaw pocket from the front, and fit the cap
+   (2× M2×8).
 5. **Adapter and tip.** Press the adapter onto the luer nozzle with a quarter turn, then push a 200 µL tip onto the
    adapter cone.
 6. **Gear plate 2.** Press the two dowels into gear plate 2 flush with its outer face. Press a bearing flush into
@@ -143,13 +143,14 @@ This is a summary. [`bom.csv`](bom.csv) has the full list with quantities, vendo
 7. **Servo.** Trim the cross horn to r = 4.6, press it on the spline and screw G1 over it (M2×6). Push the servo
    through gear plate 2's cut-out from outside, with its tabs on the outer face, and fit 2× M2×8 with the nuts
    inside. G1 meshes G2.
-8. **Close the gearbox.** Offer gear plate 2 to the body so the dowels enter gear plate 1 and G5 meshes the rack.
+8. **Close the gearbox.** Offer gear plate 2 to the body so the dowels enter gear plate 1 and G5 meshes the rack,
+   which holds the rack against its ridge.
    Rock the carriage a little to let the teeth find each other. Fix it with 3× M3×30 through the standoffs. Tie the
    servo lead to gear plate 2 and run it up to the Tappet board's PCA9685 ch 8.
 9. **Into the machine.** Remove the spindle motor, drop the plug into the 42 mm holder until the cone seats on the
    bore edge, and tighten the holder.
 10. **Tool modules.** Slide each module onto the tool rail from its end and fix it with an M3×10 at its index:
-    the microscope at x = −20, the probe at x = 8.5. Lay the microscope in the V-cradles with the "Snap" button facing
+    the microscope at x = −16, the probe at x = 11. Lay the microscope in the V-cradles with the "Snap" button facing
     forward and tie it. Pinch the electrode so its tip is level with the syringe tip.
 11. **Calibrate.** Follow [`../../bridge/README.md`](../../bridge/README.md): neutral, direction, speed, backlash and
     volume. Then teach the deck ([`../deck`](../deck)) and the tool offsets: jog the microscope or the probe over a

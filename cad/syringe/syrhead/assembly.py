@@ -193,7 +193,7 @@ def build() -> Head:
                        finish="syr_petg_orange", notes="upside down (pocket up), no supports"))
     H.add_part(PartDef("SYR-103", "plunger carriage with m1 rack", "make", "petg_print", "fdm_print", P.carriage,
                        "motion", finish="syr_petg_orange", holes=tuple(P.carriage_holes()),
-                       notes="on its back face (rack teeth stand up), no supports; slides on the body's square guide bar "
+                       notes="on its back face (rack teeth stand up), no supports; its back V-groove rides a rib behind the mesh "
                              "(PLA on PLA, a smear of PTFE / silicone grease)"))
     H.add_part(PartDef("SYR-104", "luer-to-tip adapter", "make", "pom_black", "cnc_lathe", P.adapter, "fluidics",
                        finish="syr_pom_white", holes=(("fluid", (0.0, 0.0, L.cone_top_z), "liquid bore"),),
@@ -385,13 +385,10 @@ def tool_modules(H, buy, insert):
                        "stainless_304_brushed", "tube_cut", TL.electrode_rod, "electrical", vendor="McMaster-Carr",
                        vendor_pn=f"304 stainless rod Ø{TL.ROD_D:g}", cost=round(0.01 * TL.ROD_L, 3), unit="mm",
                        qty_per=TL.ROD_L, notes="tip squared and deburred"))
-    buy("SYR-312", "electrode lead (PVC, 26 AWG)", lambda: V.wire(TL.electrode_wire_pts(), 0.8, 0.0, (1, 0, 0)),
+    buy("SYR-312", "electrode lead (PVC, 26 AWG)", lambda: V.wire(TL.electrode_wire_pts(), 0.8, 0.0, (0, 0, 1)),
         "cable_pvc_black", "generic", "26 AWG hook-up wire", 0.05, category="electrical", finish="syr_cable_red")
-    for k, fin in ((-1.0, "syr_cable_brown"), (0.0, "syr_cable_red"), (1.0, "syr_cable_orange")):
-        pn = {-1.0: "SYR-313A", 0.0: "SYR-313B", 1.0: "SYR-313C"}[k]
-        buy(pn, f"probe lead {['GND', 'VCC', 'OUT'][int(k) + 1]} (to the 3018 board: GND, 5V, probe pin A5)",
-            (lambda k=k: V.wire(probe_lead_pts(), 0.8, k, (1, 0, 0))), "cable_pvc_black", "generic",
-            "3-way 26 AWG + 2.54 housing", 0.3 if k == 0 else 0.0, "" if k == 0 else "SYR-313B", "electrical", fin)
+    buy("SYR-313", "probe cable, 3-core 26 AWG, Ø3 PVC (GND, 5 V, OUT -> 3018 probe pin A5)", probe_cable,
+        "cable_pvc_black", "generic", "3-core Ø3 + 2.54 housing", 0.6, category="electrical")
     H.add_part(PartDef("SYR-233", "cable tie 2.5 x 200 nylon (microscope)", "buy", "polypropylene_natural", "purchased",
                        lambda: V.cable_tie((0, 0, 0), (0, 0, 1), MIC_TIE_INNER, x_dir=(1, 0, 0)), "electrical",
                        vendor="HellermannTyton", vendor_pn="T30R", cost=0.04))
@@ -413,12 +410,13 @@ def tool_modules(H, buy, insert):
               tags=("cable",))
     tx, ty, tz = TL.probe_tip()
     H.add("SYR-311", frame((tx, ty, tz), z=(0, 0, 1), x=(1, 0, 0)), "electrode")
-    ttp_o = mpt(px, (0, (TL.TTP_Y[0] + TL.TTP_Y[1]) / 2, TL.TTP_BLOCK[1] - TL.TTP_DEPTH))
-    H.add("SYR-310A", frame(ttp_o, z=(0, -1, 0), x=(0, 0, 1)), "ttp223")
-    H.add("SYR-310B", frame(ttp_o, z=(0, -1, 0), x=(0, 0, 1)), "ttp223_ic")
+    w = TL.PROBE_W / 2
+    zc = TL.TTP_Z0 + (TL.TTP["w"] + 0.6) / 2
+    ttp_o = mpt(px, (w - TL.TTP_DEPTH, (TL.TTP_Y[0] + TL.TTP_Y[1]) / 2, zc))
+    H.add("SYR-310A", frame(ttp_o, z=(1, 0, 0), x=(0, 0, 1)), "ttp223")             # board in the pocket, on edge
+    H.add("SYR-310B", frame(ttp_o, z=(1, 0, 0), x=(0, 0, 1)), "ttp223_ic")
     H.add("SYR-312", Location(), "electrode_lead", tags=("cable",))
-    for pn, nm in (("SYR-313A", "probe_lead_gnd"), ("SYR-313B", "probe_lead_vcc"), ("SYR-313C", "probe_lead_out")):
-        H.add(pn, Location(), nm, tags=("cable",))
+    H.add("SYR-313", Location(), "probe_cable", tags=("cable",))
 
     # ---- bolted joints ----
     for name, x in (("microscope", mx), ("probe", px)):
@@ -426,31 +424,44 @@ def tool_modules(H, buy, insert):
         H.bolts.append(Bolt(f"scr_index_{name}", "shcs", "M3-0.5", 10, mpt(x, (0, 0, TL.SADDLE_Z[1])), (0, 1, 0),
                             (f"mod_{name}",), ins.name))
     ymid = (TL.PINCH[0] + TL.PINCH[1]) / 2
-    ins = insert("SYR-222", "ins_pinch", mpt(px, (TL.PINCH_SCREW_X, ymid, TL.PROBE_ZC - 0.4)), (0, -1, 0))
+    ins = insert("SYR-222", "ins_pinch", mpt(px, (TL.PINCH_SCREW_X, ymid, TL.PINCH_INSERT_TOP)), (0, -1, 0))
     H.bolts.append(Bolt("scr_pinch", "shcs", "M2-0.4", 8, mpt(px, (TL.PINCH_SCREW_X, ymid, TL.PROBE_ZC + 4.0)),
                         (0, 1, 0), ("mod_probe",), ins.name))
-    ins = insert("SYR-222", "ins_lid", mpt(px, (0, TL.TTP_Y[0] - 4.0, TL.TTP_BLOCK[1])), (0, -1, 0))
-    H.bolts.append(Bolt("scr_lid", "shcs", "M2-0.4", 6, mpt(px, (0, TL.TTP_Y[0] - 4.0, TL.TTP_BLOCK[1] + 2.05)),
-                        (0, 1, 0), ("mod_probe_lid",), ins.name))
+    ins = insert("SYR-222", "ins_lid", mpt(px, (w, TL.TTP_Y[0] - 4.0, zc)), (1, 0, 0))
+    H.bolts.append(Bolt("scr_lid", "shcs", "M2-0.4", 6, mpt(px, (w + 2.05, TL.TTP_Y[0] - 4.0, zc)),
+                        (-1, 0, 0), ("mod_probe_lid",), ins.name))
 
 
-# the tie's back run lies in the arm's tunnel (local Z 11.1 .. 12.9), its front run 0.6 in front of the microscope
-MIC_TIE_ZC = (12.4 + TL.MIC_ZC + TL.MIC["d"] / 2 + 0.6) / 2                    # module local Z of the loop centre
-MIC_TIE_INNER = (TL.MIC["d"] + 1.0, TL.MIC_ZC + TL.MIC["d"] / 2 + 0.6 - 12.4)  # (along X, along Y)
+# the tie's back run lies in the arm's tunnel (local Z 11.9 .. 13.5), its front run 0.6 in front of the microscope
+MIC_TIE_ZC = (13.4 + TL.MIC_ZC + TL.MIC["d"] / 2 + 0.6) / 2                    # module local Z of the loop centre
+MIC_TIE_INNER = (TL.MIC["d"] + 1.0, TL.MIC_ZC + TL.MIC["d"] / 2 + 0.6 - 13.4)  # (along X, along Y)
 
 
 def probe_lead_pts():
-    """the probe's 3-way lead: TTP223 pads -> exit slot -> up the arm front -> to the 3018 controller (machine)."""
+    """the probe cable: out of the TTP223 pocket's open top end -> up beside the module -> to the 3018 controller."""
     px = TL.PROBE_X
 
     def m(p):
         q = TL.station_loc(px) * Location(p)
         return (q.position.X, q.position.Y, q.position.Z)
-    zt = TL.TTP_BLOCK[1]
+    w = TL.PROBE_W / 2
+    zc = TL.TTP_Z0 + (TL.TTP["w"] + 0.6) / 2
     y = TL.TTP_Y[1]
-    return [m((0, y - 1.5, zt - TL.TTP_DEPTH + 2.0)), m((0, y + 1.5, zt - 1.0)), m((0, y + 6.0, zt + 0.8)),
-            m((0, -8.0, TL.SADDLE_Z[1] + 6.0)), (px + 2.0, TL.FACE_Y - 20.0, 60.0), (8.0, -40.0, 120.0),
-            (8.0, -20.0, 150.0), (10.0, 10.0, 185.0)]
+    return [m((w + 1.6, y - 2.0, zc)), m((w + 2.2, y + 3.0, zc)), m((w + 2.4, y + 8.0, zc - 2.0)),
+            m((w + 2.5, y + 14.0, 20.0)), m((w + 2.5, 0.0, 19.5)), m((w + 2.5, 12.0, 19.0)), m((w + 2.5, 20.0, 20.0)),
+            (px + 2.0, TL.FACE_Y - 25.0, 70.0), (8.0, -40.0, 120.0), (8.0, -20.0, 150.0), (10.0, 10.0, 185.0)]
+
+
+def probe_cable():
+    from build123d import BuildLine, BuildPart, BuildSketch, Circle, Plane, Spline, sweep
+    pts = [Vector(*p) for p in probe_lead_pts()]
+    with BuildPart() as bp:
+        with BuildLine() as ln:
+            Spline(*pts)
+        with BuildSketch(Plane(origin=pts[0], z_dir=ln.wire().tangent_at(0))):
+            Circle(1.5)
+        sweep(path=ln.wire())
+    return bp.part
 
 
 # ---------------------------------------------------------------------------------------------------------------------

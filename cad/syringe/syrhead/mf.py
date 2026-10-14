@@ -54,7 +54,7 @@ JOINTS = {
     # group: (kind, axis, origin, lower, upper, contacts)
     "carriage": ("prismatic", (0, 0, 1), (0, 0, 0), 0.0, S.stroke,
                  (("carriage", "gear_c"), ("stopper", "barrel"), ("plunger", "barrel"),
-                  ("carriage", "body"),      # the guide bar: 0.15 mm per face in the sleeve, by design
+                  ("carriage", "body"),      # the rack on its guide rib: 0.15 mm, by design
                   ("disc_cap", "plunger"))),
     "gear_c": ("revolute", (1, 0, 0), (0, LAY.C[0], LAY.C[1]), 0.0, 360.0,
                (("gear_c", "carriage"), ("gear_c", "gear_b"), ("bearing_c*", "spacer_c*"), ("bearing_c*", "pin_c"))),

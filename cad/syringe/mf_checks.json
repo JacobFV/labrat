@@ -1,5 +1,5 @@
 {
- "seconds": 484.6,
+ "seconds": 791.1,
  "summary": {
   "interference": {
    "info": 1
@@ -15,21 +15,21 @@
    "info": 4
   },
   "manufacturability": {
-   "warning": 7
+   "warning": 8
   },
   "edge": {
    "info": 1
   }
  },
  "errors": 0,
- "suppressed": 36,
+ "suppressed": 35,
  "findings": [
   {
    "check": "interference",
    "severity": "info",
    "pn": "",
    "path": "syr_head",
-   "message": "73 instances, 189 AABB pairs, 189 OBB pairs; booleans 72 computed (2 of them proven apart by surface samples), 100 cached, 0 failed; declared contact skipped: 17 joint contacts, 20 screws in their own receiver/nut (thread envelope allowed), 0 seated in declared pin/shaft holes, 0 route ends, 0 flexible squeezes; 9 pairs only touch; 19.6 s",
+   "message": "77 instances, 234 AABB pairs, 234 OBB pairs; booleans 0 computed (0 of them proven apart by surface samples), 214 cached, 0 failed; declared contact skipped: 20 joint contacts, 14 screws in their own receiver/nut (thread envelope allowed), 0 seated in declared pin/shaft holes, 0 route ends, 0 flexible squeezes; 7 pairs only touch; 0.9 s",
    "local": null,
    "suppressed_by": null
   },
@@ -54,9 +54,9 @@
   {
    "check": "fastener",
    "severity": "warning",
-   "pn": "MF-SHCS-M2x0005-A2",
+   "pn": "MF-SHCS-M2x0006-A2",
    "path": "syr_head/gear_a/scr_horn",
-   "message": "scr_horn (M2-0.4 x 5 shcs): hole \u00d82.20 in clamped part syr_head/gear_a/servo_horn is not the ISO 273 normal clearance \u00d82.4",
+   "message": "scr_horn (M2-0.4 x 6 shcs): hole \u00d82.20 in clamped part syr_head/gear_a/servo_horn is not the ISO 273 normal clearance \u00d82.4",
    "local": null,
    "suppressed_by": null
   },
@@ -65,7 +65,7 @@
    "severity": "info",
    "pn": "",
    "path": "syr_head",
-   "message": "20 fastener stacks checked",
+   "message": "14 fastener stacks checked",
    "local": null,
    "suppressed_by": null
   },
@@ -74,7 +74,7 @@
    "severity": "info",
    "pn": "",
    "path": "syr_head",
-   "message": "56 hole faces in 9 make parts, 9 instances checked",
+   "message": "31 hole faces in 12 make parts, 12 instances checked",
    "local": null,
    "suppressed_by": null
   },
@@ -83,7 +83,7 @@
    "severity": "info",
    "pn": "",
    "path": "syr_head/carriage",
-   "message": "joint 'carriage' (prismatic, 0..30): 401 poses, 15 moving vs 58 static instances, 22 candidate pairs",
+   "message": "joint 'carriage' (prismatic, 0..30): 401 poses, 8 moving vs 69 static instances, 17 candidate pairs",
    "local": null,
    "suppressed_by": null
   },
@@ -92,7 +92,7 @@
    "severity": "info",
    "pn": "",
    "path": "syr_head/gear_c",
-   "message": "joint 'gear_c' (revolute, 0..360): 401 poses, 3 moving vs 70 static instances, 9 candidate pairs",
+   "message": "joint 'gear_c' (revolute, 0..360): 401 poses, 3 moving vs 74 static instances, 20 candidate pairs",
    "local": null,
    "suppressed_by": null
   },
@@ -101,7 +101,7 @@
    "severity": "info",
    "pn": "",
    "path": "syr_head/gear_b",
-   "message": "joint 'gear_b' (revolute, -360..0): 401 poses, 3 moving vs 70 static instances, 12 candidate pairs",
+   "message": "joint 'gear_b' (revolute, -360..0): 401 poses, 3 moving vs 74 static instances, 14 candidate pairs",
    "local": null,
    "suppressed_by": null
   },
@@ -110,7 +110,7 @@
    "severity": "info",
    "pn": "",
    "path": "syr_head/gear_a",
-   "message": "joint 'gear_a' (revolute, 0..360): 401 poses, 4 moving vs 69 static instances, 7 candidate pairs",
+   "message": "joint 'gear_a' (revolute, 0..360): 401 poses, 4 moving vs 73 static instances, 17 candidate pairs",
    "local": null,
    "suppressed_by": null
   },
@@ -119,11 +119,24 @@
    "severity": "warning",
    "pn": "SYR-100",
    "path": "syr_head/body",
-   "message": "overhang 3975 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
+   "message": "overhang 1048 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
    "local": [
-    10.72,
-    -2.39,
-    51.42
+    -4.72,
+    -12.31,
+    14.83
+   ],
+   "suppressed_by": null
+  },
+  {
+   "check": "manufacturability",
+   "severity": "warning",
+   "pn": "SYR-101",
+   "path": "syr_head/plate2",
+   "message": "overhang 623 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
+   "local": [
+    35.27,
+    -8.57,
+    71.71
    ],
    "suppressed_by": null
   },
@@ -132,11 +145,11 @@
    "severity": "warning",
    "pn": "SYR-102",
    "path": "syr_head/flange_clamp",
-   "message": "overhang 531 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
+   "message": "overhang 538 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
    "local": [
-    1.19,
-    -0.16,
-    43.84
+    0.11,
+    -0.1,
+    38.83
    ],
    "suppressed_by": null
   },
@@ -145,11 +158,11 @@
    "severity": "warning",
    "pn": "SYR-103",
    "path": "syr_head/carriage/carriage",
-   "message": "overhang 417 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
+   "message": "overhang 247 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
    "local": [
-    9.67,
-    0.27,
-    73.09
+    23.19,
+    2.66,
+    63.16
    ],
    "suppressed_by": null
   },
@@ -158,50 +171,50 @@
    "severity": "warning",
    "pn": "SYR-105",
    "path": "syr_head/carriage/disc_cap",
-   "message": "overhang 445 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
+   "message": "overhang 443 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
    "local": [
-    -0.56,
-    -1.19,
-    53.97
+    -0.0,
+    -0.87,
+    48.97
    ],
    "suppressed_by": null
   },
   {
    "check": "manufacturability",
    "severity": "warning",
-   "pn": "SYR-110",
-   "path": "syr_head/gear_a/gear_a",
-   "message": "overhang 63 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
+   "pn": "TM-110",
+   "path": "syr_head/mod_microscope",
+   "message": "overhang 2866 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
    "local": [
     -0.0,
-    -0.0,
-    1.8
+    -43.73,
+    9.19
    ],
    "suppressed_by": null
   },
   {
    "check": "manufacturability",
    "severity": "warning",
-   "pn": "SYR-111",
-   "path": "syr_head/gear_b/gear_b",
-   "message": "overhang 48 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
+   "pn": "TM-120",
+   "path": "syr_head/mod_probe",
+   "message": "overhang 2073 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
    "local": [
-    0.0,
-    0.0,
-    4.99
+    0.04,
+    -58.15,
+    9.95
    ],
    "suppressed_by": null
   },
   {
    "check": "manufacturability",
    "severity": "warning",
-   "pn": "SYR-112",
-   "path": "syr_head/gear_c/gear_c",
-   "message": "overhang 28 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
+   "pn": "TM-121",
+   "path": "syr_head/mod_probe_lid",
+   "message": "overhang 24 mm\u00b2 steeper than 45\u00b0 from horizontal (needs support or re-orientation)",
    "local": [
-    -0.0,
-    -0.0,
-    13.05
+    9.05,
+    -32.78,
+    16.58
    ],
    "suppressed_by": null
   },
@@ -210,7 +223,7 @@
    "severity": "info",
    "pn": "",
    "path": "syr_head",
-   "message": "54 sharp edges accepted by spec/permitted_sharp_edges.yaml",
+   "message": "33 sharp edges accepted by spec/permitted_sharp_edges.yaml",
    "local": null,
    "suppressed_by": null
   }

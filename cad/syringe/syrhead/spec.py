@@ -7,9 +7,10 @@ sits on it). The CNC moves the spindle clamp, so this frame moves with machine Z
 
 Architecture (v2, every part printable without supports):
     z-stack:  plug (Ø42 x 34, in the spindle clamp)  ->  rectangular mid body (syringe barrel inside)  ->  top section
-    top section, an x-stack:  square guide bar | carriage (a sleeve on the bar) + plunger | gear plate 1 | gears | gear plate 2 | servo
-Gear axes run along +X. The carriage is a closed ring (jaw - block plate - top bridge - rack) whose two cross members
-pass through a window in gear plate 1, so the rack sits in the gear plane next to the output pinion.
+    top section, an x-stack:  carriage + plunger | gear plate 1 (+ the rack's guide rib) | gears | gear plate 2 | servo
+Gear axes run along +X. The carriage is an L: jaw (thumb disc) + bottom arm (through a window in gear plate 1) + rack
+bar. The rack slides directly on its own back: a V-groove in the rack's back face rides a V-ridge on a rib of gear plate
+1, right behind the mesh, so the gear's separating force goes straight into the guide and makes no moment.
 
 Everything here is either a measured / catalogue value (marked) or derived. Representative purchased-part numbers are
 "verify at procurement".
@@ -84,9 +85,8 @@ class Spec:
     w34: float = 5.0
     w5: float = 6.0                   # rack face width (G5 is 1 mm longer: the rack clears G4)
     # ---------------- purchased motion parts ----------------
-    slide_clr: float = 0.15           # clearance per face between the guide bar and the carriage's sleeve
-    bar_a: float = 14.0               # guide bar: a plain square bar, set diamond-wise (rotated 45 deg about Z)
-    sleeve_wall: float = 3.0
+    slide_clr: float = 0.15           # clearance between the rack's back and its guide rib
+    vee: float = 1.5                  # depth of the 90 deg V-groove in the rack's back (the rib's ridge runs in it)
     guide_l: float = 32.0             # carriage bearing length on the rail
     pin_d: float = 3.0                # ISO 2338 3 m6 dowel
     pin_len: float = 30.0
@@ -161,21 +161,11 @@ def layout(s: Spec = S) -> Layout:
     assert v["jaw0_bottom_z"] - v["clampplate_top_z"] >= 1.0, "carriage jaw would hit the flange clamp at pos 0"
     v["ul_per_mm"] = math.pi / 4 * s.barrel_id ** 2
     # ---- carriage / rail (left side, -X). The carriage's back face (+Y) is one plane: it prints on it. ----
-    v["jaw_x"] = (-14.5, 13.0)                                      # >= 1.2 mm walls beside the Ø20.4 disc seat
+    v["jaw_x"] = (-12.5, 13.0)                                      # >= 1.8 mm walls beside the Ø20.4 disc seat
     v["jaw_y"] = (-11.5, 16.5)
     v["y_back"] = v["jaw_y"][1]
-    # guide: no purchased rail and no profile - a plain square bar stands on the mid body, set diamond-wise so all four
-    # faces are at 45 deg; the carriage's guide block is a sleeve with the same square hole (+ slide_clr per face). The
-    # sleeve drops onto the bar from the top. Both print without support (the bar upright with the body, the
-    # carriage on its back).
-    d = s.bar_a / math.sqrt(2)                                       # half-diagonal of the bar
-    sleeve_half = d + s.slide_clr * math.sqrt(2) + s.sleeve_wall     # square guide block around the hole
-    v["bar_half_diag"] = d
-    v["sleeve_half"] = sleeve_half
-    v["bar_c"] = (v["jaw_x"][0] + 2.5 - sleeve_half, 0.0)            # the sleeve's +X face carries the jaw plate
-    v["spine_back_x"] = v["bar_c"][0] - d - 2.0                      # mid body's -X end
-    v["guide_z"] = (v["jaw0_bottom_z"], v["jaw0_bottom_z"] + s.guide_l)        # carriage guide block at pos 0
-    v["spine_top_z"] = v["guide_z"][1] + s.stroke + 3.0             # top of the guide bar (and of the back wall)
+    v["spine_back_x"] = -31.0                                       # mid body's -X end (carries the tool rail)
+    v["spine_top_z"] = 110.0                                         # top of the back wall
     # ---- body outline ----
     v["body_x"] = (v["spine_back_x"], None)                         # +X end = gear plate 1 outer face (below)
     v["body_y"] = (-25.0, 24.9)                                     # back < zstep_front_y - 1 everywhere
@@ -224,13 +214,18 @@ def layout(s: Spec = S) -> Layout:
     v["mm_per_servo_rad"] = r5 / v["ratio"]
     v["r_tip"] = {"g1": (s.z1 + 2) * s.m1 / 2, "g2": (s.z2 + 2) * s.m1 / 2, "g3": (s.z3 + 2) * s.m2 / 2,
                   "g4": (s.z4 + 2) * s.m2 / 2, "g5": (s.z5 + 2) * s.m3 / 2}
-    # ---- gear plate 1 window: the carriage's bottom arm and top bridge pass through it ----
+    # ---- gear plate 1 window: the carriage's arm passes through it ----
     v["arm_y"] = (v["rack_root_y"] + 0.75, v["y_back"])             # carriage cross members (y band)
-    v["window_y"] = (v["arm_y"][0] - s.run, v["arm_y"][1] + s.run)
-    v["window_z"] = (v["jaw0_bottom_z"] - s.run, v["rack0_z1"] + s.stroke + s.run)
+    v["window_y"] = (v["arm_y"][0] - s.run, v["y_back"] + s.slide_clr)  # the back edge is the rib's guide plane
+    v["arm_h"] = 8.0                                                 # carriage arm (jaw -> rack), crosses plate 1
+    v["window_z"] = (v["jaw0_bottom_z"] - s.run, v["jaw0_bottom_z"] + v["arm_h"] + s.stroke + s.run)
+    # the rack's guide rib: on gear plate 1's back member, behind the rack, spanning the mesh over the whole stroke
+    v["rib_x"] = (v["plate1_x"][1] - 2.0, v["x_rack"][1] - 0.5)    # 2 mm into plate 1: no thin wedge at its foot
+    v["rib_y0"] = v["y_back"] + s.slide_clr
+    v["rib_z"] = (v["zc"] - 23.0, v["zc"] + 25.0)
     # ---- standoffs plate 2 -> plate 1 (Y, Z): clear of every gear disc, the rack and the carriage ----
-    v["standoffs"] = [(21.0, 50.0), (21.0, v["window_z"][1] + 5.5), (-25.0, 58.0)]
-    v["standoff_d"] = 6.6
+    v["standoffs"] = [(-12.0, 47.0), (20.6, v["rib_z"][1] + 6.0), (-25.0, 58.0)]
+    v["standoff_d"] = 6.2
     # ---- servo case (outside plate 2), its long axis along -Z from the output shaft ----
     v["servo_case_c"] = (v["A"][0], v["A"][1] - (sv["L"] / 2 - sv["shaft_from_end"]))
     return L

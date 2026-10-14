@@ -7,7 +7,7 @@ MF-NUT-M2-ISO4032,2,ea,ISO 4032 hex nut M2,buy,purchased,stainless_a2_fastener,,
 SYR-100,1,ea,head body,make,fdm_print,petg_print,,,,"PETG, 0.2 mm, 6 walls, 25 % gyroid; upright on the plug, no supports"
 SYR-101,1,ea,gear plate 2 with standoffs,make,fdm_print,petg_print,,,,"PETG, 0.2 mm, 6 walls; on its outer face (standoffs up), no supports"
 SYR-102,1,ea,flange clamp,make,fdm_print,petg_print,,,,"upside down (relief pocket up), no supports"
-SYR-103,1,ea,plunger carriage with m1 rack,make,fdm_print,petg_print,,,,"on its back face (rack teeth stand up), no supports; slides on the body's square guide bar (PLA on PLA, a smear of PTFE / silicone grease)"
+SYR-103,1,ea,plunger carriage with m1 rack,make,fdm_print,petg_print,,,,"on its back face (rack teeth stand up), no supports; its back V-groove rides a rib behind the mesh (PLA on PLA, a smear of PTFE / silicone grease)"
 SYR-104,1,ea,luer-to-tip adapter,make,cnc_lathe,pom_black,,,,"POM-C natural, turned; female ISO 80369-7 slip socket, 200 uL tip cone"
 SYR-105,1,ea,thumb-disc cap,make,fdm_print,petg_print,,,,"upside down (pocket up), no supports"
 SYR-110,1,ea,G1 17T m0.8 servo gear,make,fdm_print,petg_print,,,,"horn pocket up, no supports"
@@ -30,7 +30,7 @@ SYR-300A,1,ea,USB digital microscope housing,buy,purchased,abs_black,generic (Ji
 SYR-310A,1,ea,TTP223 capacitive touch module (mini),buy,purchased,pcb_green,generic,TTP223 15 x 11 module,0.4,"VCC 5 V, OUT -> GRBL probe pin (A5), $6=1"
 SYR-311,32.0,mm,"electrode, stainless rod Ø2 cut to 32",stock,tube_cut,stainless_304_brushed,McMaster-Carr,304 stainless rod Ø2,0.32,tip squared and deburred
 SYR-312,1,ea,"electrode lead (PVC, 26 AWG)",buy,purchased,cable_pvc_black,generic,26 AWG hook-up wire,0.05,
-SYR-313B,2,ea,"probe lead VCC (to the 3018 board: GND, 5V, probe pin A5)",buy,purchased,cable_pvc_black,generic,3-way 26 AWG + 2.54 housing,0.3,
+SYR-313,1,ea,"probe cable, 3-core 26 AWG, Ø3 PVC (GND, 5 V, OUT -> 3018 probe pin A5)",buy,purchased,cable_pvc_black,generic,3-core Ø3 + 2.54 housing,0.6,
 TM-110,1,ea,tool module: USB microscope cradle,make,fdm_print,petg_print,,,,"on its side (module +X up), no supports; slides on the tool rail, 1x M3x10 at an index"
 TM-120,1,ea,tool module: capacitive probe,make,fdm_print,petg_print,,,,"on its side (module +X up), no supports; electrode pinched by 1x M2x8"
 TM-121,1,ea,probe module lid (TTP223 cover),make,fdm_print,petg_print,,,,"flat, no supports"

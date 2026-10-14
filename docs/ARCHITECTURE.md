@@ -24,7 +24,7 @@ Hardware, as bridge device ids (`bridge/labrat_bridge/bridge.py: ALL_IDS`):
   (TTP223 → GRBL probe pin). Each tool has an offset from the syringe tip (`deck_cal` `tools`, nominal from
   `cad/syringe/tools.json`); `server/labrat/tooling.py` moves the spindle to `target − offset` and the agent's
   `tool` call does goto / snap / probe.
-- `pipette` is a syringe pipette that replaces the spindle motor in the 3018's 42 mm motor holder ([`cad/syringe`](../cad/syringe)): a disposable syringe with a 200 µL tip on a luer-to-tip adapter, its plunger driven through a 12:1 printed gear train and a rack (on a carriage that slides on a square bar moulded on the head body) by a continuous-rotation FS90R servo on PCA9685 **channel 8** (`servo_raw`): 0.5 mm of plunger per servo radian. The servo has no position feedback: the bridge dead-reckons the plunger from calibrated speeds, re-zeroes with `home` (bottom stop) and accepts camera/NN estimates through `observe`.
+- `pipette` is a syringe pipette that replaces the spindle motor in the 3018's 42 mm motor holder ([`cad/syringe`](../cad/syringe)): a disposable syringe with a 200 µL tip on a luer-to-tip adapter, its plunger driven through a 12:1 printed gear train and a rack (the rack slides on its own back against a rib behind the mesh) by a continuous-rotation FS90R servo on PCA9685 **channel 8** (`servo_raw`): 0.5 mm of plunger per servo radian. The servo has no position feedback: the bridge dead-reckons the plunger from calibrated speeds, re-zeroes with `home` (bottom stop) and accepts camera/NN estimates through `observe`.
 
 ## 2. Topology
 

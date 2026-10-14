@@ -33,9 +33,9 @@ PRINT_ORIENT = {   # part frame -> print bed frame (axis, degrees); the body and
     "SYR-105": ((1, 0, 0), 180.0),   # thumb-disc cap upside down: pocket up
     "TM-110": ((0, 1, 0), -90.0),    # tool modules lie on their side (module frame +X up)
     "TM-120": ((0, 1, 0), -90.0),
+    "TM-121": ((0, 1, 0), -90.0),    # probe lid on its -X face
 }
-CLAMP_SCREWS = [(0.0, 20.0), (0.0, -20.0)]     # flange clamp: 2x M2 beyond the flange's long ends
-PLATE_T = 2.5                 # carriage wall beyond the slide rail's outer face
+CLAMP_SCREWS = [(8.0, 19.5), (-8.0, -19.5)]    # flange clamp: 2x M2 on a diagonal, clear of the flange oval
 TIE = (-10.0, 70.0)           # cable tie on gear plate 2 (machine y, z)
 TIE_SLOT_DZ = 4.5
 
@@ -71,7 +71,7 @@ def chamfer_all(shape, c=EB):
         return shape
 
 
-def pocket(sketch_fn, plane: Plane, depth, rim=0.4, far_rim=False):
+def pocket(sketch_fn, plane: Plane, depth, rim=0.4, far_rim=False, above=1.0):
     """cutter for a pocket of the sketch's profile, ``depth`` below ``plane`` (along -normal), with a 45 deg rim
     (and one at the far end too when the pocket breaks through into another cavity)."""
     with BuildPart() as bp:
@@ -92,7 +92,8 @@ def pocket(sketch_fn, plane: Plane, depth, rim=0.4, far_rim=False):
             with BuildSketch(plane):
                 sketch_fn()
                 offset(amount=rim, kind=Kind.INTERSECTION)
-        extrude(amount=1.0)
+        if above:
+            extrude(amount=above)
     return bp.part
 
 
@@ -143,26 +144,34 @@ def x_hole(d, x, y, z, depth, into=-1, rim=0.4, far_rim=False, up=(0.0, 1.0)):
 # =====================================================================================================================
 # SYR-100  head body (FDM PETG), frame = head frame. Prints upright (plug on the bed), no supports:
 # plug -> seat ring -> 45 deg flare -> rectangular mid body (barrel bore, flange table) -> rail spine with the rail
-# guide bar, tool rail, back wall, gear plate 1 (window for the carriage, dowel seats, standoff inserts).
+# tool rail, back wall, gear plate 1 (window for the carriage's arm, the rack's guide rib, dowel seats, standoff inserts).
 # =====================================================================================================================
-def bar_section(grow=0.0):
-    """sketch fn (Plane.XY): the guide bar's diamond section, grown by ``grow`` per face (the sleeve's hole)."""
-    cx, cy = LAY.bar_c
-    d = LAY.bar_half_diag + grow * math.sqrt(2)
-
-    def fn():
-        Polygon((cx - d, cy), (cx, cy - d), (cx + d, cy), (cx, cy + d), align=None)
-    return fn
-
-
-def guide_bar():
-    """the guide bar: a plain 14 mm square bar, diamond-wise, standing on the table up to the spine top."""
+def rack_rib():
+    """the rack's guide: a rib on gear plate 1's back member, right behind the rack, carrying a 45 deg V-ridge that runs
+    in the V-groove of the rack's back. Prismatic along Z (prints upright with the body); its lower end leans 45 deg
+    back onto plate 1."""
     L = LAY
+    (x0, x1), y0, (z0, z1) = L.rib_x, L.rib_y0, L.rib_z
+    xc = sum(L.x_rack) / 2
+    apex = L.y_back - S.vee + S.slide_clr * math.sqrt(2)
+    hw = y0 - apex
+    yb = L.body_y[1]
     with BuildPart() as bp:
-        with BuildSketch(Plane.XY.offset(L.table_top_z - 1.0)):
-            bar_section()()
-        extrude(amount=L.spine_top_z - L.table_top_z + 1.0)
-    return chamfer_all(bp.part, 0.5)                                        # long edges + a lead-in at the top
+        with BuildSketch(Plane.XY.offset(z0 - (x1 - x0))):
+            with Locations((x0, y0)):
+                Rectangle(x1 - x0, yb - y0, align=(Align.MIN, Align.MIN))
+        extrude(amount=z1 - z0 + (x1 - x0))
+        with BuildSketch(Plane.XZ):                                           # 45 deg lower end
+            zb = z0 - (x1 - x0)
+            Polygon((x0 - 1, zb - 1), (x1 + 1, z0 + 1), (x1 + 1, zb - 1), align=None)
+        extrude(amount=-60, both=True, mode=Mode.SUBTRACT)
+    rib = chamfer_all(bp.part, 0.4)
+    with BuildPart() as rp:                                                   # the V-ridge, 0.5 into the rib
+        with BuildSketch(Plane.XY.offset(z0)):
+            Polygon((xc - hw - 0.5, y0 + 0.5), (xc, apex), (xc + hw + 0.5, y0 + 0.5), align=None)
+        extrude(amount=z1 - z0 - 1.0)
+    ridge = chamfer_all(rp.part, 0.3)
+    return rib.fuse(ridge).clean()
 
 
 def plate1_sketch():
@@ -174,10 +183,11 @@ def plate1_sketch():
     by0, by1 = L.body_y
     circles = [(L.C, 6.0), (L.B, 6.0), ((wy0, wz1), 4.0), (peak, 4.5)]
     for (y, z) in L.standoffs:
-        circles.append(((y, z), by1 - y if y > 0 else 6.0))
+        r = by1 - 0.6 - y if y > 0 else 6.0
+        circles.append(((y, z + 1.5), r))                                   # raised: room over the insert's roof
     with BuildSketch(yz_plane(L.plate1_x[0])) as sk:
-        with Locations(((by0 + by1) / 2, tb1 - 0.5)):
-            Rectangle(by1 - by0, 1.0)
+        with Locations(((by0 + 1.0 + by1 - 0.6) / 2, tb1 - 0.5)):
+            Rectangle(by1 - by0 - 1.6, 1.0)                                  # inside the mid body's front / back faces
         for (c, r) in circles:
             with Locations(c):
                 Circle(r)
@@ -210,11 +220,17 @@ def body():
     mid = rbox(bx0, bx1, by0, by1, 0.0, tb1)
     flare = Solid.make_cone(S.seat_od / 2, S.seat_od / 2 + tb1 + 1.0, tb1 + 1.0)   # 45 deg: no overhang
     mid = mid & flare
+    try:                                                                     # break the flare / box intersections
+        cone = [f for f in mid.faces() if f.geom_type.name == "CONE"]
+        es = [e for f in cone for e in f.edges() if e.center().Z > 0.5]
+        mid = mid.chamfer(0.5, None, es)
+    except Exception:
+        pass
     p1 = extrude(plate1_sketch(), amount=L.plate1_x[1] - L.plate1_x[0])
     solids = [
         plug(),
         mid,
-        guide_bar(),
+        rack_rib(),
         rbox(bx0, bx1 - 0.5, L.back_wall_y[0], L.back_wall_y[1], tb1 - 1.0, st),                 # back wall
         chamfer_all(p1),                                                                           # gear plate 1
         T.tool_rail(),                                                                             # tool rail
@@ -238,7 +254,7 @@ def body():
         # gear plate 1: carriage window, dowel seats (slip), standoff inserts
         x1 = L.plate1_x[1]
         t1 = x1 - L.plate1_x[0]
-        add(pocket(window_profile(), yz_plane(x1), t1, far_rim=True), mode=Mode.SUBTRACT)
+        add(pocket(window_profile(), yz_plane(x1), t1, far_rim=True, above=0.0), mode=Mode.SUBTRACT)
         for (y, z) in (L.B, L.C):
             add(x_hole(PIN_SLIP, x1, 0, 0, t1, rim=0.3, far_rim=True).moved(Location((0, y, z))), mode=Mode.SUBTRACT)
         for (y, z) in L.standoffs:
@@ -258,7 +274,7 @@ def body_holes():
     out += [("pin", (x, y, L.table_top_z - 2.0), "M2 heat-set insert seat") for (x, y) in CLAMP_SCREWS]
     out += [("pin", (x1 - 3.0, y, z), "M3 heat-set insert seat") for (y, z) in L.standoffs]
     out += [("access", (x1 - 3.0, (L.window_y[0] + L.window_y[1]) / 2, (L.window_z[0] + L.window_z[1]) / 2),
-             "window: the carriage's bottom arm and top bridge run through it")]
+             "window: the carriage's arm runs through it")]
     out += T.tool_rail_holes()
     return out
 
@@ -340,7 +356,7 @@ def plate2_holes():
 def flange_clamp():
     L = LAY
     z0, t = L.clampplate_bottom_z, L.clampplate_t
-    x0 = L.bar_c[0] + L.bar_half_diag + 0.7
+    x0 = -15.0
     with BuildPart() as bp:
         add(rbox(x0, L.plate1_x[0] - 0.5, L.body_y[0] + 2.5, L.back_wall_y[0] - 0.5, z0, z0 + t))
         add(drill(S.disc_d + 1.0, t + 1, Location((0, 0, z0 + t)), 0.5), mode=Mode.SUBTRACT)   # plunger + disc pass
@@ -358,10 +374,11 @@ def flange_clamp():
 
 
 # =====================================================================================================================
-# SYR-103  plunger carriage with its m1 rack (FDM PETG), head frame at pos 0. One closed ring in the XZ plane:
-# jaw (thumb disc) - plate on the MGN7C - top bridge - rack bar - bottom arm. Every member reaches the back plane
-# y = y_back, and the part prints on it: the rack teeth stand up from the bar (flanks 25 deg off vertical), the slots
-# open upward, horizontal holes are teardrops.
+# SYR-103  plunger carriage with its m1 rack (FDM), head frame at pos 0. An L: jaw (thumb disc) - arm (through gear plate
+# 1's window) - rack bar. The rack bar slides on its own back: a V-groove there rides the rib's V-ridge, right behind
+# the mesh. Every member reaches the back plane y = y_back, and the part prints on it: the rack teeth stand up from
+# the bar (flanks 25 deg off vertical), the slots open upward, the V-groove's walls are 45 deg, horizontal holes are
+# teardrops.
 # =====================================================================================================================
 def rack_tooth_centres():
     p = math.pi * S.m3
@@ -416,17 +433,11 @@ def carriage():
     zd = L.disc0_z
     zj1 = zd + L.jaw_top_dz
     zr1 = L.rack0_z1
-    gz0, gz1 = L.guide_z
     ay0 = L.arm_y[0]
     rx0, rx1 = L.x_rack
-    px0, px1 = jx0, jx0 + PLATE_T                 # MGN7C mounting plate: its -X face is the block's mounting face
     with BuildPart() as bp:
-        add(rbox(px0 + 0.5, jx1, jy0, yb, zj0, zj1))                                   # jaw (disc seat + rear block)
-        cx, sh = L.bar_c[0], L.sleeve_half
-        add(rbox(cx - sh, px1, -sh, yb, gz0, gz1))                                     # guide block (sleeve)
-        add(rbox(px0 + 0.3, px1 - 0.3, ay0, yb, gz1 - 1.0, zr1 - 0.5))                 # plate up to the top bridge
-        add(rbox(px0 + 0.6, rx1, ay0, yb, zr1 - 4.5, zr1))                             # top bridge
-        add(rbox(jx1 - 0.5, rx0 + 0.5, ay0, yb, zj0, zj1))                             # bottom arm
+        add(rbox(jx0, jx1, jy0, yb, zj0, zj1))                                         # jaw (disc seat + rear block)
+        add(rbox(jx1 - 0.5, rx0 + 0.5, ay0, yb, zj0, zj0 + L.arm_h))                   # arm
         add(rbox(rx0, rx1, L.rack_root_y, yb, zj0, zr1))                               # rack bar
         # ---- cuts ----
         add(pocket(slot_profile(S.disc_d / 2 + 0.2), Plane.XY.offset(zj1), zj1 - zd), mode=Mode.SUBTRACT)   # disc seat
@@ -440,13 +451,12 @@ def carriage():
         for (x, y) in L.cap_screws:                                                    # cap inserts (M2), through
             add(pocket(teardrop(M2_INSERT[0], UP_CARRIAGE), Plane(origin=(x, y, zj1)), zj1 - zj0, rim=0.3,
                        far_rim=True), mode=Mode.SUBTRACT)
-            # tool + screw access through the top bridge, straight above the cap screw
-            add(pocket(teardrop(4.4, UP_CARRIAGE), Plane(origin=(x, y, zr1)), 4.5, rim=0.3, far_rim=True),
-                mode=Mode.SUBTRACT)
-        # the sleeve's hole: the bar's section + slide_clr per face, through
-        with BuildSketch(Plane.XY.offset(gz0 - 1.0)):
-            bar_section(S.slide_clr)()
-        extrude(amount=gz1 - gz0 + 2.0, mode=Mode.SUBTRACT)
+        # the guide: a 90 deg V-groove along the rack's back, 45 deg lead-ins at both ends
+        xc = (rx0 + rx1) / 2
+
+        def vgroove():
+            Polygon((xc - S.vee - 0.6, yb + 0.6), (xc, yb - S.vee), (xc + S.vee + 0.6, yb + 0.6), align=None)
+        add(pocket(vgroove, Plane.XY.offset(zr1), zr1 - zj0, rim=0.4, far_rim=True), mode=Mode.SUBTRACT)
         # m1 PA 25 rack teeth on the -Y face of the bar (embedded 0.5 mm: no slivers; edges left sharp, see checks.yaml)
         p, m, ta = math.pi * S.m3, S.m3, math.tan(math.radians(S.pa))
         ry, ty = L.rack_root_y, L.rack_tip_y
@@ -468,7 +478,7 @@ def disc_cap():
     jy0, jy1 = L.jaw_y
     z0 = L.disc0_z + L.jaw_top_dz + L.cap_gap
     with BuildPart() as bp:
-        add(rbox(jx0 + PLATE_T + 0.1, jx1, jy0, jy1, z0, z0 + L.cap_t))
+        add(rbox(jx0 + 0.5, jx1 - 1.0, jy0, jy1, z0, z0 + L.cap_t))
         add(pocket(slot_profile(S.disc_d / 2 + 0.2, flipped=True), Plane.XY.offset(z0).rotated((180, 0, 0)),
                    L.disc0_z + S.disc_t - z0), mode=Mode.SUBTRACT)
         rd = S.disc_d / 2 + 0.2
@@ -485,7 +495,6 @@ def carriage_holes():
     L = LAY
     zr1 = L.rack0_z1
     out = [("pin", (x, y, L.disc0_z + L.jaw_top_dz - 2.0), "M2 heat-set insert seat (disc cap)") for (x, y) in L.cap_screws]
-    out += [("access", (x, y, zr1 - 2.0), "hex key + screw access to the disc-cap screw below") for (x, y) in L.cap_screws]
     return out
 
 

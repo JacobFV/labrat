@@ -21,6 +21,12 @@ permitted:
       Lower apex of the tool rail (two 45 deg flanks): it prints as a downward ridge, and a chamfer there would be a
       flat, unsupported facet. The saddles never touch it (0.15 mm clearance on the flanks).
 
+  - part: "SYR-100"
+    region: [[-31.5, -25.5, 0.0], [21.5, 25.5, 30.0]]
+    reason: >-
+      Where the 45 deg flare meets the mid body's vertical faces the edges are obtuse (135 deg dihedral): they are not
+      sharp to the hand and need no break. The flare itself is the print's self-supporting transition from the plug.
+
 accepted:
   - name: rack-teeth-walls
     check: geometry

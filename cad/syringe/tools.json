@@ -1,12 +1,11 @@
 {
  "frame": "offset = tool point - syringe tip end, machine axes (mm); spindle = target - offset",
  "rail_index_x": [
-  -28.0,
-  -20.0,
-  -11.0,
-  -2.0,
-  8.5,
-  16.0
+  -24.0,
+  -16.0,
+  -7.5,
+  3.0,
+  11.0
  ],
  "tools": {
   "pipette": {
@@ -22,7 +21,7 @@
    "kind": "usb_microscope",
    "module": "TM-110",
    "offset": [
-    -20.0,
+    -16.0,
     -63.0,
     25.0
    ],
@@ -32,7 +31,7 @@
    "kind": "cap_probe",
    "module": "TM-120",
    "offset": [
-    8.5,
+    11.0,
     -42.5,
     0.0
    ],

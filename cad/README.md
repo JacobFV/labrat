@@ -2,7 +2,7 @@
 
 | dir | what |
 |---|---|
-| [`syringe/`](syringe) | **Tool head v2** for the 3018's 42 mm motor holder. A 12 mL syringe's plunger is driven by a continuous-rotation FS90R through a 12.01:1 printed gear train and a rack on a carriage that slides on a plain square bar moulded on the body. A tool rail takes interchangeable modules: a USB microscope and a capacitive probe. Every printed part prints without supports, and a print check enforces it. Written in build123d with part numbers and a BOM, STEP/STL/3MF exports, coupled gear-train and sweep checks, microfab design checks, and Cycles renders. See [`syringe/README.md`](syringe/README.md). |
+| [`syringe/`](syringe) | **Tool head v2** for the 3018's 42 mm motor holder. A 12 mL syringe's plunger is driven by a continuous-rotation FS90R through a 12.01:1 printed gear train and a rack that slides on its own back against a rib right behind the mesh. A tool rail takes interchangeable modules: a USB microscope and a capacitive probe. Every printed part prints without supports, and a print check enforces it. Written in build123d with part numbers and a BOM, STEP/STL/3MF exports, coupled gear-train and sweep checks, microfab design checks, and Cycles renders. See [`syringe/README.md`](syringe/README.md). |
 | [`deck/`](deck) | **Deck**: the printed 6 × 8 beaker matrix (`DECK-001`, 15.3 × 50 mm beakers), the FT-200L-RS tip rack, the deck layout (`deck.json`, used by the simulator, the twin and the renders) and the reach report against the 3018's Z travel. |
 | [`cnc3018/`](cnc3018) | Parametric 3018 PRO model (build123d + trimesh), with the syringe head (from `syringe/twin`) in the holder. It produces `cnc3018.glb` and `web/models/syringe_rig.json` for the web twin, plus matplotlib renders. `render_bench.py` takes full-bench screenshots from the three.js twin. |
 
@@ -24,7 +24,7 @@ cd ../.. && uv run --python 3.12 --with playwright python cad/cnc3018/render_ben
   twin's `SAFE_H` and the simulator's Z table).
 - The syringe is coaxial with the old spindle, so the commanded XY is the tip XY, and `deck_cal` `pipette_offset`
   defaults to 0, 0, 0.
-- The printed slide rail is on the machine's −X side of the syringe; the tool rail runs along the front, with the
+- The rack slides on a rib of gear plate 1, directly behind the mesh; the tool rail runs along the front, with the
   modules hanging in front of the holder. The gears are on the +X side, with their axes along X, and
   the servo hangs on the outside of gear plate 2.
 - Everything above the Z-stepper line stays at y ≤ 24.9, in front of the stepper's front face at 26 (checked).
