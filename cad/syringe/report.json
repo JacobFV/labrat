@@ -1,187 +1,235 @@
 {
-  "params": {
-    "spindle_plug_od": 50.2,
-    "machine_clamp_id": 52.0,
-    "plug_len": 18.0,
-    "plug_clearance": 0.3,
-    "syringe_barrel_od": 20.2,
-    "syringe_barrel_len": 80.0,
-    "syringe_bore_clearance": 0.55,
-    "syringe_body_top_z": 49.0,
-    "syringe_head_d": 14.0,
-    "syringe_head_thickness": 3.0,
-    "syringe_rod_d": 7.6,
-    "syringe_flange_d": 24.2,
-    "syringe_plunger_protrusion": 35.0,
-    "syringe_stroke": 25.0,
-    "servo_case_long": 22.8,
-    "servo_case_short": 12.4,
-    "servo_case_y": 23.0,
-    "servo_tab_hole_pitch": 28.0,
-    "servo_tab_hole_d": 2.1,
-    "servo_clearance": 0.5,
-    "servo_shaft_from_case_left": 5.8,
-    "gear_module": 1.5,
-    "gear_teeth": 12,
-    "gear_pressure_angle": 20.0,
-    "gear_phase_deg": 5.0,
-    "gear_width": 5.5,
-    "gear_back_y": -3.0,
-    "horn_arm_half": 6.8,
-    "horn_arm_w": 5.6,
-    "horn_pocket_depth": 1.8,
-    "rack_width": 6.0,
-    "rack_root_x": 20.5,
-    "rack_min_z": 74.0,
-    "rack_max_z": 159.0,
-    "rack_tooth_min_z": 74.0,
-    "rack_tooth_max_z": 151.0,
-    "rack_tooth_backlash": 0.2,
-    "guide_clearance": 0.55,
-    "servo_shaft_z": 102.0,
-    "top_collar_outer_d": 32.0,
-    "top_collar_end_z": 49.0,
-    "barrel_set_screw_d": 2.8,
-    "plunger_bridge_z": 81.0,
-    "plunger_bridge_gap": 3.7,
-    "plunger_bridge_t": 2.7,
-    "plate_y0": -17.6,
-    "plate_y1": -12.6,
-    "rack_rib_x": 17.0,
-    "guide_wall_x0": 13.0
+ "src": "e5b82dbf32eb",
+ "ok": true,
+ "checks": [
+  {
+   "check": "spec",
+   "name": "tip end above bed at CNC z=0 (mm)",
+   "ok": true,
+   "value": 60.0,
+   "need": 60.0
   },
-  "pitch_r": 9.0,
-  "gear_center_x": 31.575,
-  "rack_pitch_x": 22.375,
-  "ref_machine_clamp_d": 52.0,
-  "machine_reference": "JacobFV/labrat/cad/cnc3018/cnc3018.py",
-  "parts": {
-    "mount_body": {
-      "valid": true,
-      "volume_cm3": 65.85,
-      "bounds_mm": [
-        [
-          -27.3,
-          -27.33,
-          -0.03
-        ],
-        [
-          56.98,
-          27.33,
-          144.0
-        ]
-      ]
-    },
-    "rack": {
-      "valid": true,
-      "volume_cm3": 3.92,
-      "bounds_mm": [
-        [
-          -8.5,
-          -9.0,
-          74.0
-        ],
-        [
-          23.88,
-          9.0,
-          159.0
-        ]
-      ]
-    },
-    "pinion": {
-      "valid": true,
-      "volume_cm3": 1.17,
-      "bounds_mm": [
-        [
-          21.08,
-          -3.0,
-          91.51
-        ],
-        [
-          42.07,
-          2.5,
-          112.49
-        ]
-      ]
-    }
+  {
+   "check": "spec",
+   "name": "gear ratio servo:pinion",
+   "ok": true,
+   "value": 12.01,
+   "need": "12 +- 0.1"
   },
-  "fit_checks": {
-    "mount_body:rack_overlap_mm3": 0.0,
-    "mount_body:pinion_overlap_mm3": 0.0,
-    "rack:pinion_overlap_mm3": 0.0,
-    "servo:mount_body_overlap_mm3": 0.0,
-    "servo:pinion_overlap_mm3": 0.0,
-    "servo:rack_overlap_mm3": 0.0,
-    "syringe:mount_body_overlap_mm3": 0.0,
-    "syringe:rack_overlap_mm3": 0.0,
-    "clamp_proxy:mount_body_overlap_mm3": 0.0,
-    "flange_insertion_path_overlap_mm3": 0.0,
-    "plunger:rack_max_overlap_mm3": 0.0,
-    "head_in_fork_gap": true,
-    "fork_above_barrel_at_full_stroke_mm": 5.2
+  {
+   "check": "spec",
+   "name": "plunger travel per servo rad (mm)",
+   "ok": true,
+   "value": 0.4996,
+   "need": "<= 0.6"
   },
-  "kinematic_sweep": [
-    {
-      "down_mm": 0.0,
-      "rack_housing_overlap_mm3": 0.0,
-      "rack_gear_overlap_mm3": 0.0
-    },
-    {
-      "down_mm": 2.5,
-      "rack_housing_overlap_mm3": 0.0,
-      "rack_gear_overlap_mm3": 0.0
-    },
-    {
-      "down_mm": 5.0,
-      "rack_housing_overlap_mm3": 0.0,
-      "rack_gear_overlap_mm3": 0.001
-    },
-    {
-      "down_mm": 7.5,
-      "rack_housing_overlap_mm3": 0.0,
-      "rack_gear_overlap_mm3": 0.0
-    },
-    {
-      "down_mm": 10.0,
-      "rack_housing_overlap_mm3": 0.0,
-      "rack_gear_overlap_mm3": 0.0
-    },
-    {
-      "down_mm": 12.5,
-      "rack_housing_overlap_mm3": 0.0,
-      "rack_gear_overlap_mm3": 0.0
-    },
-    {
-      "down_mm": 15.0,
-      "rack_housing_overlap_mm3": 0.0,
-      "rack_gear_overlap_mm3": 0.0
-    },
-    {
-      "down_mm": 17.5,
-      "rack_housing_overlap_mm3": 0.0,
-      "rack_gear_overlap_mm3": 0.0
-    },
-    {
-      "down_mm": 20.0,
-      "rack_housing_overlap_mm3": 0.0,
-      "rack_gear_overlap_mm3": 0.0
-    },
-    {
-      "down_mm": 22.5,
-      "rack_housing_overlap_mm3": 0.0,
-      "rack_gear_overlap_mm3": 0.0
-    },
-    {
-      "down_mm": 25.0,
-      "rack_housing_overlap_mm3": 0.0,
-      "rack_gear_overlap_mm3": 0.0
-    }
-  ],
-  "nozzle_end_z": -41.0,
-  "servo_stack_y": {
-    "tab_top": -10.1,
-    "housing_top": -5.8,
-    "spline_top": -1.799999999999999,
-    "horn_top": -1.1999999999999988
+  {
+   "check": "spec",
+   "name": "volume per servo degree (uL)",
+   "ok": true,
+   "value": 2.17,
+   "need": "info"
+  },
+  {
+   "check": "spec",
+   "name": "stroke volume (mL)",
+   "ok": true,
+   "value": 7.47,
+   "need": ">= 5"
+  },
+  {
+   "check": "spec",
+   "name": "contact ratio G1/G2",
+   "ok": true,
+   "value": 1.376,
+   "need": ">= 1.15"
+  },
+  {
+   "check": "spec",
+   "name": "contact ratio G3/G4",
+   "ok": true,
+   "value": 1.359,
+   "need": ">= 1.15"
+  },
+  {
+   "check": "spec",
+   "name": "contact ratio G5/rack",
+   "ok": true,
+   "value": 1.422,
+   "need": ">= 1.15"
+  },
+  {
+   "check": "spec",
+   "name": "rack teeth cover the stroke (+-1.5 pitch)",
+   "ok": true,
+   "value": [
+    51.73,
+    92.57
+   ],
+   "need": [
+    53.15,
+    92.57
+   ]
+  },
+  {
+   "check": "spec",
+   "name": "carriage jaw above the flange clamp at pos 0 (mm)",
+   "ok": true,
+   "value": 1.55,
+   "need": ">= 1.0"
+  },
+  {
+   "check": "mesh",
+   "name": "mesh gear_a/gear_b",
+   "ok": true,
+   "value": {
+    "max_overlap_mm3": 0.0183,
+    "max_gap_mm": 0.0539
+   },
+   "need": "overlap <= 0.05 mm3 and gap <= 0.35 mm at every pose"
+  },
+  {
+   "check": "mesh",
+   "name": "mesh gear_b/gear_c",
+   "ok": true,
+   "value": {
+    "max_overlap_mm3": 0.0,
+    "max_gap_mm": 0.0416
+   },
+   "need": "overlap <= 0.05 mm3 and gap <= 0.35 mm at every pose"
+  },
+  {
+   "check": "mesh",
+   "name": "mesh gear_c/carriage",
+   "ok": true,
+   "value": {
+    "max_overlap_mm3": 0.0,
+    "max_gap_mm": 0.0
+   },
+   "need": "overlap <= 0.05 mm3 and gap <= 0.35 mm at every pose"
+  },
+  {
+   "check": "sweep",
+   "name": "all moving vs static + group pairs, 25 poses",
+   "ok": true,
+   "value": 0,
+   "need": 0
+  },
+  {
+   "check": "machine",
+   "name": "max Y above the Z stepper bottom (z > 68)",
+   "ok": true,
+   "value": 16.5,
+   "need": "< 25.0"
+  },
+  {
+   "check": "machine",
+   "name": "max Y beside the Z plate (-43 < z < 49)",
+   "ok": true,
+   "value": 28.0,
+   "need": "< 31.0"
   }
+ ],
+ "layout": {
+  "tip_end_z": -105.0,
+  "tip_top_z": -54.0,
+  "cone_top_z": -50.66666666666667,
+  "adapter_top_z": -40.66666666666667,
+  "nozzle_end_z": -48.16666666666667,
+  "barrel_bottom_z": -38.16666666666667,
+  "flange_z": 41.83333333333333,
+  "flange_top_z": 44.03333333333333,
+  "plug_bottom_z": -26.0,
+  "table_top_z": 42.83333333333333,
+  "table_t": 4.0,
+  "clampplate_bottom_z": 42.883333333333326,
+  "clampplate_t": 4.0,
+  "clampplate_top_z": 46.883333333333326,
+  "disc0_z": 52.03333333333333,
+  "jaw0_bottom_z": 48.43333333333333,
+  "jaw_top_dz": 1.0,
+  "cap_gap": 0.1,
+  "cap_t": 3.5,
+  "cap_screws": [
+   [
+    -7.5,
+    12.8
+   ],
+   [
+    7.5,
+    12.8
+   ]
+  ],
+  "ul_per_mm": 248.84555409084754,
+  "jaw_x": [
+   -14.5,
+   13.0
+  ],
+  "jaw_y": [
+   -11.5,
+   16.5
+  ],
+  "mgn_H": 8.0,
+  "mgn_H1": 1.5,
+  "mgn_W": 17.0,
+  "mgn_L": 22.5,
+  "mgn_B": 12.0,
+  "mgn_C": 8.0,
+  "rail_W": 7.0,
+  "rail_H": 4.8,
+  "rail_face_x": -22.5,
+  "spine_t": 6.0,
+  "mgn0_z": 68.03333333333333,
+  "rail_z0": 48.03333333333333,
+  "rack_x0": 13.0,
+  "rack_body_t": 4.25,
+  "rack_root_x": 17.25,
+  "rack_tip_x": 19.5,
+  "rack_pitch_x": 18.5,
+  "C": [
+   24.58,
+   87.85811129410271
+  ],
+  "rack0_z0": 48.43333333333333,
+  "zc": 87.85811129410271,
+  "rack_len": 47.27875959474386,
+  "B": [
+   39.870000000000005,
+   114.34116814183085
+  ],
+  "A": [
+   12.990000000000006,
+   114.34116814183085
+  ],
+  "ratio": 12.009803921568627,
+  "mm_per_servo_rad": 0.4995918367346939,
+  "y_rack": [
+   -3.0,
+   3.0
+  ],
+  "y_g4": [
+   -18.5,
+   -13.5
+  ],
+  "y_g2": [
+   -23.8,
+   -19.8
+  ],
+  "g1_w": 4.4,
+  "g1_back": -24.2,
+  "cover_t": 3.0,
+  "cover_front_y": -31.299999999999997,
+  "cover_back_y": -28.299999999999997,
+  "back_plate_y": [
+   6.0,
+   10.0
+  ]
+ },
+ "gear_phases_deg": {
+  "g5": 180.0,
+  "g4": -59.99999999999999,
+  "g3": 135.0,
+  "g2": -180.0,
+  "g1": 10.588235294117647
+ }
 }

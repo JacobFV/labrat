@@ -2,37 +2,32 @@
 
 | dir | what |
 |---|---|
-| [`syringe/`](syringe) | **Rack-and-pinion syringe head** that replaces the 3018's spindle motor: one printed body (50.2 mm plug in the spindle clamp + syringe collar + rack guide + servo plate), a rack with a plunger fork, and a pinion on a continuous-rotation 9 g servo. CadQuery, parametric, STEP/STL/3MF, fit + kinematic checks. |
-| [`cnc3018/`](cnc3018) | Parametric 3018 PRO model (build123d + trimesh) with the syringe head in the clamp → `cnc3018.glb` for the web twin, plus matplotlib renders. `render_bench.py` renders the full bench (CNC, deck with tip rack / plate / reservoirs, SO-101s, phone, laptop, desk) from the real three.js twin. |
+| [`syringe/`](syringe) | **Syringe head v1.0** for the 3018 spindle clamp. A 12 mL syringe's plunger is driven by a continuous-rotation FS90R through a 12.01:1 printed gear train and a rack on an MGN7 guide. Written in build123d with part numbers and a BOM, STEP/STL/3MF/DXF exports, coupled gear-train and sweep checks, microfab design checks, and Cycles renders. See [`syringe/README.md`](syringe/README.md). |
+| [`cnc3018/`](cnc3018) | Parametric 3018 PRO model (build123d + trimesh), with the syringe head (from `syringe/twin`) in the clamp. It produces `cnc3018.glb` and `web/models/syringe_rig.json` for the web twin, plus matplotlib renders. `render_bench.py` takes full-bench screenshots from the three.js twin. |
 
 ## Rebuild
 ```bash
-# 1. syringe head: STEP/STL/3MF, report.json (fails on any interference), preview.png
-cd cad/syringe && uv run --python 3.12 --with cadquery --with trimesh --with matplotlib --with numpy \
-    --with pillow --with networkx --with lxml python syringe_3018_rack.py
-# 2. 3018 + head -> cnc3018.glb (also copied to web/models), clearance assert, renders
-cd ../cnc3018 && uv run --python 3.12 --with build123d --with trimesh --with matplotlib --with numpy \
-    --with networkx --with lxml python cnc3018.py
-# 3. full-bench renders from the twin (headless Chromium)
-cd ../.. && uv run --python 3.12 --with playwright python cad/cnc3018/render_bench.py [--chrome /path/to/chrome]
+cd cad/syringe   # 1. head: exports + checks (fails on any check)
+uv run --python 3.12 --with build123d==0.13.0 --with bd_warehouse==0.4.0 --with trimesh --with networkx \
+    --with lxml --with numpy --with pyyaml python -m syrhead.build
+~/Documents/microfab_3d_atlas_bundle/.venv/bin/python -m syrhead.render     # 2. Cycles stills (optional, local)
+cd ../cnc3018    # 3. 3018 + head -> GLB for the twin, renders
+uv run --python 3.12 --with build123d --with trimesh --with matplotlib --with numpy --with networkx --with lxml \
+    python cnc3018.py
+cd ../.. && uv run --python 3.12 --with playwright python cad/cnc3018/render_bench.py --chrome /path/to/chrome
 ```
-CadQuery and build123d pin different OCP builds, so steps 1 and 2 use separate `uv run` environments. Step 2 reads
-`syringe/stl/*.stl` and `syringe/report.json`, so run step 1 first after changing a syringe parameter.
-
-## Renders
-- `cnc3018/renders/bench_full_assembly.png`, `bench_cnc_syringe_closeup.png`, `bench_syringe_head_detail.png`,
-  `setup_front.png`, `setup_iso.png`, `lab_iso.png`: full bench, from the twin.
-- `cnc3018/renders/cnc3018_iso.png`, `cnc3018_front.png`, `cnc3018_syringe_head.png`: machine only.
-- `syringe/preview.png`: head only, four shaded views.
 
 ## How the head sits in the machine
-- The plug drops into the 52 mm clamp from above, and its lip rests on the clamp top. `plug_len = 18` puts the end of a
-  51 mm, 200 µL tip (pressed 5 mm onto the luer nozzle) 60 mm above the bed at CNC z = 0, which is the twin's `SAFE_H`
-  and the height the simulator's Z table assumes. `cnc3018.py` asserts this.
-- The syringe is **coaxial with the old spindle**, so the commanded XY is the tip XY. `deck_cal` `pipette_offset`
-  defaults to 0,0,0. If you stored an old offset (dy = −45), reset it in the Deck tab.
-- The rack and pinion sit on the machine's −X (left) side of the syringe. The servo body hangs toward the front, toward the phone camera.
-  Everything above the clamp stays ≥ 16 mm in front of the Z plate and Z stepper (asserted).
+- The plug drops into the 52 mm clamp from above and fills the clamp's full 26 mm. Its lip rests on the clamp's top
+  face. The tip end is then 60 mm above the bed at CNC z = 0 (the twin's `SAFE_H` and the simulator's Z table).
+- The syringe is coaxial with the old spindle, so the commanded XY is the tip XY, and `deck_cal` `pipette_offset`
+  defaults to 0, 0, 0. If you stored the old offset (dy = −45), reset it in the Deck tab.
+- The MGN7 rail is on the machine's −X side of the syringe. The gearbox and servo are on the +X side, in front, facing
+  the phone camera.
+- Everything above the Z-stepper line stays at y ≤ 16.5, against the stepper front at 26 (checked).
 
-See [`syringe/README.md`](syringe/README.md) for the parts, assembly, actuation numbers and open issues. See
-[`../bridge/README.md`](../bridge/README.md) for the servo calibration.
+## Frames
+`cnc3018.py` models in machine coordinates with Y and Z swapped: X = machine x − 150, Y = up, Z = machine y − 90.
+three.js shows this mirrored, which is the twin's long-standing convention. The head is built in true machine axes and
+mapped by the same swap. The Cycles bench renders use the true-handed machine frame; the 3018's decal text, which was
+authored for the mirrored twin, is left out there.

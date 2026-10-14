@@ -96,9 +96,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - name: Syringe head CAD + fit / kinematic checks (asserts on any interference)
+      - name: Syringe head CAD, exports + coupled gear-train / sweep / machine checks (fails on any)
         working-directory: cad/syringe
-        run: uv run --python 3.12 --with cadquery --with trimesh --with matplotlib --with numpy --with pillow --with networkx --with lxml python syringe_3018_rack.py
+        run: uv run --python 3.12 --with build123d==0.13.0 --with bd_warehouse==0.4.0 --with trimesh --with networkx --with lxml --with numpy --with pyyaml python -m syrhead.build --poses 13
       - name: 3018 assembly with the syringe head (clearance assert, GLB)
         working-directory: cad/cnc3018
         run: NORENDER=1 uv run --python 3.12 --with build123d --with trimesh --with matplotlib --with numpy --with networkx --with lxml python cnc3018.py

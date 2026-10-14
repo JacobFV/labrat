@@ -14,7 +14,8 @@ const ROWS = 'ABCDEFGH';
 const SAFE_H = 60; // tip height above deck at cnc z=0
 const BED_H = 72; // desk -> bed top (GLB feet bottom at -72)
 const PIP_DY = 0; // pipette tip axis vs spindle axis (deck y): coaxial syringe head
-const SYR_STROKE = 25, SYR_PITCH_R = 9; // cad/syringe: plunger travel (mm), pinion pitch radius (mm)
+const SYR_STROKE = 30; // cad/syringe spec.stroke; node motion per mm comes from models/syringe_rig.json (cnc3018.py)
+const CLEAR_MATS = { syr_pp_clear: .35, acrylic_clear: .22, syr_tip_yellow: .8 }; // see-through finishes in the GLB
 // SO-101 placement matches the real bench (operator stands at -Z, the CNC front): so_a = operator's LEFT,
 // so_b = operator's RIGHT, both at the CNC's front corners, zero-pose reach pointing to the machine BACK (+Z).
 // The CNC group is mirrored in X (cncRoot.scale.x = -1) so machine +x reads left->right for the operator, as on
@@ -168,11 +169,12 @@ export class Twin {
     new GLTFLoader().load(new URL('./models/cnc3018.glb', import.meta.url).href, (g) => {
       const root = g.scene; root.name = 'cnc3018';
       const n = (k) => root.getObjectByName(k);
-      const nodes = { base: n('cnc_base'), bed: n('cnc_y_bed'), xc: n('cnc_x_carriage'), z: n('cnc_z'), rack: n('syringe_rack'), pinion: n('syringe_pinion'), tip: n('pipette_tip') };
+      const nodes = { base: n('cnc_base'), bed: n('cnc_y_bed'), xc: n('cnc_x_carriage'), z: n('cnc_z'), tip: n('pipette_tip'),
+        syr: ['syringe_carriage', 'syringe_gear_a', 'syringe_gear_b', 'syringe_gear_c'].map((k) => [k, n(k)]).filter(([, o]) => o) };
       if (!nodes.bed || !nodes.xc || !nodes.z) { console.warn('cnc3018.glb: missing nodes, keeping fallback'); return; }
       root.traverse((m) => {
         if (!m.isMesh) return; m.castShadow = true; m.receiveShadow = true;
-        const mt = m.material; if (mt && (mt.name === 'tip' || mt.name === 'syringe')) { mt.transparent = true; mt.opacity = mt.name === 'tip' ? .8 : .45; mt.depthWrite = false; m.castShadow = false; }
+        const mt = m.material; if (mt && CLEAR_MATS[mt.name] != null) { mt.transparent = true; mt.opacity = CLEAR_MATS[mt.name]; mt.depthWrite = false; m.castShadow = false; }
       });
       this.cncRoot.add(root);
       this.fbGantry.visible = false; this.bedBox.visible = false;
@@ -182,6 +184,8 @@ export class Twin {
       this.headTip.material.visible = false; // the GLB has the real tip
       nodes.tip.visible = this.headTip.visible;
       this.cncNodes = nodes; this.cncModel = root;
+      for (const [, o] of nodes.syr) o.userData.rest = { y: o.position.y, rz: o.rotation.z };
+      fetch(new URL('./models/syringe_rig.json', import.meta.url).href).then((r) => r.json()).then((rig) => { this.syrRig = rig; if (this.plungerPos != null) this.setPlunger(this.plungerPos); }).catch((e) => console.warn('syringe_rig.json', e));
       if (this.cnc) this.setCNC(this.cnc);
     }, undefined, (e) => console.warn('cnc3018.glb failed to load, using box fallback', e));
   }
@@ -398,12 +402,17 @@ export class Twin {
     if (p.pos_mm != null) this.setPlunger(+p.pos_mm, +(p.stroke_mm ?? SYR_STROKE));
     if (typeof p.tip === 'string' && this.tips[p.tip]) this.tips[p.tip].visible = false;
   }
-  // plunger height above its lowest point (bridge pipette.pos_mm): rack slides, pinion turns (GLB modelled at the top)
+  // plunger height above the bottomed stopper (bridge pipette.pos_mm): the carriage slides, the 12:1 train turns
+  // (per-mm node motion from models/syringe_rig.json; the GLB is modelled at pos 0)
   setPlunger(pos, stroke = SYR_STROKE) {
-    const d = Math.max(0, Math.min(stroke, pos)) - stroke;
-    this.plunger.position.y = 78 + 12 * d / stroke;
-    if (this.cncNodes?.rack) this.cncNodes.rack.position.y = d;
-    if (this.cncNodes?.pinion) this.cncNodes.pinion.rotation.z = d / SYR_PITCH_R;
+    const p = Math.max(0, Math.min(stroke, pos)); this.plungerPos = p;
+    this.plunger.position.y = 66 + 12 * p / stroke;
+    if (!this.cncNodes || !this.syrRig) return;
+    for (const [k, o] of this.cncNodes.syr) {
+      const r = this.syrRig.nodes[k]; if (!r) continue;
+      if (r.prop === 'position.y') o.position.y = o.userData.rest.y + r.per_mm * p;
+      else o.rotation.z = o.userData.rest.rz + r.per_mm * p;
+    }
   }
   setWells(wells) {
     if (!wells) return;

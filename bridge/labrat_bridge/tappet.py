@@ -97,7 +97,8 @@ class Tappet(Device):
             self.client.close()
 
 
-# Rack-and-pinion syringe (cad/syringe): continuous-rotation 9 g servo -> 12T m1.5 pinion (r 9 mm) -> rack -> plunger.
+# Syringe head (cad/syringe): continuous-rotation FS90R -> 17T:50T -> 12T:49T printed gear train (12.01:1) -> 12T m1
+# pinion (r 6 mm) -> rack on an MGN7 carriage -> plunger. 0.5 mm of plunger per servo radian (~2.2 uL / servo degree).
 # A continuous servo has no position feedback: us sets SPEED. Position is dead-reckoned from calibrated plunger
 # speeds, re-zeroed by `home` (drive down into the bottom stop) and corrected by `observe` (camera / NN estimate).
 # pos_mm = plunger height above its lowest point (0 = pressed, stroke_mm = fully drawn).
@@ -107,16 +108,17 @@ DEFAULT_SYR = {
     "span_us": 400,           # us above the deadband at full speed
     "dir": 1,                 # +1: us > neutral raises the plunger (aspirates); flip if the rack runs the wrong way
     "move_speed": 0.25,       # fraction of span for normal moves
-    "mm_per_s_up": 6.0,       # measured plunger speed at move_speed, raising
-    "mm_per_s_down": 6.0,     # ... lowering (load differs: calibrate both)
-    "backlash_mm": 0.15,      # extra travel added on direction reversal
-    "stroke_mm": 25.0,        # usable rack travel (cad/syringe syringe_stroke)
+    "mm_per_s_up": 1.4,       # measured plunger speed at move_speed, raising (FS90R ~110 rpm free / 12 * 6 mm)
+    "mm_per_s_down": 1.4,     # ... lowering (load differs: calibrate both)
+    "backlash_mm": 0.08,      # extra travel added on direction reversal (rack/pinion backlash dominates)
+    "stroke_mm": 30.0,        # usable plunger travel (cad/syringe spec.stroke)
     "syringe_id_mm": 17.8,    # barrel bore -> ul_per_mm = pi/4 * id^2
     "ul_gain": 1.0,           # actual/geometric volume (air cushion compression, tip leakage), fit by weighing
     "ready_mm": 2.0,          # air cushion kept below the liquid: aspirate starts here, dispense returns here
     "max_ul": 200.0,          # tip capacity
-    "home_speed": 0.15,       # slow drive into the bottom stop
-    "home_s": 6.0,            # long enough to reach the stop from anywhere, short enough not to cook the servo
+    "home_speed": 0.12,       # slow, low-torque final drive into the bottom stop (the 12:1 train multiplies stall force)
+    "home_fast_above_mm": 1.5,  # with a trusted position, move fast to this height first
+    "home_overtravel_mm": 1.0,  # extra distance driven into the stop
     "settle_ms": 120,
     "min_pulse_ms": 25,
 }
@@ -208,11 +210,22 @@ class Syringe(Device):
         self.last_dir = sign
 
     # ---- actions ----
+    def _home(self):
+        """fast to just above the stop if the position is trusted, then slow and low-torque into the stopper's bottom."""
+        c = self.cal
+        if self.homed and self.pos > c["home_fast_above_mm"]:
+            self._move_to(c["home_fast_above_mm"])
+            dist = c["home_fast_above_mm"] + c["home_overtravel_mm"]
+        else:
+            dist = c["stroke_mm"] + c["home_overtravel_mm"]
+        self._run(-c["home_speed"], dist / self._rate(False, c["home_speed"]))
+        self.pos, self.homed, self.last_dir = 0.0, True, -1
+
     def a_home(self):
-        """drive slowly down into the bottom stop (fork on the barrel), then pos = 0."""
+        """drive down into the bottom stop (stopper bottomed in the barrel), then pos = 0."""
         with self._lk:
-            self._run(-self.cal["home_speed"], self.cal["home_s"])
-            self.pos, self.homed, self.last_dir, self.vol_ul = 0.0, True, -1, 0.0
+            self._home()
+            self.vol_ul = 0.0
         return self.state()
 
     def a_zero(self, mm: float = 0.0):
@@ -252,8 +265,7 @@ class Syringe(Device):
         """plunger to ready_mm (do this ABOVE the liquid): the air cushion the aspirate starts from."""
         with self._lk:
             if not self.homed:
-                self._run(-self.cal["home_speed"], self.cal["home_s"])
-                self.pos, self.homed, self.last_dir = 0.0, True, -1
+                self._home()
             self._move_to(self.cal["ready_mm"])
         return self.state()
 

@@ -24,9 +24,9 @@ TIP_CAP_UL = 200.0
 FEED_XY, FEED_Z = 3000.0, 600.0  # mm/min
 ACCEL = 400.0  # mm/s^2
 PIPETTE_UL_PER_S = 100.0
-# rack-and-pinion syringe head (cad/syringe, bridge/calib syringe.json defaults): plunger height for the twin
+# syringe head (cad/syringe, 12:1 gear train, bridge/calib/syringe.json defaults): plunger height for the twin
 SYR_UL_PER_MM = math.pi / 4 * 17.8 ** 2  # 20.2 mm OD barrel, ~17.8 mm bore
-SYR_READY_MM, SYR_STROKE_MM = 2.0, 25.0
+SYR_READY_MM, SYR_STROKE_MM = 2.0, 30.0
 
 # SO-101 reach envelope (base positions in deck coords, mm): one arm on each side of the 3018 CNC (left/right of the bed).
 # The iPhone camera is on a static stand above the bed, so photos need no arm.

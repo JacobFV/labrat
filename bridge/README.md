@@ -41,12 +41,13 @@ port order. If the arms swap, run once with `--so-a/--so-b`; the mapping is save
   every move (G90/G91 tracked), rewrites G0 -> G1 with capped F. Streaming uses character counting (127-byte RX buffer),
   then `G4 P0` to wait for motion completion. Alarm on connect/before a job -> `$X`. If `$22=1`, `home` runs `$H` then
   `G10 L20 P1` with `calib/cnc.json:zero_after_home`; otherwise `home` = go to work 0,0,0 via safe Z.
-- `pipette` (kind `servo_syringe`, [`cad/syringe`](../cad/syringe)): a continuous-rotation servo turns a 12T m1.5 pinion
-  (pitch radius 9 mm) on the rack that holds the plunger. `us` sets **speed**, not angle:
+- `pipette` (kind `servo_syringe`, [`cad/syringe`](../cad/syringe)): a continuous-rotation FS90R drives a 12:1 printed
+  gear train and a 12T m1 pinion (pitch radius 6 mm) on the rack that holds the plunger (0.5 mm per servo radian). `us` sets **speed**, not angle:
   `us = neutral_us + dir*sign*(deadband_us + span_us*|speed|)`. The plunger height `pos_mm` (0 = lowest, `stroke_mm` =
   fully drawn) is dead-reckoned: a move of `d` mm runs for `d / mm_per_s_{up,down}` (scaled by speed, + `backlash_mm` on
   reversal) and always ends with a neutral pulse. `ul_per_mm = pi/4 * syringe_id_mm^2 * ul_gain`.
-  - `home {}`: drive slowly down for `home_s` into the bottom stop, then `pos_mm = 0`. `zero {mm?}` declares the position.
+  - `home {}`: fast to just above the stop (if the position is trusted), then slow / low torque into it; `pos_mm = 0`.
+    `zero {mm?}` declares the position.
   - `prime {}`: (homes if needed) plunger to `ready_mm`, the air cushion. The server does this **above** the liquid.
   - `aspirate {ul}`: needs a prime when the tip is empty; raises by `ul/ul_per_mm`. `dispense {ul?}`: lowers again
     (to `ready_mm` when emptying). `blowout {}`: to 0, pushing the cushion out.
@@ -64,7 +65,8 @@ Files in `bridge/calib/` (defaults used when missing):
 - `so_a.json` / `so_b.json`: `joints.{name}.{offset (ticks), sign (+-1), min, max (deg)}`, `poses.{home,ready,rest}` (legacy `look_deck`/`look_user`/`look_plate` requests fall back to `ready` unless the file defines them).
   deg = sign * (ticks - 2048 - offset) * 360/4096.
 - `syringe.json`: `neutral_us, deadband_us, span_us, dir, move_speed, mm_per_s_up, mm_per_s_down, backlash_mm, stroke_mm,
-  syringe_id_mm, ul_gain, ready_mm, max_ul, home_speed, home_s, settle_ms, min_pulse_ms` (defaults in `tappet.py: DEFAULT_SYR`).
+  syringe_id_mm, ul_gain, ready_mm, max_ul, home_speed, home_fast_above_mm, home_overtravel_mm, settle_ms, min_pulse_ms`
+  (defaults in `tappet.py: DEFAULT_SYR`).
 - `cnc.json`: `{zero_after_home:[0,0,0], home_if_enabled:true}`.
 
 SO-101 steps (torque goes OFF, move by hand):
@@ -84,6 +86,9 @@ Syringe (send the actions with `POST /api/device {device:"pipette", action, args
    1.5π mm tooth pitch, or use the camera); `mm_per_s_up = mm / 2`. Repeat downward for `mm_per_s_down`.
 4. **Backlash:** reverse after a move and find the extra travel before the rack moves; set `backlash_mm`.
 5. **Volume:** `syringe_id_mm` from the syringe datasheet; then tune `ul_gain` by weighing water (1 mg = 1 µL).
-6. `home_s` must be long enough to reach the stop from the top (`stroke_mm / (mm_per_s_down*home_speed/move_speed)` + margin).
-Resolution note: with the 20.2 mm barrel, 1 mm of plunger is ~250 µL, so a 50 µL aspirate is a 0.2 mm move. Open-loop
-timing is not good enough for that; use `observe` (camera reading the rack) or a smaller syringe (`syringe_id_mm`).
+6. **Homing:** `home` drives down at `home_speed` (low duty = low torque: the 12:1 train turns the FS90R's stall
+   torque into ~280 N at the rack at full duty) for the distance it may need, then sets `pos_mm = 0`. With a trusted
+   position it first moves fast to `home_fast_above_mm`.
+Resolution: the 12:1 train gives 0.5 mm of plunger per servo radian (~2.2 uL per servo degree with the 20.2 mm
+barrel, ~250 uL/mm). At the default `move_speed` the plunger runs ~1.4 mm/s, so the 25 ms minimum pulse is ~0.035 mm
+(~9 uL): good enough for 20-200 uL steps open loop, with `observe` (camera reading the rack) closing the loop.

@@ -15,13 +15,13 @@ REN = os.path.join(HERE, "renders")
 VIEWS = {
     "bench_full_assembly":       ((1800, 1200), (-700, 1650, -1500), (-40, 1000, 0)),
     "bench_cnc_syringe_closeup": ((1800, 1200), (-330, 1260, -520), (-20, 1080, 0)),
-    "bench_syringe_head_detail": ((1800, 1200), (-170, 1240, -260), (-5, 1155, -5)),
+    "bench_syringe_head_detail": ((1800, 1200), (-170, 1250, -420), (10, 1165, -5)),
     "setup_front":               ((1456, 821), (0, 1250, -1350), (0, 1020, 0)),
     "setup_iso":                 ((1512, 794), (-900, 1500, -1250), (-30, 1000, 0)),
     "lab_iso":                   ((1512, 794), (-1300, 1900, -1900), (0, 1050, 0)),
 }
 POSE = "{x: 150, y: 60, z: -12}"
-PIPETTE = "{tip: true, vol_ul: 120, pos_mm: 14, stroke_mm: 25}"
+PIPETTE = "{tip: true, vol_ul: 120, pos_mm: 14, stroke_mm: 30}"
 
 
 def free_port():
@@ -47,7 +47,7 @@ def main():
             pg = b.new_page(viewport={"width": 1800, "height": 1200})
             pg.on("console", lambda m: print("console:", m.text) if m.type == "error" else None)
             pg.goto(f"http://127.0.0.1:{port}/?token=labrat")
-            pg.wait_for_function("window.labrat?.twin?.cncNodes?.rack", timeout=120000)
+            pg.wait_for_function("window.labrat?.twin?.cncNodes && window.labrat.twin.syrRig", timeout=120000)
             pg.wait_for_timeout(4000)  # SO-101 meshes, laptop texture
             pg.evaluate("""() => {
               const t = window.__t = window.labrat.twin;

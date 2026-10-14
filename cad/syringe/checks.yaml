@@ -1,0 +1,46 @@
+# microfab check configuration for the syringe head (syrhead.check_mf). Same schema as microfab's
+# spec/permitted_sharp_edges.yaml and spec/accepted_problems.yaml. Keep both lists short; every entry has a reason.
+
+permitted:
+  - part: "*"
+    process: laser_cut
+    reason: >-
+      SYR-101 is laser-cut 3 mm cast acrylic: every edge is a through-cut whose condition is set by the process
+      (polished kerf, no burr on acrylic). Edge breaks are not modelled on flat DXF parts.
+  - part: "SYR-130-*"
+    process: tube_cut
+    reason: Bearing spacers are cut from 4 x 0.45 brass tube; the cut ends are deburred, which the model does not show.
+  - part: "SYR-11*"
+    reason: >-
+      FDM spur gears (m0.8 / m1.0). The involute tooth edges are left sharp: a modelled chamfer narrower than one
+      0.4 mm extrusion line cannot be printed, and a wider one would remove working flank. The edges are broken on
+      the bed by the first-layer squish and deburred by hand. All other gear edges (bores, pockets) are part of the
+      tooth geometry or are bearing seats.
+  - part: "SYR-103"
+    region: [[16.4, -3.2, 48.0], [19.8, 3.2, 98.0]]
+    reason: Rack teeth (m1, PA 25), FDM-printed with the tooth profile in the XY plane; same reason as the gears.
+
+accepted:
+  - name: rack-teeth-walls
+    check: geometry
+    part: "SYR-103"
+    region: [[16.4, -3.2, 48.0], [19.8, 3.2, 98.0]]
+    reason: >-
+      m1 rack teeth: the tooth tips are one 0.4-0.6 mm extrusion wide by design (same rule as TOOTH_WALL on the
+      gears). The region covers the teeth only; the rest of the carriage keeps the 1.2 mm FDM wall rule.
+
+reviewed_warnings:
+  - check: fastener
+    match: "hole Ø2.20 in clamped part */servo is not the ISO 273 normal clearance"
+    reason: >-
+      The hole is the FS90R's own moulded tab hole (Ø2.2, catalogue). The M2 tab screw is a clearance fit with
+      0.1 mm radial; it is the vendor's intended screw.
+  - check: fastener
+    match: "hole Ø2.20 in clamped part */servo_horn is not the ISO 273 normal clearance"
+    reason: The horn's own centre hole (Ø2.2, vendor part); the M2 horn screw is the vendor's intended screw.
+  - check: manufacturability
+    match: "overhang"
+    reason: >-
+      FDM parts are printed with supports where noted in README (body upright with tree supports under the lip and
+      the table; carriage on its side; cap and clamp flat). The checker measures overhang in the part frame,
+      which is the print frame for the body, the cap, the clamp and the gears, but not for the carriage.

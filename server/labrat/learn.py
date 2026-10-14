@@ -175,7 +175,7 @@ def learning() -> dict:
 
 
 TAXONOMY = [
-    "Lab devices: arms → SO-101 gripper arms (so_a, so_b, one each side of the CNC); motion stage → 3018 CNC (cnc, GRBL); liquid handler → syringe pipette (pipette, in the CNC spindle clamp on the spindle axis, 200 µL tips on the luer nozzle, rack and pinion on a continuous-rotation servo, ESP32/PCA9685 Tappet board tap_a ch 8); camera → iPhone on a static stand above the CNC bed.",
+    "Lab devices: arms → SO-101 gripper arms (so_a, so_b, one each side of the CNC); motion stage → 3018 CNC (cnc, GRBL); liquid handler → syringe pipette (pipette, in the CNC spindle clamp on the spindle axis, 200 µL tips on a luer-to-tip adapter, 12:1 gear train + rack on a continuous-rotation FS90R servo, ESP32/PCA9685 Tappet board tap_a ch 8); camera → iPhone on a static stand above the CNC bed.",
     "Reagents: dyes → red, yellow, blue (subtractive primaries); diluent → water. All in 20 mL reservoir troughs at x=250.",
     "Labware: tip_rack (8x12, 200 µL tips) at (20,20); 96-well plate (300 µL wells) at (140,20); reservoirs (4 troughs); waste (280,170); tip eject bar (10,170).",
     "Colours: secondary colours → orange (red+yellow), green (blue+yellow), purple (red+blue); tertiary → brown (all three).",

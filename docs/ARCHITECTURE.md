@@ -19,7 +19,7 @@ Hardware, as bridge device ids (`bridge/labrat_bridge/bridge.py: ALL_IDS`):
 - `so_a`, `so_b` are SO-101 arms (Feetech STS3215 bus at 1 Mbps): plain manipulators with the stock gripper, `so_a` on one side of the CNC and `so_b` on the other. Named poses are `home`, `ready` and `rest`; the old `look_deck`/`look_user`/`look_plate` names are accepted as aliases for `ready`.
 - `tap_a` is the ESP32-S3 + PCA9685 Tappet board that drives the syringe servo (JSON lines over UART at 115200). `tap_b` and the Tappet arms are optional and not part of the demo setup.
 - `cnc` is a 3018 CNC running GRBL 1.1 at 115200.
-- `pipette` is a syringe pipette that replaces the spindle motor in the 3018's 52 mm clamp ([`cad/syringe`](../cad/syringe)): a disposable syringe with a 200 µL tip on its luer nozzle, its plunger driven by a rack and pinion on a continuous-rotation 9 g servo on PCA9685 **channel 8** (`servo_raw`). The servo has no position feedback: the bridge dead-reckons the plunger from calibrated speeds, re-zeroes with `home` (bottom stop) and accepts camera/NN estimates through `observe`.
+- `pipette` is a syringe pipette that replaces the spindle motor in the 3018's 52 mm clamp ([`cad/syringe`](../cad/syringe)): a disposable syringe with a 200 µL tip on a luer-to-tip adapter, its plunger driven through a 12:1 printed gear train and a rack on an MGN7 linear guide by a continuous-rotation FS90R servo on PCA9685 **channel 8** (`servo_raw`): 0.5 mm of plunger per servo radian. The servo has no position feedback: the bridge dead-reckons the plunger from calibrated speeds, re-zeroes with `home` (bottom stop) and accepts camera/NN estimates through `observe`.
 
 ## 2. Topology
 

@@ -1,0 +1,31 @@
+pn,qty,unit,name,kind,process,material,vendor,vendor_pn,unit_cost_usd,notes
+LIB-SHCS-M2x4,4,ea,"ISO 4762 M2x4 socket head cap screw, A2",buy,purchased,stainless_a2_fastener,McMaster-Carr / Bossard,ISO 4762 M2x4 A2,0.068,
+LIB-SHCS-M2x5,1,ea,"ISO 4762 M2x5 socket head cap screw, A2",buy,purchased,stainless_a2_fastener,McMaster-Carr / Bossard,ISO 4762 M2x5 A2,0.07,
+LIB-SHCS-M2x6,5,ea,"ISO 4762 M2x6 socket head cap screw, A2",buy,purchased,stainless_a2_fastener,McMaster-Carr / Bossard,ISO 4762 M2x6 A2,0.072,
+LIB-SHCS-M2x8,4,ea,"ISO 4762 M2x8 socket head cap screw, A2",buy,purchased,stainless_a2_fastener,McMaster-Carr / Bossard,ISO 4762 M2x8 A2,0.076,
+LIB-SHCS-M3x10,2,ea,"ISO 4762 M3x10 socket head cap screw, A2",buy,purchased,stainless_a2_fastener,McMaster-Carr / Bossard,ISO 4762 M3x10 A2,0.08,
+LIB-SHCS-M3x8,4,ea,"ISO 4762 M3x8 socket head cap screw, A2",buy,purchased,stainless_a2_fastener,McMaster-Carr / Bossard,ISO 4762 M3x8 A2,0.076,
+MF-NUT-M2-ISO4032,2,ea,ISO 4032 hex nut M2,buy,purchased,stainless_a2_fastener,,,,
+SYR-100,1,ea,head body,make,fdm_print,petg_print,,,,"PETG, 0.2 mm, 6 walls, 40 % gyroid; upright, tree supports under lip + table"
+SYR-101,1,ea,gearbox cover,make,laser_cut,acrylic_clear,,,,"3 mm cast acrylic, laser cut; raster-engraved legend"
+SYR-102,1,ea,flange clamp,make,fdm_print,petg_print,,,,
+SYR-103,1,ea,plunger carriage with m1 rack,make,fdm_print,petg_print,,,,printed on its back face (rack teeth in the XY plane)
+SYR-104,1,ea,luer-to-tip adapter,make,cnc_lathe,pom_black,,,,"POM-C natural, turned; female ISO 80369-7 slip socket, 200 uL tip cone"
+SYR-105,1,ea,thumb-disc cap,make,fdm_print,petg_print,,,,
+SYR-110,1,ea,G1 17T m0.8 servo gear,make,fdm_print,petg_print,,,,
+SYR-111,1,ea,G2/G3 50T m0.8 + 12T m1 compound gear,make,fdm_print,petg_print,,,,
+SYR-112,1,ea,G4/G5 49T m1 + 12T m1 output gear,make,fdm_print,petg_print,,,,
+SYR-130-03p00,3.0,mm,"bearing spacer, brass tube 4 x 0.45 cut to 3",stock,tube_cut,brass_c360,K&S Precision Metals,"9220 (4 mm x 0.45 wall brass tube), cut + deburred",0.012,bears on the MR63ZZ inner ring only (OD 4.0 < shield bore)
+SYR-130-04p50,4.5,mm,"bearing spacer, brass tube 4 x 0.45 cut to 4.5",stock,tube_cut,brass_c360,K&S Precision Metals,"9220 (4 mm x 0.45 wall brass tube), cut + deburred",0.018000000000000002,bears on the MR63ZZ inner ring only (OD 4.0 < shield bore)
+SYR-130-09p80,9.8,mm,"bearing spacer, brass tube 4 x 0.45 cut to 9.8",stock,tube_cut,brass_c360,K&S Precision Metals,"9220 (4 mm x 0.45 wall brass tube), cut + deburred",0.039200000000000006,bears on the MR63ZZ inner ring only (OD 4.0 < shield bore)
+SYR-130-19p50,19.5,mm,"bearing spacer, brass tube 4 x 0.45 cut to 19.5",stock,tube_cut,brass_c360,K&S Precision Metals,"9220 (4 mm x 0.45 wall brass tube), cut + deburred",0.078,bears on the MR63ZZ inner ring only (OD 4.0 < shield bore)
+SYR-200A,1,ea,"Feetech FS90R continuous-rotation servo (case, spline, horn, lead)",buy,purchased,abs_black,Feetech,FS90R,6.5,"continuous rotation micro servo, 4.8-6 V, 110 rpm no-load @ 4.8 V"
+SYR-201A,1,ea,12 mL luer-slip syringe (barrel 20.2 OD x 80),buy,purchased,polypropylene_natural,BD / Terumo / Monoject,12 mL luer slip (barrel OD 20.2 measured),0.25,
+SYR-202,1,ea,200 uL universal pipette tip,buy,purchased,polypropylene_natural,Axygen / Sarstedt,T-200-Y (representative),0.02,
+SYR-210,1,ea,MGN7 rail L70,buy,purchased,steel_hardened_ground,HIWIN,MGNR7R70HM,9.0,
+SYR-211A,1,ea,HIWIN MGN7C carriage,buy,purchased,steel_hardened_ground,HIWIN,MGN7C1R70HM (block),11.0,
+SYR-220,4,ea,MR63ZZ bearing 3x6x2.5,buy,purchased,steel_hardened_ground,NMB / SKF,MR63ZZ,0.6,
+SYR-221,2,ea,dowel pin ISO 2338 3m6 x 40,buy,purchased,steel_hardened_ground,McMaster-Carr,ISO 2338 3m6x40,0.3,
+SYR-222,7,ea,heat-set insert M2 x 4,buy,purchased,brass_c360,ruthex,RX-M2x4,0.1,
+SYR-223,6,ea,heat-set insert M3 x 5.7,buy,purchased,brass_c360,ruthex,RX-M3x5.7,0.12,
+SYR-232,1,ea,cable tie 2.5 x 100 nylon,buy,purchased,polypropylene_natural,HellermannTyton,T18R,0.03,

@@ -20,7 +20,7 @@ simulator**, and stores what it learned in typed memory (semantic / episodic / p
 ## Hardware
 Layout: the 3018 CNC is in the middle, `so_a` and `so_b` stand on either side of it, the iPhone is on a fixed
 stand looking straight down at the CNC bed, and the laptop sits to the side.
-- **3018 CNC** (GRBL 1.1) with a **syringe pipette head** in the spindle clamp: a disposable syringe with a 200 µL tip on its luer nozzle, plunger on a rack and pinion driven by a continuous-rotation 9 g servo (CAD in [`cad/syringe`](cad/syringe)).
+- **3018 CNC** (GRBL 1.1) with a **syringe pipette head** in the spindle clamp: a disposable syringe with a 200 µL tip on a luer-to-tip adapter, plunger on a rack and an MGN7 linear guide, driven through a 12:1 gear train by a continuous-rotation FS90R servo (CAD in [`cad/syringe`](cad/syringe)).
 - **Syringe servo driver:** an ESP32-S3 + PCA9685 Tappet board (`tap_a`, firmware in [`tappet/`](tappet), JSON lines over USB at 115200). PCA9685 **channel 8 drives the syringe servo**. The Tappet arms themselves are optional and not part of the demo setup.
 - **2× SO-101 arms** (Feetech STS3215), `so_a` and `so_b`: plain manipulators with the stock gripper, one on each side of the CNC.
 - **iPhone** on a static stand above the CNC bed: camera, mic, speaker and animated eyes. It does not move.

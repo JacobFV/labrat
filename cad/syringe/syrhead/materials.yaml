@@ -1,0 +1,57 @@
+# Render finishes for the syringe head that microfab's spec/materials.yaml does not have.
+# Same schema (render: shader / base / rough / ior / transmission / layer_lines / wear / wear_amount); merged over
+# microfab's library at render time. Part materials for checks/BOM stay microfab keys; these are finishes only.
+syr_pp_clear:
+  name: polypropylene syringe barrel, clarified
+  render: {shader: glass, base: [0.95, 0.96, 0.96], rough: 0.09, ior: 1.49, transmission: 0.93, wear: [smudge, dust], wear_amount: 0.35}
+syr_tip_yellow:
+  name: PP pipette tip, yellow
+  render: {shader: glass, base: [0.98, 0.80, 0.16], rough: 0.16, ior: 1.49, transmission: 0.82, wear: [], wear_amount: 0.0}
+syr_petg_orange:
+  name: PETG, printed, orange
+  render: {shader: plastic, base: [0.86, 0.30, 0.05], rough: 0.42, layer_lines: true, wear: [smudge, dust], wear_amount: 0.45}
+syr_petg_white:
+  name: PETG, printed, white
+  render: {shader: plastic, base: [0.86, 0.86, 0.84], rough: 0.42, layer_lines: true, wear: [smudge, dust], wear_amount: 0.45}
+syr_pom_white:
+  name: POM-C natural, turned
+  render: {shader: plastic, base: [0.90, 0.90, 0.86], rough: 0.28, subsurface: 0.2, wear: [smudge], wear_amount: 0.3}
+syr_cable_brown:
+  name: PVC lead, brown
+  render: {shader: rubber, base: [0.20, 0.09, 0.04], rough: 0.38, wear: [dust], wear_amount: 0.3}
+syr_cable_red:
+  name: PVC lead, red
+  render: {shader: rubber, base: [0.62, 0.03, 0.02], rough: 0.38, wear: [dust], wear_amount: 0.3}
+syr_cable_orange:
+  name: PVC lead, orange
+  render: {shader: rubber, base: [0.88, 0.36, 0.03], rough: 0.38, wear: [dust], wear_amount: 0.3}
+syr_ps_clear:
+  name: polystyrene 96-well plate
+  render: {shader: glass, base: [0.97, 0.98, 0.99], rough: 0.04, ior: 1.59, transmission: 0.95, wear: [smudge, dust], wear_amount: 0.3}
+syr_pp_blue:
+  name: PP tip-rack box, blue
+  render: {shader: plastic, base: [0.04, 0.22, 0.62], rough: 0.35, wear: [smudge, dust], wear_amount: 0.4}
+syr_pp_natural:
+  name: PP reservoir
+  render: {shader: plastic, base: [0.9, 0.9, 0.86], rough: 0.4, subsurface: 0.4, wear: [stain, dust], wear_amount: 0.4}
+syr_dye_red:
+  name: red dye solution
+  render: {shader: liquid, base: [0.75, 0.04, 0.05], rough: 0.02, ior: 1.33, transmission: 0.75, wear: [], wear_amount: 0.0}
+syr_dye_yellow:
+  name: yellow dye solution
+  render: {shader: liquid, base: [0.95, 0.75, 0.05], rough: 0.02, ior: 1.33, transmission: 0.75, wear: [], wear_amount: 0.0}
+syr_dye_blue:
+  name: blue dye solution
+  render: {shader: liquid, base: [0.05, 0.2, 0.8], rough: 0.02, ior: 1.33, transmission: 0.75, wear: [], wear_amount: 0.0}
+syr_water:
+  name: water
+  render: {shader: liquid, base: [0.9, 0.95, 0.98], rough: 0.01, ior: 1.33, transmission: 0.95, wear: [], wear_amount: 0.0}
+syr_laminate_white:
+  name: bench laminate, white
+  render: {shader: plastic, base: [0.80, 0.80, 0.78], rough: 0.55, wear: [smudge, dust, scratch], wear_amount: 0.5}
+syr_heatsink_purple:
+  name: anodised driver heatsink
+  render: {shader: metal, base: [0.35, 0.18, 0.55], rough: 0.35, metal: 0.8, wear: [dust], wear_amount: 0.3}
+syr_backdrop:
+  name: photo sweep, matte grey
+  render: {shader: plastic, base: [0.42, 0.43, 0.45], rough: 0.85, wear: [], wear_amount: 0.0}
