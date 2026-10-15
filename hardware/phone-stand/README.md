@@ -76,9 +76,12 @@ Two things the checks do not cover:
 
 ## Parts and printing
 
-PETG (or PLA), **0.2 mm layers**, 0.4 mm nozzle. Use 4 walls; 5 on PS-110 and PS-120. Infill 15–25 %, and 100 % on
-the jaws and the pinion. Print with no supports and no brim, except an optional brim on the yoke. Holes that run
-parallel to the bed are teardrops. Downward faces are 45° chamfers, flares, pyramids, V roofs or 45° windows.
+PETG (or PLA), **0.2 mm layers**, 0.4 mm nozzle. Use 4 walls; 5 on PS-110 and PS-120, 3 on the base.
+Infill 20–25 %, 10 % on the base (the steel shot gives the weight, not the plastic), and 100 % on the jaws and the
+pinion. The flat panels are left solid on purpose: at these infills, lightening pockets add perimeters and skins and
+slice to the same or more filament and a longer print (PS-101 lid +20 to +32 min, PS-100 ramp cavity +1.4 m). Print
+with no supports and no brim, except an optional brim on the yoke. Holes that run parallel to the bed are teardrops.
+Downward faces are 45° chamfers, flares, pyramids, V roofs or 45° windows.
 
 | part | prints | notes |
 |---|---|---|

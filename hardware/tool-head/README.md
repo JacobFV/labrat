@@ -91,9 +91,10 @@ capacitance-sensitive. Note the TTP223 calibrates its baseline at power-up: powe
 
 **Probe position (rail index 11, electrode at x 9.5, y −47.5 from the tip).** The electrode and the syringe tip are
 level, so while the probe goes down into a beaker the tip goes down beside it. At (9.5, −47.5) ≡ (+9.5, +9.5) mod the
-19 mm pitch, the tip falls in the gap between four beakers (5.8 mm from each wall),
-or outside the matrix for rows E–F, so the probe can go down to **23.8 mm above the bed** (`tools.json`
-`probe_floor_h`: 2 mm over the holder top and labels). Liquid below that cannot be probed (it can still be pipetted).
+19 mm pitch, the tip falls in the gap between four beakers (5.8 mm from each wall), or outside the matrix for rows
+E–F, so it clears the 11.2 mm holder. The probe can go down to **23.8 mm above the bed** (`tools.json`
+`probe_floor_h`), where the deployed arm is 2.6 mm over the beaker rims. Liquid below that cannot be probed (it can
+still be pipetted).
 
 **Operation (DO rules, [`docs/protocol.md`](../../docs/protocol.md)).** `probe.deploy` / `retract` only with the electrode
 above the rims (the arc's lowest point is the deployed position, so deploying anywhere the deployed tip clears is
@@ -119,7 +120,7 @@ The hub's pin map is in [`../electronics`](../electronics).
 |---|---|---|---|---|
 | tip in every beaker at CNC z −45 (tip end 10 above the bed) | 15.6 | 5.1 | 5.0 | 15.3 (retracted) |
 | tip over every tip-rack hole at CNC z −45 | 9.8 | (enters the tip) | 5.0 | 9.5 (retracted) |
-| probing every beaker down to 23.8 above the bed | 39.2 (tip: 2.0 over the holder) | | 18.8 | 2.6 (arm over the rim; deployed) |
+| probing every beaker down to 23.8 above the bed | 39.2 (tip: 12.0 over the holder) | | 18.8 | 2.6 (arm over the rim; deployed) |
 | travel at CNC z 0, over the 57 mm tip rims | 54.8 | | 50.0 | 54.5 retracted / 28.0 deployed |
 
 Still open (deck layout, [`../deck`](../deck)): the syringe tip and the

@@ -1,7 +1,6 @@
 """Pack LabRat printable parts onto Ender-3 V3 SE plates (220 x 220).
 
-usage: uv run --with trimesh --with numpy --with lxml --with networkx python pack_plates.py \
-           <out dir> <Ender_Follower_SO101.stl> <work dir>
+usage: uv run --with trimesh --with numpy --with lxml --with networkx python pack_plates.py <out dir> <work dir>
 
 Writes <out>/plate_XX_<name>.3mf (one object per part, bed coords 0..220)
 and <work>/plate_XX_<name>/<part>.stl (each part translated to its bed
@@ -11,8 +10,7 @@ import json, sys, os
 import numpy as np
 import trimesh
 
-OUT = sys.argv[1]
-SO101_PLATE = sys.argv[2]  # upstream Ender_Follower_SO101.stl
+OUT, WORK = sys.argv[1], sys.argv[2]
 BED = 220.0
 GAP = 5.0
 
@@ -55,9 +53,9 @@ def load(rel):
 
 
 class Plate:
-    def __init__(self, name, material, margin, adhesion="skirt", supports=False):
+    def __init__(self, name, material, margin, adhesion="skirt"):
         self.name, self.material, self.margin = name, material, margin
-        self.adhesion, self.supports = adhesion, supports
+        self.adhesion = adhesion
         lo, hi = margin, BED - margin + GAP  # every rect carries its +x/+y gap
         self.free = [(lo, lo, hi - lo, hi - lo)]  # maxrects free list (x, y, w, h)
         self.items = []
@@ -141,7 +139,7 @@ plates += pla
 # PETG: phone stand base alone (164 x 212: no room for a skirt), then the rest
 base = Plate(None, "PETG", 0.0, adhesion="none")
 m = load("phone-stand/stl/PS-100.stl")
-base.items.append(dict(rel="phone-stand/stl/PS-100.stl", k=0, mesh=m, ov={"wall_line_count": 4, "infill_sparse_density": 15},
+base.items.append(dict(rel="phone-stand/stl/PS-100.stl", k=0, mesh=m, ov={"wall_line_count": 3, "infill_sparse_density": 10},
                        note="base, flat (164 x 212: no skirt, the start-gcode purge line primes)", x=0, y=0, rot=0))
 base.label = "petg_stand_base"
 plates.append(base)
@@ -156,7 +154,7 @@ for i, p in enumerate(plates, 1):
     meshes = [placed_mesh(it) for it in p.items]
     centre(meshes)
     sc = trimesh.Scene()
-    pdir = os.path.join(sys.argv[3], name); os.makedirs(pdir, exist_ok=True)
+    pdir = os.path.join(WORK, name); os.makedirs(pdir, exist_ok=True)
     parts = []
     for it, mm in zip(p.items, meshes):
         pn = os.path.splitext(os.path.basename(it["rel"]))[0] + (f"_{it['k'] + 1}" if it["k"] else "")
@@ -167,24 +165,9 @@ for i, p in enumerate(plates, 1):
                           rot=it["rot"], bbox=[round(v, 1) for v in [*lo, *hi]]))
     sc.export(os.path.join(OUT, name + ".3mf"))
     lo = np.min([m.bounds[0] for m in meshes], axis=0); hi = np.max([m.bounds[1] for m in meshes], axis=0)
-    manifest.append(dict(name=name, material=p.material, adhesion=p.adhesion, supports=p.supports, parts=parts,
+    manifest.append(dict(name=name, material=p.material, adhesion=p.adhesion, parts=parts,
                          footprint=[round(v, 1) for v in [*lo, *hi]]))
 
-# SO-101 follower: the upstream pre-oriented Ender plate, one per arm (so_a, so_b)
-so = trimesh.load(SO101_PLATE, force="mesh")
-so.apply_translation(-so.bounds[0]); so.apply_translation([(BED - so.extents[0]) / 2, (BED - so.extents[1]) / 2, 0])
-for i, arm in enumerate(["x2"], len(manifest) + 1):  # print it twice: so_a and so_b
-    name = f"plate_{i:02d}_pla_so101_follower_{arm}"
-    pdir = os.path.join(sys.argv[3], name); os.makedirs(pdir, exist_ok=True)
-    f = os.path.join(pdir, "Ender_Follower_SO101.stl"); so.export(f)
-    sc = trimesh.Scene(); sc.add_geometry(so, node_name="SO101_follower_" + arm, geom_name="SO101_follower_" + arm)
-    sc.export(os.path.join(OUT, name + ".3mf"))
-    lo, hi = so.bounds
-    manifest.append(dict(name=name, material="PLA+", adhesion="none", supports=True, parts=[dict(
-        pn="SO101_follower_" + arm, src="upstream STL/SO101/Follower/Ender_Follower_SO101.stl @ a758567",
-        stl=f, overrides={}, note="all 11 follower parts of one arm, upstream orientation (WaveShare plate)", rot=0,
-        bbox=[round(v, 1) for v in [*lo, *hi]])], footprint=[round(v, 1) for v in [*lo, *hi]]))
-
-json.dump(manifest, open(os.path.join(sys.argv[3], "plates.json"), "w"), indent=1)
+json.dump(manifest, open(os.path.join(WORK, "plates.json"), "w"), indent=1)
 for pl in manifest:
     print(pl["name"], pl["material"], pl["footprint"], [p["pn"] for p in pl["parts"]])

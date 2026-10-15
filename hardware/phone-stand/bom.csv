@@ -1,5 +1,5 @@
 pn,qty,unit,name,kind,process,material,vendor,vendor_pn,unit_cost_usd,notes
-PS-100,1.0,ea,"base: steel-shot ballast pocket, 2020 socket, tongue under the 3018 front plate",make,fdm_print,PETG,,,,"flat; 4 walls, 15% infill"
+PS-100,1.0,ea,"base: steel-shot ballast pocket, 2020 socket, tongue under the 3018 front plate",make,fdm_print,PETG,,,,"flat; 3 walls, 10% infill (the steel shot gives the weight)"
 PS-101,1.0,ea,"base lid (lead groove, engraved name)",make,fdm_print,PETG,,,,flat
 PS-110,1.0,ea,"pan housing: pan servo pocket, thrust face, rim, 2020 socket",make,fdm_print,PETG,,,,"upright, socket down; 5 walls"
 PS-111,1.0,ea,turntable retainer ring,make,fdm_print,PETG,,,,flat

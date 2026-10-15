@@ -357,10 +357,12 @@ def _probe_tools():
                       "stop_deg": PR.STOP_DEG, "swing_deg": PR.SWING},
             "probe_floor_h": PROBE_FLOOR_H,
             "probe_floor_note": "lowest electrode-tip height above the bed when probing a beaker of the matrix: the "
-                                "syringe tip then sits in the gap between 4 beakers, 2 mm over the holder top + labels"}
+                                "syringe tip then sits in the gap between 4 beakers; the limit is the deployed arm, 2.6 "
+                                "mm over the beaker rims"}
 
 
-PROBE_FLOOR_H = 21.8 + 2.0        # deck/deck.py: holder top 21.2 + 0.6 raised labels
+PROBE_FLOOR_H = 23.8               # the deployed arm (TM-122) stays 2.6 over the beaker rims (51.2); the holder
+                                  # top (deck.json holder_top_h 11.2) is 12 below the tip here, so it is not the limit
 
 
 TOOLS = {   # tool points relative to the syringe tip end (deck_cal tool offsets: spindle = target - offset)

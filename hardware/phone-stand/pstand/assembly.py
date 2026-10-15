@@ -60,7 +60,7 @@ def _servo_parts(prefix, product):
 
 PARTS: dict[str, Part] = {
     "PS-100": Part("PS-100", "base: steel-shot ballast pocket, 2020 socket, tongue under the 3018 front plate", "make",
-                   "fdm_print", "PETG", "petg_graphite", notes="flat; 4 walls, 15% infill"),
+                   "fdm_print", "PETG", "petg_graphite", notes="flat; 3 walls, 10% infill (the steel shot gives the weight)"),
     "PS-101": Part("PS-101", "base lid (lead groove, engraved name)", "make", "fdm_print", "PETG", "petg_graphite",
                    notes="flat"),
     "PS-110": Part("PS-110", "pan housing: pan servo pocket, thrust face, rim, 2020 socket", "make", "fdm_print", "PETG",

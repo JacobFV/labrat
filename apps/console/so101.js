@@ -43,7 +43,7 @@ export async function loadSO101({ bodyColor = 0xf2f2ee, servoColor = 0x161618, l
       pending.push(loadGeo(loader, file).then((geo) => {
         const m = new THREE.Mesh(geo, servo ? servoMat : bodyMat);
         m.castShadow = m.receiveShadow = true; m.name = file.split('/').pop(); holder.add(m);
-        // printed links: the URDF STLs are already in print orientation (they match hardware/so101/stl), so layers
+        // printed links: the URDF STLs are in upstream's print orientation, so layers
         // stack along mesh +Z; the meshes are in metres (unit 1000 -> 0.2 mm layers)
         if (!servo && layerLines) { m.userData.print_up = [0, 0, 1]; applyLayerLines(m, { up: [0, 0, 1], unit: 1000 }); }
       }));

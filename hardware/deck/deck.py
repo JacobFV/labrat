@@ -45,12 +45,12 @@ TIP_ENGAGE = HEAD.tip_top_z - HEAD.cone_end_z  # adapter cone below the tip rim 
 TIP_PRESS = 0.5                                 # push past the seal to seat the tip
 
 # ---------------------------------------------------------------------------------------------------------------------
-# DECK-001 beaker matrix: 6 rows (A-F, along +y) x 8 columns (1-8, along +x) on a 19 mm pitch.
+# DECK-001 beaker matrix (holder top 11.2, beakers held over their bottom 10 mm): 6 rows (A-F, along +y) x 8 columns (1-8, along +x) on a 19 mm pitch.
 # Columns 1-7 are mixing beakers; column 8 holds the stocks (A8 water, B8 red, C8 yellow, D8 blue, E8 / F8 free).
 # ---------------------------------------------------------------------------------------------------------------------
 M = dict(rows=6, cols=8, pitch=19.0,
          pocket_d=BEAKER["od"] + 0.5,          # slide fit
-         pocket_depth=20.0, floor=1.2,         # beakers stand 1.2 above the bed; rims at 51.2
+         pocket_depth=10.0, floor=1.2,         # beakers stand 1.2 above the bed; rims at 51.2
          tube_od=19.6,                          # neighbouring tubes overlap 0.6 (pocket-to-pocket web 3.2)
          drain_d=8.0,                           # push-out / drain hole in every pocket floor
          border=7.0, label_h=0.6,               # label border (front + left) with raised row / column labels

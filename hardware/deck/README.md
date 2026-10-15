@@ -12,12 +12,12 @@ uv run --python 3.12 --with build123d==0.13.0 --with bd_warehouse==0.4.0 --with 
 ## DECK-001 beaker matrix (print it)
 
 - **Beakers:** 6 rows (A–F, front to back) × 8 columns (1–8, left to right) of 15.3 × 50 mm beakers, on a 19 mm pitch.
-- **Pockets:** Ø15.8 (slide fit) and 20 deep on a 1.2 mm floor, so the rims are 51.2 mm above the bed. Each pocket has
-  a Ø8 hole for draining and pushing beakers out.
+- **Pockets:** Ø15.8 (slide fit) and 10 deep on a 1.2 mm floor (the holder top is 11.2 mm above the bed), so the
+  rims are 51.2 mm above the bed. Each pocket has a Ø8 hole for draining and pushing beakers out.
 - **Structure:** the tubes overlap their neighbours, leaving a 3.2 mm web between pockets.
 - **Labels:** raised row letters on the left and column numbers on the front. Column 8 is labelled **S**.
 - **Clamping:** two ears, front and back, have 20 mm M5 slots running along X for T-slot clamps.
-- **Size:** 160 × 146 × 21 mm, about 121 cm³. It prints as modelled (base on the bed) with no supports, and every
+- **Size:** 160 × 146 × 11.2 mm, about 72 cm³. It prints as modelled (base on the bed) with no supports, and every
   pocket and gap opens upward.
 - **Columns 1–7:** mixing beakers, the simulator's `plate` grid A1–F7, up to 5 mL each.
 - **Column 8:** stocks. A8 water, B8 red, C8 yellow and D8 blue (4.5 mL each) are the simulator's reservoirs; E8 and F8

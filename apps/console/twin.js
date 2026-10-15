@@ -43,7 +43,7 @@ const BENCH_H = 900; // lab floor -> bench top; everything on the bench lives in
 export const DECK = {
   tip_rack: { x: 17, y: 19.25, pitch: 9, box: [8, 10], l: 117, w: 81.5, plate_h: 55.4, rim_h: 57 },
   plate: { x: 153.25, y: 32, pitch: 19, rows: 6, cols: 7, cap: 5000 },        // mixing beakers A1-F7
-  matrix: { cols: 8, ext: [136.4, 296.1, 15.2, 136.8], top: 21.2, floor: 1.2 },
+  matrix: { cols: 8, ext: [136.4, 296.1, 15.2, 136.8], top: 11.2, floor: 1.2 },
   beaker: { od: 15.3, id: 13.5, h: 50, bottom: 1.2, ul_per_mm: Math.PI / 4 * 13.5 ** 2 },
   reservoirs: [['water', 32], ['red', 51], ['yellow', 70], ['blue', 89]].map(([name, y]) => ({ name, x: 153.25 + 7 * 19, y })),
   res_fill: 4500,

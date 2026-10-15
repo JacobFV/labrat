@@ -44,7 +44,7 @@
     "swing_deg": 150.0
    },
    "probe_floor_h": 23.8,
-   "probe_floor_note": "lowest electrode-tip height above the bed when probing a beaker of the matrix: the syringe tip then sits in the gap between 4 beakers, 2 mm over the holder top + labels"
+   "probe_floor_note": "lowest electrode-tip height above the bed when probing a beaker of the matrix: the syringe tip then sits in the gap between 4 beakers; the limit is the deployed arm, 2.6 mm over the beaker rims"
   }
  }
 }

@@ -48,7 +48,6 @@ STACK = [cfg_layer(f"{RES}/variants/creality/creality_ender3v3se_0.4.inst.cfg"),
 
 MATERIAL = {
     "PLA": dict(material_print_temperature=205, material_bed_temperature=60, cool_fan_speed=100),
-    "PLA+": dict(material_print_temperature=210, material_bed_temperature=60, cool_fan_speed=100),
     "PETG": dict(material_print_temperature=235, material_bed_temperature=75, cool_fan_speed=50,
                  cool_fan_speed_max=60, retraction_amount=1.0),
 }
@@ -130,8 +129,6 @@ LP = ":".join([APP, APP + "/runtime/compat", APP + "/runtime/compat/lib/x86_64-l
 def slice_plate(pl):
     user = dict(USER, **MATERIAL[pl["material"]])
     user["adhesion_type"] = pl["adhesion"]
-    if pl["supports"]:
-        user.update(support_enable=True, support_type="everywhere", support_angle=45)
     g, bad = all_settings(user)
     if bad: print("unresolved:", bad[:10], file=sys.stderr)
     for key in ("machine_start_gcode", "machine_end_gcode"):
