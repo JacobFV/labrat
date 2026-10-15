@@ -1,0 +1,17 @@
+[project]
+name = "labrat-phone-stand"
+version = "1.0.0"
+description = "LabRat motorised pan/tilt phone stand (parametric build123d)"
+requires-python = ">=3.10"
+dependencies = [
+    "build123d>=0.9",
+    "trimesh>=4.0",
+    "networkx",
+    "lxml",
+    "scipy",
+    "shapely",
+    "mapbox-earcut",
+]
+
+[tool.uv]
+package = false

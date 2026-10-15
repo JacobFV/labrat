@@ -1,0 +1,9 @@
+{
+  "name": "labrat-phone",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "for f in *.js test/*.js; do node --check \"$f\" || exit 1; done",
+    "test": "node --test test/*.test.js"
+  }
+}

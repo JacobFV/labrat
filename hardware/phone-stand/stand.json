@@ -1,0 +1,170 @@
+{
+ "src": "341d13abd6",
+ "frames": {
+  "S": "stand frame, mm: origin on the bench top on the pan axis; x = machine +x (operator's right), y = toward the CNC (machine back), z = up",
+  "bench_three": "twin bench-top frame (three.js, Y up): (X, Y, Z) = (-x, z, y - 225)",
+  "deck": "cloud deck coords (bed frame, z up from the bed) at bed machine y = 90: deck = (x + 150, y - 135, z - 72)"
+ },
+ "pan": {
+  "channel": 2,
+  "axis_S": [
+   0,
+   0,
+   1
+  ],
+  "pivot_S": [
+   0.0,
+   0.0,
+   298.15
+  ],
+  "positive": "counter-clockwise from above (rear camera from the deck toward the operator's left, so_a)",
+  "mech_zero": "yoke square to the machine: rear camera azimuth +y (machine back)",
+  "servo_deg_at_mech_zero": 90.0,
+  "servo_dir": -1,
+  "limits_mech_deg": [
+   -85.0,
+   85.0
+  ],
+  "servo_travel_deg": 180.0
+ },
+ "tilt": {
+  "channel": 3,
+  "axis_P": [
+   1,
+   0,
+   0
+  ],
+  "pivot_P_from_pan_pivot": [
+   0.0,
+   0.0,
+   131.2
+  ],
+  "pivot_S": [
+   0.0,
+   0.0,
+   429.35
+  ],
+  "angle": "el = rear-camera elevation (deg): 0 = phone upright, screen to the operator; -90 = straight down",
+  "positive": "raises the rear camera (rotation about +x)",
+  "servo_deg_at_el": "90 + 1 * (el - (-40.0))",
+  "el_mid": -40.0,
+  "servo_dir": 1,
+  "limits_el_deg": [
+   -95.0,
+   40.0
+  ]
+ },
+ "camera": {
+  "rear_T": [
+   22.0,
+   6.7,
+   60.0
+  ],
+  "rear_axis_T": [
+   0,
+   1,
+   0
+  ],
+  "front_T": [
+   0.0,
+   -3.8,
+   63.0
+  ],
+  "front_axis_T": [
+   0,
+   -1,
+   0
+  ],
+  "T": "tilt frame at el = 0: origin on the tilt axis, axes = S at pan 0",
+  "fov_deg": {
+   "across_phone": 55.0,
+   "along_phone": 70.0
+  },
+  "note": "nominal nominal 6.1 in phone (iPhone 15 size) centred by the clamp: main camera 22.0 mm right of the phone centre (seen from the screen), 60.0 mm above it. Measure yours."
+ },
+ "reference": {
+  "deck_center_S": [
+   0.0,
+   225.0,
+   72.0
+  ],
+  "pan_mech": 5.61,
+  "el": -66.11,
+  "servo_deg": [
+   84.4,
+   63.9
+  ],
+  "note": "protocol aim (0, 0) = this pose: pan = pan_mech - pan_mech_ref, tilt = el - el_ref"
+ },
+ "operator": {
+  "face_S": [
+   0.0,
+   -425.0,
+   700.0
+  ],
+  "pan_mech": 0.0,
+  "el": -25.31,
+  "note": "screen (front camera) toward the operator's face"
+ },
+ "aim_reference_impl": "pstand/kin.py aim(): fixed-point iteration putting the target on the camera axis including the camera offset from both axes",
+ "cloud_cal_stand": {
+  "pan_ch": 2,
+  "tilt_ch": 3,
+  "pan_center_deg": 84.4,
+  "tilt_center_deg": 63.9,
+  "pan_dir": -1,
+  "tilt_dir": 1,
+  "pan_limits": [
+   -90.6,
+   79.4
+  ],
+  "tilt_limits": [
+   -28.9,
+   106.1
+  ],
+  "pivot": [
+   157.5,
+   -131.0,
+   369.3
+  ],
+  "deck_center": [
+   150,
+   90,
+   0
+  ],
+  "operator": [
+   150.0,
+   -560.0,
+   628.0
+  ],
+  "note": "values for cloud/src/devices/stand.ts (cal:stand). Its model puts the camera at `pivot`; this is the best-fit single point (S [7.5, 4.0, 441.4], near the tilt axis): max pointing error 2.3 deg over the deck plane and the beaker rims. The exact model above (aim_reference_impl) has none."
+ },
+ "keepout_S": {
+  "cylinder": {
+   "axis_xy": [
+    0,
+    0
+   ],
+   "r": 100.0,
+   "z": [
+    0.0,
+    524.3
+   ]
+  },
+  "base_box": {
+   "x": [
+    -82.0,
+    82.0
+   ],
+   "y": [
+    -100.0,
+    112.0
+   ],
+   "z": [
+    0.0,
+    44.0
+   ]
+  },
+  "note": "for the SO-101 planners: the phone sweeps a 95 mm sphere about the tilt axis"
+ }
+}

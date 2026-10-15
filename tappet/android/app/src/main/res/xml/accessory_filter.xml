@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Must match config/robot.json link.aoa (firmware SEND_STRING manufacturer/model) -->
-<resources>
-    <usb-accessory manufacturer="Tappet" model="TappetBody" />
-</resources>

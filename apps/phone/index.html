@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<title>LabRat Eye</title>
+<script>
+  // relative asset URLs below need the trailing slash (/phone -> /phone/)
+  if (!location.pathname.endsWith('/') && !/\.[a-z]+$/i.test(location.pathname)) location.replace(location.pathname + '/' + location.search);
+</script>
+<link rel="stylesheet" href="phone.css">
+</head>
+<body>
+<canvas id="eyes"></canvas>
+<video id="cam" playsinline muted autoplay></video>
+<div id="hud">
+  <span id="conn">offline</span>
+  <span id="mode"></span>
+  <span id="hubStatus"></span>
+</div>
+<div id="transcript"><div id="interim"></div></div>
+<div id="hint" class="hidden">If you can't hear me, flip the ring/silent switch off and turn the volume up</div>
+<div id="dbg"></div>
+<form id="textForm" class="hidden" autocomplete="off">
+  <input id="textIn" type="text" placeholder="type to LabRat…" enterkeyhint="send">
+  <button type="submit">send</button>
+</form>
+<div id="controls" class="hidden">
+  <button id="flipBtn" title="switch camera">cam</button>
+  <button id="talkBtn">hold to talk</button>
+  <button id="hfBtn" title="hands-free: listen continuously">hands-free</button>
+  <button id="kbBtn" title="type instead">abc</button>
+  <button id="hubBtn" class="hidden" title="pair the servo hub over Bluetooth">pair hub</button>
+  <button id="previewBtn" title="show camera preview">view</button>
+</div>
+<div id="start">
+  <div class="title">LabRat</div>
+  <div class="sub">tap to wake · camera, microphone &amp; voice</div>
+  <button id="startBtn">Start</button>
+  <div id="err"></div>
+</div>
+<script type="module" src="phone.js"></script>
+</body>
+</html>

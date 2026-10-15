@@ -1,7 +1,7 @@
 [project]
 name = "labrat-bridge"
 version = "0.1.0"
-description = "LabRat laptop hardware bridge (SO-101, Tappet ESP32, GRBL CNC, rack-and-pinion syringe)"
+description = "LabRat laptop hardware bridge (SO-101 arms, GRBL CNC, USB microscope, ESP32 servo hub)"
 requires-python = ">=3.12"
 dependencies = ["websockets>=13", "pyserial>=3.5"]
 

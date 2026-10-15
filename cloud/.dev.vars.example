@@ -1,0 +1,8 @@
+# Copy to .dev.vars for `wrangler dev` (and set the same names with `wrangler secret put` when deploying).
+# Every socket and /api call must carry ?token=<LABRAT_TOKEN> (or Authorization: Bearer <token>). Default: labrat
+LABRAT_TOKEN=labrat
+# The agent's brain. Unset -> rule-based agent.
+ANTHROPIC_API_KEY=
+# ANTHROPIC_MODEL=claude-sonnet-5-5
+# Start runs without waiting for approval (1/0)
+# LABRAT_AUTO_APPROVE=0

@@ -1,4 +1,4 @@
-"""All-mock bridge vs a tiny fake /ws/bridge server: one command per device + validation + watchdog."""
+"""All-mock bridge vs a tiny fake /ws/bridge server: one command per device + validation + events + watchdog."""
 import asyncio
 import json
 import os
@@ -18,30 +18,24 @@ CMDS = [
     ("so_b", "joints", {"q": {"shoulder_pan": 10, "gripper": 30}, "ms": 200}),
     ("so_b", "gripper", {"open": 1.0, "ms": 100}),
     ("so_a", "read", {}),
-    ("tap_a", "raw", {"cmd": "home", "ms": 100}),
-    ("tap_b", "raw", {"cmd": "ping"}),
+    ("hub", "line", {"msg": {"cmd": "hello"}}),
+    ("hub", "line", {"msg": {"cmd": "cfg", "ch": 1, "kind": "pos"}}),
+    ("hub", "line", {"msg": {"cmd": "servo", "ch": 1, "deg": 120, "ms": 200}}),
+    ("hub", "line", {"msg": {"cmd": "servo", "ch": 2, "deg": 60, "ms": 150}}),
+    ("hub", "line", {"msg": {"cmd": "pulse", "ch": 0, "us": 700, "ms": 4000, "until": "syr_home"}}),
+    ("hub", "read", {}),
     ("cnc", "home", {}),
     ("cnc", "move", {"x": 20, "y": 20, "z": -5, "f": 3000}),
     ("cnc", "jog", {"dx": 1}),
     ("cnc", "gcode", {"lines": ["G90 G21", "G0 X30 Y25", "G1 Z-10 F200", "G4 P0.1"]}),
     ("cnc", "status", {}),
-    ("pipette", "home", {}),
-    ("pipette", "prime", {}),
-    ("pipette", "aspirate", {"ul": 50}),
-    ("pipette", "dispense", {"ul": 50}),
-    ("pipette", "blowout", {}),
-    ("pipette", "move", {"mm": 10}),
-    ("pipette", "jog", {"mm": -2.5}),
-    ("pipette", "observe", {"mm": 7.0, "conf": 0.5}),
-    ("pipette", "drive", {"speed": 0.2, "ms": 100}),
-    ("pipette", "stop", {}),
 ]
 BAD = [
     ("cnc", "move", {"x": 400, "y": 0, "z": 0}),
     ("cnc", "gcode", {"lines": ["M8"]}),
     ("so_a", "pose", {"name": "nope"}),
-    ("pipette", "move", {"mm": 99}),
-    ("pipette", "aspirate", {"ul": 20}),  # drive{} dropped tracking and the plunger is not primed
+    ("hub", "line", {"msg": {"cmd": "servo", "ch": 0, "deg": 90}}),     # ch0 is continuous: firmware says "kind"
+    ("hub", "line", {"msg": {"nocmd": 1}}),
     ("nope", "x", {}),
 ]
 
@@ -63,7 +57,7 @@ def test_bridge_all_mock():
 
 
 async def _run():
-    got: dict = {"hello": None, "states": 0, "results": {}}
+    got: dict = {"hello": None, "states": 0, "results": {}, "events": []}
     done = asyncio.Event()
     token_seen = []
 
@@ -76,7 +70,7 @@ async def _run():
             rid = str(uuid.uuid4())
             ids[rid] = (dev, act)
             await ws.send(json.dumps({"t": "cmd", "id": rid, "device": dev, "action": act, "args": args}))
-            if dev in ("cnc", "pipette", "so_a", "so_b"):
+            if dev in ("cnc", "so_a", "so_b"):
                 # wait for result to keep per-device order deterministic
                 while rid not in got["results"]:
                     m = json.loads(await ws.recv())
@@ -91,11 +85,19 @@ async def _run():
                 got["last_state"] = m
             elif m["t"] == "result":
                 got["results"][m["id"]] = (ids[m["id"]], m)
+            elif m["t"] == "event":
+                got["events"].append(m)
+        # an input change on the hub comes up as an event
+        devs["hub"].firmware.set_input("in1", 1)
+        while not any(e["data"].get("name") == "in1" for e in got["events"]):
+            m = json.loads(await ws.recv())
+            if m["t"] == "event":
+                got["events"].append(m)
         done.set()
 
+    devs = build_devices(set(ALL_IDS))
     async with serve(handler, "127.0.0.1", 0) as server:
         port = server.sockets[0].getsockname()[1]
-        devs = build_devices(set(ALL_IDS))
         br = Bridge(devs, bridge_url(f"ws://127.0.0.1:{port}", "labrat"))
         task = asyncio.create_task(br.run())
         await done.wait()
@@ -117,31 +119,22 @@ async def _run():
     assert got["states"] >= 3
     cnc = devs["cnc"].state()
     assert cnc["wpos"] == [30.0, 25.0, -10.0]
-    syr = devs["pipette"].state()
-    assert syr["us"] == 1500 and not syr["moving"], "watchdog should stop the syringe servo"
-    assert syr["homed"] is False, "raw drive must invalidate the dead-reckoned position"
+    hub_ok = {json.dumps(m["data"].get("stopped_by")) for (d, a), m in res if d == "hub" and m["ok"]}
+    assert '"syr_home"' in hub_ok, "the mock plunger reaches its bottom stop and ends the pulse early"
+    kind_err = [m for (d, a), m in res if d == "hub" and not m["ok"] and "kind" in m["error"]]
+    assert kind_err and kind_err[0]["data"]["err"] == "kind", "a firmware ok:false reply comes back as data"
+    ev = [e for e in got["events"] if e["device"] == "hub"]
+    assert any(e["data"] == {"ev": "in", "name": "syr_home", "v": 1} for e in ev)
+    assert any(e["data"] == {"ev": "in", "name": "in1", "v": 1} for e in ev)
+    hub = devs["hub"]
+    assert hub.state()["inputs"]["in1"] == 1
+    # link lost: the bridge stops pinging, the (mock) firmware watchdog relaxes everything by itself
+    assert hub.link_up is False
+    assert hub.firmware.wd_count >= 1
+    assert all(us == 0 for us in hub.firmware.us)
     assert br.safe_done
-
-
-def test_syringe_dead_reckoning():
-    from labrat_bridge.tappet import Syringe
-
-    s = Syringe("pipette", None)
-    s.a_home()
-    s.a_prime()
-    assert s.state()["pos_mm"] == s.cal["ready_mm"]
-    upm = s.ul_per_mm
-    s.a_aspirate(100)
-    assert abs(s.pos - (s.cal["ready_mm"] + 100 / upm)) < 1e-9 and s.vol_ul == 100
-    s.a_dispense(40)
-    assert abs(s.pos - (s.cal["ready_mm"] + 60 / upm)) < 1e-9 and s.vol_ul == 60
-    s.a_dispense()
-    assert s.pos == s.cal["ready_mm"] and s.vol_ul == 0
-    s.a_observe(s.pos + 1.0, conf=0.5)
-    assert abs(s.pos - (s.cal["ready_mm"] + 0.5)) < 1e-9
-    assert s.us_for(0) == 1500 and s.us_for(1) > 1500 > s.us_for(-1)
-    s.a_blowout()
-    assert s.pos == 0 and s.state()["us"] == 1500
+    for d in devs.values():
+        d.close()
 
 
 def test_probe_and_microscope_mock(monkeypatch):

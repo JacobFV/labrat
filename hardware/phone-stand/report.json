@@ -1,0 +1,426 @@
+{
+ "src": "341d13abd6",
+ "ok": true,
+ "checks": [
+  {
+   "check": "fov",
+   "name": "deck plane, bed y=90: aimed at the deck centre",
+   "ok": true,
+   "value": {
+    "across_deg": 22.57,
+    "along_deg": 14.5,
+    "margin_deg": 4.93
+   },
+   "aim": {
+    "pan": 5.61,
+    "el": -66.11
+   },
+   "best_aim": {
+    "pan": 8.0,
+    "el": -68.5,
+    "margin_deg": 5.86
+   },
+   "need": ">= 2 deg margin on the deck plane at bed y = 90 (others informative)"
+  },
+  {
+   "check": "fov",
+   "name": "deck plane, bed y=0: aimed at the deck centre",
+   "ok": true,
+   "value": {
+    "across_deg": 20.33,
+    "along_deg": 11.47,
+    "margin_deg": 7.17
+   },
+   "aim": {
+    "pan": 4.0,
+    "el": -55.92
+   },
+   "best_aim": {
+    "pan": 5.0,
+    "el": -59.5,
+    "margin_deg": 7.7
+   },
+   "need": ">= 2 deg margin on the deck plane at bed y = 90 (others informative)"
+  },
+  {
+   "check": "fov",
+   "name": "deck plane, bed y=180: aimed at the deck centre",
+   "ok": true,
+   "value": {
+    "across_deg": 24.49,
+    "along_deg": 17.71,
+    "margin_deg": 3.01
+   },
+   "aim": {
+    "pan": 9.36,
+    "el": -78.61
+   },
+   "best_aim": {
+    "pan": 10.0,
+    "el": -79.0,
+    "margin_deg": 3.14
+   },
+   "need": ">= 2 deg margin on the deck plane at bed y = 90 (others informative)"
+  },
+  {
+   "check": "fov",
+   "name": "beaker rims (51.2 above the bed), bed y=90: aimed at the deck centre",
+   "ok": true,
+   "value": {
+    "across_deg": 25.36,
+    "along_deg": 15.95,
+    "margin_deg": 2.14
+   },
+   "aim": {
+    "pan": 5.61,
+    "el": -66.11
+   },
+   "best_aim": {
+    "pan": 8.0,
+    "el": -70.0,
+    "margin_deg": 3.05
+   },
+   "need": ">= 2 deg margin on the deck plane at bed y = 90 (others informative)"
+  },
+  {
+   "check": "fov",
+   "name": "beaker rims (51.2 above the bed), bed y=0: aimed at the deck centre",
+   "ok": true,
+   "value": {
+    "across_deg": 22.39,
+    "along_deg": 13.13,
+    "margin_deg": 5.11
+   },
+   "aim": {
+    "pan": 4.0,
+    "el": -55.92
+   },
+   "best_aim": {
+    "pan": 5.0,
+    "el": -56.0,
+    "margin_deg": 5.57
+   },
+   "need": ">= 2 deg margin on the deck plane at bed y = 90 (others informative)"
+  },
+  {
+   "check": "fov",
+   "name": "beaker rims (51.2 above the bed), bed y=180: aimed at the deck centre",
+   "ok": true,
+   "value": {
+    "across_deg": 27.92,
+    "along_deg": 19.49,
+    "margin_deg": -0.42
+   },
+   "aim": {
+    "pan": 9.36,
+    "el": -78.61
+   },
+   "best_aim": {
+    "pan": 10.0,
+    "el": -77.5,
+    "margin_deg": -0.27
+   },
+   "need": ">= 2 deg margin on the deck plane at bed y = 90 (others informative)"
+  },
+  {
+   "check": "torque",
+   "name": "tilt holding torque vs SG90 stall (1.8 kg cm)",
+   "ok": true,
+   "value": {
+    "tilt_group_g": 303.1,
+    "cg_from_axis_mm": 2.57,
+    "t_cg": 0.078,
+    "t_phone_misplaced_8mm": 0.184,
+    "t_thickness": 0.035,
+    "t_usb_cable": 0.1,
+    "t_hold_kgcm": 0.396,
+    "t_dyn_90deg_0.6s": 0.102,
+    "margin_x": 3.6
+   },
+   "need": ">= 2x"
+  },
+  {
+   "check": "torque",
+   "name": "tilt holding torque vs MG90S stall (2.2 kg cm)",
+   "ok": true,
+   "value": {
+    "tilt_group_g": 303.1,
+    "cg_from_axis_mm": 2.57,
+    "t_cg": 0.078,
+    "t_phone_misplaced_8mm": 0.184,
+    "t_thickness": 0.035,
+    "t_usb_cable": 0.1,
+    "t_hold_kgcm": 0.396,
+    "t_dyn_90deg_0.6s": 0.102,
+    "margin_x": 4.4
+   },
+   "need": ">= 2x"
+  },
+  {
+   "check": "torque",
+   "name": "pan torque vs SG90 stall (1.8 kg cm)",
+   "ok": true,
+   "value": {
+    "pan_group_g": 399.0,
+    "t_thrust_friction_dry": 0.322,
+    "t_lead_loop": 0.15,
+    "t_accel_170deg_0.6s": 0.335,
+    "t_total_kgcm": 0.807,
+    "margin_x": 2.2,
+    "cg_off_pan_axis_mm": 2.6
+   },
+   "need": ">= 2x"
+  },
+  {
+   "check": "torque",
+   "name": "pan torque vs MG90S stall (2.2 kg cm)",
+   "ok": true,
+   "value": {
+    "pan_group_g": 399.0,
+    "t_thrust_friction_dry": 0.322,
+    "t_lead_loop": 0.15,
+    "t_accel_170deg_0.6s": 0.335,
+    "t_total_kgcm": 0.807,
+    "margin_x": 2.7,
+    "cg_off_pan_axis_mm": 2.6
+   },
+   "need": ">= 2x"
+  },
+  {
+   "check": "tipping",
+   "name": "push at the phone (tilt-axis height) that tips the stand, worst edge/pose",
+   "ok": 1.0,
+   "value": {
+    "force_N": 4.04,
+    "edge": "-y (operator side)",
+    "pose": [
+     -85,
+     -90
+    ],
+    "static_tip_angle_deg": 37.0,
+    "total_mass_g": 2419,
+    "cg_S": [
+     0.0,
+     -25.0,
+     96.8
+    ]
+   },
+   "need": ">= 3 N (a firm screen tap)"
+  },
+  {
+   "check": "layout",
+   "name": "so_a pan axis -> stand axis (mm); base footprint edge",
+   "ok": true,
+   "value": {
+    "axis_to_axis": 261.0,
+    "to_phone_sweep_r95": 166.0,
+    "to_base_corner": 169.8
+   },
+   "need": "> 150 mm clear of the phone sweep (arm bases ~ 60 mm r)"
+  },
+  {
+   "check": "layout",
+   "name": "so_b pan axis -> stand axis (mm); base footprint edge",
+   "ok": true,
+   "value": {
+    "axis_to_axis": 261.0,
+    "to_phone_sweep_r95": 166.0,
+    "to_base_corner": 169.8
+   },
+   "need": "> 150 mm clear of the phone sweep (arm bases ~ 60 mm r)"
+  },
+  {
+   "check": "layout",
+   "name": "base ramp end -> 3018 front end plate (mm); tongue top under its bottom edge",
+   "ok": true,
+   "value": {
+    "ramp_to_plate_y": 2.0,
+    "tongue_top": 5.0,
+    "plate_bottom": 8.0
+   },
+   "need": ">= 1 mm, tongue >= 2 mm under the plate"
+  },
+  {
+   "check": "sweep",
+   "name": "tilt group (open jaws, 85 x 170 x 9.5 phone) vs yoke + tilt servo, full turn (min gap mm; the horn/servo-tower gap is 0.7 by design)",
+   "ok": true,
+   "value": 0.7,
+   "at_el": 48.0,
+   "closest": "tilt_horn",
+   "per_part": {
+    "phone 85 x 170 x 9.5": 4.9,
+    "jaw_l": 11.3,
+    "jaw_r": 11.0,
+    "cradle": 3.0
+   },
+   "need": ">= 0.5 (sampled surfaces)"
+  },
+  {
+   "check": "sweep",
+   "name": "pan + tilt groups vs base/post/housing above the retainer, pan +-90 (min gap mm)",
+   "ok": true,
+   "value": 5.86,
+   "at": [
+    15.0,
+    -90.0
+   ],
+   "need": ">= 0.8"
+  },
+  {
+   "check": "print",
+   "name": "PS-100: overhang needing support (mm2, print frame)",
+   "ok": true,
+   "value": 0.0,
+   "need": "<= 3.0",
+   "where": null,
+   "print_extent_mm": [
+    164.0,
+    212.0,
+    43.0
+   ],
+   "fits_220": true
+  },
+  {
+   "check": "print",
+   "name": "PS-101: overhang needing support (mm2, print frame)",
+   "ok": true,
+   "value": 0.0,
+   "need": "<= 3.0",
+   "where": null,
+   "print_extent_mm": [
+    164.0,
+    130.0,
+    3.0
+   ],
+   "fits_220": true
+  },
+  {
+   "check": "print",
+   "name": "PS-110: overhang needing support (mm2, print frame)",
+   "ok": true,
+   "value": 0.08,
+   "need": "<= 3.0",
+   "where": [
+    -10.1,
+    3.4,
+    254.0
+   ],
+   "print_extent_mm": [
+    82.0,
+    82.0,
+    73.4
+   ],
+   "fits_220": true
+  },
+  {
+   "check": "print",
+   "name": "PS-111: overhang needing support (mm2, print frame)",
+   "ok": true,
+   "value": 0.0,
+   "need": "<= 3.0",
+   "where": null,
+   "print_extent_mm": [
+    82.0,
+    82.0,
+    3.0
+   ],
+   "fits_220": true
+  },
+  {
+   "check": "print",
+   "name": "PS-120: overhang needing support (mm2, print frame)",
+   "ok": true,
+   "value": 0.0,
+   "need": "<= 3.0",
+   "where": null,
+   "print_extent_mm": [
+    146.6,
+    64.0,
+    147.3
+   ],
+   "fits_220": true
+  },
+  {
+   "check": "print",
+   "name": "PS-130: overhang needing support (mm2, print frame)",
+   "ok": true,
+   "value": 0.0,
+   "need": "<= 3.0",
+   "where": null,
+   "print_extent_mm": [
+    128.0,
+    44.0,
+    31.0
+   ],
+   "fits_220": true
+  },
+  {
+   "check": "print",
+   "name": "PS-131: overhang needing support (mm2, print frame)",
+   "ok": true,
+   "value": 0.0,
+   "need": "<= 3.0",
+   "where": [
+    -2.7,
+    -11.0,
+    0.1
+   ],
+   "print_extent_mm": [
+    64.0,
+    32.4,
+    17.4
+   ],
+   "fits_220": true
+  },
+  {
+   "check": "print",
+   "name": "PS-132: overhang needing support (mm2, print frame)",
+   "ok": true,
+   "value": 0.0,
+   "need": "<= 3.0",
+   "where": null,
+   "print_extent_mm": [
+    15.7,
+    16.0,
+    3.8
+   ],
+   "fits_220": true
+  },
+  {
+   "check": "print",
+   "name": "PS-133: overhang needing support (mm2, print frame)",
+   "ok": true,
+   "value": 0.0,
+   "need": "<= 3.0",
+   "where": null,
+   "print_extent_mm": [
+    5.5,
+    5.5,
+    5.3
+   ],
+   "fits_220": true
+  },
+  {
+   "check": "range",
+   "name": "tilt range covers straight down .. screen facing a standing operator",
+   "ok": true,
+   "value": {
+    "el_soft": [
+     -95.0,
+     40.0
+    ],
+    "el_servo": [
+     -130.0,
+     50.0
+    ],
+    "operator_el": -25.3,
+    "deck_el": -66.1
+   }
+  }
+ ],
+ "layout": {
+  "H_T": 429.34999999999997,
+  "Z_TH": 298.15,
+  "post_L": 250.0
+ }
+}

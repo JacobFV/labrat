@@ -1,4 +1,4 @@
-"""USB digital microscope on the head's tool rail (cad/syringe TM-110): the generic "1000x 8-LED" UVC camera.
+"""USB digital microscope on the head's tool rail (hardware/tool-head TM-110): the generic "1000x 8-LED" UVC camera.
 
 Device ``microscope`` (kind ``usb_microscope``):
     snap {width?, height?}  -> {image_b64, mime, w, h, ts}   one frame (JPEG with OpenCV, else PNG from the mock)

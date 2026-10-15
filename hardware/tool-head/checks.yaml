@@ -1,0 +1,62 @@
+# microfab check configuration for the syringe head (syrhead.check_mf). Same schema as microfab's
+# spec/permitted_sharp_edges.yaml and spec/accepted_problems.yaml. Keep both lists short; every entry has a reason.
+
+permitted:
+  - part: "SYR-130-*"
+    process: tube_cut
+    reason: Bearing spacers are cut from 4 x 0.45 brass tube; the cut ends are deburred, which the model does not show.
+  - part: "SYR-11*"
+    reason: >-
+      FDM spur gears (m0.8 / m1.0). The involute tooth edges are left sharp: a modelled chamfer narrower than one
+      0.4 mm extrusion line cannot be printed, and a wider one would remove working flank. The edges are broken on
+      the bed by the first-layer squish and deburred by hand. All other gear edges (bores, pockets) are part of the
+      tooth geometry or are bearing seats.
+  - part: "SYR-103"
+    region: [[21.9, 0.9, 43.0], [28.1, 3.8, 91.0]]
+    reason: Rack teeth (m1, PA 25), printed standing up from the bar (profile in the print plane); same reason as the gears.
+
+  - part: "SYR-100"
+    region: [[-28.5, -29.6, 18.5], [19.8, -28.4, 19.6]]
+    reason: >-
+      Lower apex of the tool rail (two 45 deg flanks): it prints as a downward ridge, and a chamfer there would be a
+      flat, unsupported facet. The saddles never touch it (0.15 mm clearance on the flanks).
+
+  - part: "SYR-100"
+    region: [[-31.5, -25.5, 0.0], [21.5, 25.5, 30.0]]
+    reason: >-
+      Where the 45 deg flare meets the mid body's vertical faces the edges are obtuse (135 deg dihedral): they are not
+      sharp to the hand and need no break. The flare itself is the print's self-supporting transition from the plug.
+
+  - part: "TM-122"
+    region: [[9.0, -48.0, -80.6], [19.0, -47.0, -69.4]]
+    reason: >-
+      The electrode clamp's pinch slit (0.8 mm): a chamfer on its lips would only widen the slit; it is a flexure
+      gap, not a handled edge.
+  - part: "TM-122"
+    region: [[13.0, -49.0, -41.5], [14.2, -46.0, -38.5]]
+    reason: The horn screw's hole where it leaves the horn-pocket floor; the horn hub covers it.
+
+accepted:
+  - name: rack-teeth-walls
+    check: geometry
+    part: "SYR-103"
+    region: [[21.9, 0.9, 43.0], [28.1, 3.8, 91.0]]
+    reason: >-
+      m1 rack teeth: the tooth tips are one 0.4-0.6 mm extrusion wide by design (same rule as TOOTH_WALL on the
+      gears). The region covers the teeth only; the rest of the carriage keeps the 1.2 mm FDM wall rule.
+
+reviewed_warnings:
+  - check: fastener
+    match: "hole Ø2.20 in clamped part */servo is not the ISO 273 normal clearance"
+    reason: >-
+      The hole is the FS90R's own moulded tab hole (Ø2.2, catalogue). The M2 tab screw is a clearance fit with
+      0.1 mm radial; it is the vendor's intended screw.
+  - check: fastener
+    match: "hole Ø2.20 in clamped part */servo_horn is not the ISO 273 normal clearance"
+    reason: The horn's own centre hole (Ø2.2, vendor part); the M2 horn screw is the vendor's intended screw.
+  - check: manufacturability
+    match: "overhang"
+    reason: >-
+      microfab measures overhang in the part frame. Gear plate 2, the flange clamp, the carriage and the disc cap
+      print in another orientation (syrhead.parts.PRINT_ORIENT); syrhead.kin's print check measures every FDM part
+      in its print orientation and requires zero area that needs support (it runs in syrhead.build and in CI).

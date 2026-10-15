@@ -1,0 +1,19 @@
+signal,esp32s3_gpio,esp32_gpio,direction,connects_to,notes
+I2C_SDA,8,21,I/O open-drain,PCA9685 SDA,pull-up is on the PCA9685 breakout (10k to its VCC = 3V3); 400 kHz
+I2C_SCL,9,22,OUT open-drain,PCA9685 SCL,pull-up on the breakout
+PCA_OE,10,23,OUT,PCA9685 OE,"high = every servo output off (estop, boot). Optional: the breakout pulls OE low by itself"
+SYR_HOME,4,26,IN pull-up,syr_home microswitch (NO) -> GND,"closed = 1; ends `pulse ... until:""syr_home""`"
+ESTOP,5,27,IN pull-up,E-stop mushroom button (NC) -> GND,open = engaged = every servo off. No button fitted: put a jumper wire from this pin to GND
+IN1,6,25,IN pull-up,spare switch -> GND,event `in1`
+IN2,7,33,IN pull-up,spare switch -> GND,event `in2`
+A0,1,34,ADC1 in,spare analog (0..3.1 V),`read` -> adc.a0 in mV
+A1,2,35,ADC1 in,spare analog (0..3.1 V),`read` -> adc.a1 in mV
+3V3,3V3,3V3,PWR out,PCA9685 VCC (logic),the breakout's I2C pull-ups go to VCC: keep VCC at 3V3
+GND,GND,GND,GND,"PCA9685 GND, switches, supply -",single common ground
+5V,5V,5V,PWR,nothing,do NOT feed the servo supply into this pin: the board runs from USB
+PCA9685 ch0,-,-,PWM 50 Hz,FS90R continuous (syringe plunger drive),firmware default kind=cont; tool head (hardware/tool-head)
+PCA9685 ch1,-,-,PWM 50 Hz,SG90 positional (capacitive-probe arm),"firmware default kind=pos; tool rail, on the head"
+PCA9685 ch2,-,-,PWM 50 Hz,MG90S positional (phone stand pan),firmware default kind=pos; phone stand
+PCA9685 ch3,-,-,PWM 50 Hz,MG90S positional (phone stand tilt),firmware default kind=pos; phone stand
+PCA9685 ch4,-,-,PWM 50 Hz,FS90R or SG90 (spare / second syringe),firmware default kind=pos; -
+PCA9685 ch5,-,-,PWM 50 Hz,SG90 (spare),firmware default kind=pos; -

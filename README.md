@@ -1,103 +1,124 @@
-# LabRat 🐀🧪
+# LabRat
 
-**A voice-operated, simulation-first desk-lab agent with persistent memory that improves itself.**
-Built for the Harness Engineering & Model Wrangling Hackathon (SF, 2026-10-11).
+**A voice-operated, simulation-first desk-lab robot that learns from its own results.**
 
-![The real LabRat bench: a 3018 CNC with a pink tip rack and well plates, an SO-101 arm at each front corner, the iPhone with animated eyes front-centre, and the laptop on the right](docs/images/bench_photo.png)
+You talk to it through a phone on a pan/tilt stand (its face, eyes, ears and voice) or chat with it from the laptop
+console or a terminal. It designs an experiment, simulates many variants in a digital twin, picks the best one, asks
+for approval, runs it on real hardware, photographs the result, compares it with its prediction, refits its own
+simulator, and keeps what it learned in typed memory.
 
-**Built with**
+The hardware is a 3018 desktop CNC carrying a geared syringe pipette (plus a USB microscope and a capacitive
+liquid-level probe on a tool rail) in place of its spindle, a printed beaker matrix, and an SO-101 arm on each side.
 
-<p align="left">
-<img src="docs/images/sponsors/anthropic.png" alt="Anthropic (Claude)" height="24"> &nbsp;&nbsp; <img src="docs/images/sponsors/mongodb.png" alt="MongoDB Atlas" height="40"> &nbsp;&nbsp; <img src="docs/images/sponsors/voyageai.png" alt="Voyage AI" height="40"> &nbsp;&nbsp; <img src="docs/images/sponsors/aws.png" alt="AWS" height="40"> &nbsp;&nbsp; <img src="docs/images/sponsors/raindrop.png" alt="Raindrop" height="36"> &nbsp;&nbsp; <img src="docs/images/sponsors/modelence.png" alt="Modelence" height="36"> &nbsp;&nbsp; <img src="docs/images/sponsors/elevenlabs.png" alt="ElevenLabs" height="24">
-</p>
+LabRat started at the Harness Engineering & Model Wrangling Hackathon (SF, October 2026), where it took 2nd place.
 
-Talk to it through an iPhone on a static stand looking down at the deck (its eyes, ears and voice), or
-chat with it on the laptop. It designs an experiment, **simulates many variants in a 3D digital twin**,
-picks the best one, asks for approval, and then runs it for real. The hardware is a 3018 CNC carrying a
-rack-and-pinion syringe pipette in place of its spindle, with an SO-101 gripper arm on each side. It then compares the result with its prediction, **refits its own
-simulator**, and stores what it learned in typed memory (semantic / episodic / procedural / taxonomic).
+![The hackathon bench: the 3018 with a tip rack and beakers, an SO-101 arm at each front corner, the phone front-centre and the laptop on the right](docs/images/bench_photo.png)
 
-## Hardware
-Layout: the 3018 CNC is in the middle, `so_a` and `so_b` stand on either side of it, the iPhone is on a fixed
-stand looking straight down at the CNC bed, and the laptop sits to the side.
-- **3018 CNC** (GRBL 1.1) with a **tool head** in the spindle holder (CAD in [`cad/syringe`](cad/syringe), every printed part support-free):
-  - a syringe pipette: a disposable syringe with a 200 µL tip on a luer-to-tip adapter, its plunger on a rack that slides on its own back against a rib right behind the gear mesh, driven through a 12:1 gear train by a continuous-rotation FS90R servo;
-  - a tool rail with interchangeable modules: a USB microscope (snapshots of any beaker) and a capacitive liquid-level probe (TTP223 on the GRBL probe pin).
-- **Syringe servo driver:** an ESP32-S3 + PCA9685 Tappet board (`tap_a`, firmware in [`tappet/`](tappet), JSON lines over USB at 115200). PCA9685 **channel 8 drives the syringe servo**. The Tappet arms themselves are optional and not part of the demo setup.
-- **2× SO-101 arms** (Feetech STS3215), `so_a` and `so_b`: plain manipulators with the stock gripper, one on each side of the CNC.
-- **iPhone** on a static stand above the CNC bed: camera, mic, speaker and animated eyes. It does not move.
-- A **laptop** to the side running the USB bridge and the console, plus an FT-200L-RS tip rack and a printed beaker
-  matrix (6 × 8 beakers of 15.3 × 50 mm; columns 1–7 for mixing, column 8 for the stock dyes and water), CAD in
-  [`cad/deck`](cad/deck).
-
-## Architecture
-```
-iPhone SPA (static stand) ──wss /ws/phone──┐                        ┌─ MongoDB Atlas  (typed memory + $vectorSearch)
-Laptop console (chat/twin) ─wss /ws/ui─────┼── LabRat server ───────┼─ Voyage AI      (embeddings; hashed fallback)
-Terminal CLI (cli/) ───────wss /ws/ui──────┤   FastAPI: agent,      ├─ Anthropic      (agent LLM + vision fallback)
-Laptop USB bridge ─────────wss /ws/bridge──┘   sim twin, lab,       ├─ ElevenLabs     (TTS + STT)
-  │                                            vision, learn (RSI)  ├─ Raindrop       (traces, rsi.update events)
-  ├─ SO-101 ×2 gripper arms (Feetech STS)                           └─ Modelence      (Mission Control event ingest)
-  ├─ Tappet ESP32 board tap_a (syringe servo, PCA9685 ch 8)
-  └─ 3018 CNC (GRBL)
-```
-Full system design (components, endpoints, memory, sim, learning loop, safety, sponsor map):
-**[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
-
-## The loop (why it's a harness, not a demo)
-1. **Ask:** by voice or chat, e.g. "make the most orange well from red and yellow".
-2. **Recall:** Voyage + Atlas vector search over prior episodic, semantic and procedural memories.
-3. **Design and simulate:** N protocol variants are run in the digital twin (CNC motion, pipette
-   volumes, tip tracking, dye mixing, safety checks), then scored.
-4. **Select and approve:** the best passing variant needs explicit approval before real actuation.
-5. **Execute:** the bridge drives the hardware with local limits, a gcode whitelist and a watchdog.
-6. **Observe:** a phone photo and/or your rating.
-7. **Self-improve:** `learn.py` refits the simulator parameters and adopts them only if prediction
-   error drops. It re-scores past variants, promotes the protocol to procedural memory, and logs
-   `rsi.update` to Raindrop. The Learning tab charts error over versions.
-
-## Repo
-| Dir | What |
+| Digital twin (console) | Tool head on the 3018 (Cycles render) |
 |---|---|
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | The single system-design doc: components, data flow, all endpoints, memory, sim, safety, sponsors, deployment |
-| [`CONTRACT.md`](CONTRACT.md) | Pointer to ARCHITECTURE.md plus the hardware/bridge protocol tables |
-| [`server/`](server) | FastAPI server: hubs, agent (LLM tool use + rule fallback), simulator, learning loop, vision, sponsor integrations |
-| [`web/`](web) | Laptop console: chat, three.js digital twin, experiment gallery, Learning and Memory tabs, approvals, camera/deck calibration |
-| [`phone/`](phone) | Static overhead iPhone: animated eyes, camera frames, push-to-talk / VAD voice, TTS playback |
-| [`cli/`](cli) | Terminal REPL (`labrat`): streams `/ws/ui`, chat, `/sim`, `/run`, `/approve`, `/abort` |
-| [`bridge/`](bridge) | USB bridge: SO-101 (Feetech STS), Tappet ESP32, GRBL CNC, rack-and-pinion syringe, each with a mock |
-| [`tappet/`](tappet) | Tappet hardware (merged from the former `JacobFV/tappet` repo): ESP32 firmware, Python host, Android head app, CAD, web UI, docs |
-| [`cad/`](cad) | Syringe head for the 3018's motor holder and the printed beaker matrix (build123d → STEP/STL/3MF, every printed part support-free), the parametric 3018 + bench model, renders |
-| [`deploy/`](deploy) | `aws_ec2.sh`: EC2 + Docker + Caddy HTTPS (`<ip>.sslip.io`, needed for iPhone camera/mic) |
-| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | CI: server, bridge, JS syntax, Tappet host/firmware/Android/CAD |
+| ![three.js twin of the bench](docs/images/twin_wide.png) | ![tool head, deck and laptop](hardware/tool-head/renders/bench_full.png) |
+
+## How it works
+
+1. **Ask**, by voice on the phone (speech recognition and synthesis run on the phone) or by chat: "make the most
+   orange beaker from red and yellow".
+2. **Recall** related memories (D1 full-text search over semantic, episodic, procedural and taxonomic memories).
+3. **Design and simulate** N protocol variants in the twin: CNC motion timing, pipette and tip accounting, dye
+   mixing, safety checks, a score against the goal colour.
+4. **Approve.** Only a variant that passed simulation can run, and a human approves it first.
+5. **Execute.** The coordinator drives the CNC, pipette, probe arm and stand; the bridge enforces its own limits and
+   a watchdog.
+6. **Observe.** The stand aims the phone at the deck and takes a photo; the target beaker's colour is read from it
+   (or the operator rates it).
+7. **Learn.** The simulator's dye model is refitted and adopted only if prediction error drops; past variants are
+   re-scored, and a protocol that worked is promoted to procedural memory.
+
+Claude (Anthropic API) is the agent's brain. Without an API key a rule-based agent handles the basic commands.
+
+## Layout
+
+```
+                      ┌──────────── cloud/ ─────────────┐
+ apps/console ─ws/ui─►│ Worker ─► Lab Durable Object    │◄─ws/bridge─ bridge/ ─USB─┬─ SO-101 arms so_a, so_b
+ apps/cli ─────ws/ui─►│   agent · sim · learn · vision  │                          ├─ 3018 CNC (GRBL)
+ apps/phone ─ws/phone►│   pipette / probe / stand       │                          ├─ USB microscope
+   (face, voice,      │   drivers ─► D1                 │                          └─ servo hub ─┐
+    camera, BLE) ─────┼─────────────────────────────────┼──── BLE (alternative) ──────────────►│
+                      └──────────── Anthropic API ──────┘          firmware/servo-hub (ESP32 + PCA9685)
+```
+
+| Path | What |
+|---|---|
+| [`cloud/`](cloud) | Cloudflare Worker + one Durable Object (`Lab`) + D1: WebSocket hub, REST API, agent, simulator, learning loop, vision, memory, and the pipette / probe / stand drivers on top of the servo hub. Serves the apps. [README](cloud/README.md) |
+| [`apps/console/`](apps/console) | Laptop console: chat, three.js digital twin with 3D replay, experiments, Learning and Memory tabs, approvals, deck / camera / device calibration |
+| [`apps/phone/`](apps/phone) | Phone page: animated face, camera frames, on-device voice; drives the servo hub over Web Bluetooth when paired |
+| [`apps/cli/`](apps/cli) | Terminal REPL (`labrat`) over `/ws/ui` and REST |
+| [`bridge/`](bridge) | Laptop USB bridge: SO-101 arms, GRBL CNC, USB microscope, servo hub over serial; every device has a mock. [README](bridge/README.md) |
+| [`firmware/servo-hub/`](firmware/servo-hub) | ESP32 / ESP32-S3 + PCA9685 firmware (PlatformIO): 16 servo channels, inputs, e-stop, watchdog, JSON lines over USB and BLE. [README](firmware/servo-hub/README.md) |
+| [`hardware/`](hardware) | Tool head, deck, 3018 model, phone stand, SO-101 parts, electronics: CAD, BOMs, renders. [Index](hardware/README.md) |
+| [`docs/protocol.md`](docs/protocol.md) | The wire contract: providers, phone, UI, servo-hub firmware |
+| [`docs/architecture.md`](docs/architecture.md) | System design: the DO, devices, agent, simulator, learning, safety, [endpoints](docs/architecture.md#endpoints) |
 
 ## Quickstart
+
+Needs Node 22+ (cloud), [uv](https://docs.astral.sh/uv/) (bridge, CLI) and PlatformIO (firmware, only for the real
+hub). Everything runs locally; nothing needs a Cloudflare account until you deploy.
+
 ```bash
-cp .env.example .env    # fill in keys; anything blank falls back to a local mock
-# 1. server (port 8000 here; any port works)
-cd server && uv run uvicorn labrat.app:app --host 0.0.0.0 --port 8000
-# 2. USB bridge (add --mock all without hardware)
-cd bridge && uv run python -m labrat_bridge --server ws://localhost:8000 --token labrat
-# 3. laptop console
-open "http://localhost:8000/?token=labrat"
-# 4. iPhone on its stand: https://<server>/phone/?token=labrat   (HTTPS is required for camera/mic)
-# 5. terminal CLI
-cd cli && uv run labrat --server http://localhost:8000 --token labrat
+# 1. Coordinator (local Worker + DO + D1)
+cd cloud
+npm i
+cp .dev.vars.example .dev.vars           # LABRAT_TOKEN=labrat; optionally ANTHROPIC_API_KEY
+npx wrangler d1 migrations apply labrat --local
+npx wrangler dev                         # http://127.0.0.1:8787
 ```
-Tests: `cd server && uv run --group dev pytest -q`, `cd bridge && uv run --group dev pytest -q`,
-`cd tappet/host && uv run --extra dev pytest -q`, `cd tappet/firmware && pio test -e native`.
 
-## Deployed endpoints
-- **Modelence Mission Control:** https://labrat-mission-mv4c6k4pk66-prod.cloud.modelence.app.
-  The server POSTs events to `/api/events` on it (`MODELENCE_URL`), authenticated with
-  `Authorization: Bearer <MODELENCE_KEY>`, which must equal the Modelence config value `labrat.ingestKey`.
-- **AWS:** `deploy/aws_ec2.sh` (EC2 + Docker + Caddy auto-HTTPS on `<ip>.sslip.io`) is written but
-  **not yet deployed**. Until then the server runs on the laptop.
+- Console: <http://127.0.0.1:8787/console/> (add `?token=...` if you changed `LABRAT_TOKEN`).
+- Phone: `/phone/` on the same origin. Camera, microphone and Web Bluetooth need a secure context, so a real phone
+  needs HTTPS (a deployed Worker or a tunnel). Web Bluetooth works in Chrome on Android, not on iOS.
 
-Sponsor-to-file mapping: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [server/README.md](server/README.md#sponsor-integrations).
+```bash
+# 2. Bridge (another terminal; --mock all runs without any hardware)
+cd bridge
+uv run python -m labrat_bridge --server ws://127.0.0.1:8787 --token labrat --mock all
+uv run python -m labrat_bridge --server ws://127.0.0.1:8787 --token labrat      # real hardware, auto-discovered
+
+# 3. CLI
+cd apps/cli
+uv run labrat --server http://127.0.0.1:8787 --token labrat
+
+# 4. Servo hub firmware
+cd firmware/servo-hub
+pio test -e native                       # host-side unit tests
+pio run                                  # build (default env esp32s3; -e esp32 for a classic DevKit)
+pio run -e esp32s3 -t upload             # flash
+```
+
+Tests: `cd cloud && npm test && npm run typecheck`, `cd bridge && uv run --group dev pytest -q`,
+`cd apps/cli && uv run pytest`, `cd apps/phone && npm test`, `cd firmware/servo-hub && pio test -e native`,
+`cd hardware/electronics && python3 gen_wiring.py` (checks the pin map against the firmware).
+
+Deploying: see [`cloud/README.md`](cloud/README.md) (create the D1 database, apply migrations with `--remote`, set
+`LABRAT_TOKEN` and `ANTHROPIC_API_KEY` as secrets, `npx wrangler deploy`).
+
+## Hardware
+
+- **3018 CNC** (GRBL 1.1) with the [tool head](hardware/tool-head) in its 42 mm spindle holder: a 12 mL syringe with a
+  200 µL tip, driven by a continuous-rotation FS90R through a 12:1 printed gear train and rack; a tool rail with a USB
+  microscope and a servo-deployed capacitive probe. Every printed part prints without supports.
+- **[Deck](hardware/deck):** a printed 6 × 8 beaker matrix (columns 1–7 for mixing, column 8 for water and the red,
+  yellow and blue dyes) and an FT-200L-RS tip rack.
+- **[Phone stand](hardware/phone-stand):** a weighted pan/tilt stand front-centre that aims the phone at the deck for
+  photos and at the operator while it talks.
+- **2 × [SO-101](hardware/so101)** arms (Feetech STS3215) with stock grippers, one at each front corner.
+- **[Servo hub](hardware/electronics):** ESP32 + PCA9685 on a 5 V servo rail: ch0 syringe, ch1 probe arm, ch2/ch3
+  stand; a plunger home switch and an e-stop.
+
+## Credits
+
+- SO-101 arm (parts in `hardware/so101/`, URDF and decimated meshes in `apps/console/models/so101/`):
+  [TheRobotStudio/SO-ARM100](https://github.com/TheRobotStudio/SO-ARM100), Apache-2.0.
+- 3018 model (`apps/console/models/cnc3018.glb`): original, generated by `hardware/cnc3018/cnc3018.py`.
+- Laptop, bench and labware in the twin are procedural (`apps/console/twin.js`, `apps/console/twin/`).
+
 License: [MIT](LICENSE).
-
-## 3D asset credits
-- SO-101 arm URDF and meshes (`web/models/so101/`): [TheRobotStudio/SO-ARM100](https://github.com/TheRobotStudio/SO-ARM100), Apache-2.0 (LICENSE copied alongside). The meshes are decimated.
-- 3018 CNC model (`web/models/cnc3018.glb`): original, generated by `cad/cnc3018/cnc3018.py`.
-- Laptop, lab bench, phone stand: procedural in `web/twin.js`. The laptop screen uses a LabRat console screenshot (`web/models/laptop/console.jpg`).

@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "labrat",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  // apps/console is served at /console/ ("/" redirects there), apps/phone at /phone/. ../apps/.assetsignore drops cli/.
+  "assets": { "directory": "../apps", "binding": "ASSETS", "html_handling": "auto-trailing-slash", "not_found_handling": "none" },
+  "durable_objects": { "bindings": [{ "name": "LAB", "class_name": "Lab" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Lab"] }],
+  // Local dev uses a local D1; replace database_id with `wrangler d1 create labrat`'s id before any deploy.
+  "d1_databases": [{ "binding": "DB", "database_name": "labrat", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
+  "vars": {
+    "ANTHROPIC_MODEL": "claude-sonnet-5-5",
+    "LABRAT_AUTO_APPROVE": "0",
+    "LABRAT_AUTO_OBSERVE": "1",
+    "LABRAT_PHOTO_WAIT_S": "3"
+  },
+  "observability": { "enabled": true }
+}

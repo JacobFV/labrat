@@ -1,0 +1,120 @@
+{
+ "src": "341d13abd6",
+ "frame": "three.js, Y up, mm. Node 'phone_stand' is the stand root: put it at the twin bench-top position (0, 0, -225). pivot_stand is in the phone_stand frame (informational); each moving node's origin is on its pivot.",
+ "place": {
+  "position": [
+   0.0,
+   0.0,
+   -225.0
+  ]
+ },
+ "pan": {
+  "node": "pan",
+  "axis": [
+   0.0,
+   1.0,
+   0.0
+  ],
+  "angle": "node rotation about axis = mechanical pan (deg, CCW from above; 0 = rear camera toward +Z, the machine) = protocol pan + zero.pan",
+  "pivot_stand": [
+   0.0,
+   298.15,
+   0.0
+  ],
+  "modelled_deg": -5.61,
+  "sign": 1,
+  "min": -90.6,
+  "max": 79.4
+ },
+ "tilt": {
+  "node": "tilt",
+  "axis": [
+   -1.0,
+   0.0,
+   0.0
+  ],
+  "angle": "node rotation about axis = camera elevation el (deg; 0 = phone upright, screen to the operator; -90 = rear camera straight down) = protocol tilt + zero.tilt",
+  "pivot_stand": [
+   0.0,
+   429.35,
+   0.0
+  ],
+  "modelled_deg": 66.11,
+  "sign": 1,
+  "min": -28.9,
+  "max": 106.1
+ },
+ "zero": {
+  "pan": 5.61,
+  "tilt": -66.11,
+  "note": "protocol aim (0, 0) = rear camera on the deck centre (bed at machine y = 90). The GLB is modelled at mechanical pan 0, el 0."
+ },
+ "limits": {
+  "pan_mech": [
+   -85.0,
+   85.0
+  ],
+  "el": [
+   -95.0,
+   40.0
+  ],
+  "pan": [
+   -90.6,
+   79.4
+  ],
+  "tilt": [
+   -28.9,
+   106.1
+  ]
+ },
+ "clamp": {
+  "nodes": [
+   "clamp_jaw_l",
+   "clamp_jaw_r"
+  ],
+  "axis": [
+   1.0,
+   0.0,
+   0.0
+  ],
+  "x_of_width": "clamp_jaw_l.position.x = +w/2, clamp_jaw_r.position.x = -w/2 (three X = -machine x)",
+  "modelled_width": 71.6,
+  "range": [
+   60.0,
+   85.0
+  ]
+ },
+ "cameras": {
+  "rear": {
+   "node": "tilt",
+   "pos": [
+    -22.0,
+    60.0,
+    6.7
+   ],
+   "dir": [
+    0.0,
+    0.0,
+    1.0
+   ],
+   "fov_deg": {
+    "across": 55.0,
+    "along": 70.0
+   }
+  },
+  "front": {
+   "node": "tilt",
+   "pos": [
+    0.0,
+    63.0,
+    -3.8
+   ],
+   "dir": [
+    0.0,
+    0.0,
+    -1.0
+   ]
+  }
+ },
+ "print_up": "glTF extras.print_up on each printed part node: unit print-direction (layer normal) in the node frame"
+}

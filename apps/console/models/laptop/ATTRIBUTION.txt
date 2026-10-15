@@ -1,0 +1,3 @@
+apps/console/models/laptop/
+- The laptop itself is procedural (built in apps/console/twin.js `_buildLaptop`), so no third-party mesh is used.
+- console.jpg is a screenshot of the LabRat console (project-owned), used as the laptop screen texture.

@@ -1,0 +1,16 @@
+ref,qty,item,generic choice,approx_usd_each,note
+U1,1,ESP32-S3-DevKitC-1,"N8R8 or N16R8; or a classic ESP32 DevKitC (WROOM-32), ~6 USD",9.0,an S3 board is already on hand
+U2,1,PCA9685 16-ch 12-bit servo driver breakout,generic 'PCA9685 servo driver' (Adafruit 815 clone),3.5,"has I2C pull-ups, 220 R output resistors, a V+ screw terminal and a footprint for C1"
+PS1,1,5 V 4 A DC power supply,"wall adapter, 5.5x2.1 mm barrel (20 W)",8.0,"or an XL4015 5 A buck module from the 3018's 24 V supply, set to 5.2 V"
+J1,1,DC barrel jack to screw terminal adapter,5.5x2.1 mm female,0.5,to the PCA9685 V+ terminal
+C1,1,1000 uF 16 V electrolytic capacitor,"radial 10x16 mm, low-ESR",0.3,across V+/GND at the PCA9685 terminal; mind the polarity
+M1,1,FS90R continuous-rotation 9 g servo,Feetech FS90R,4.0,listed in hardware/tool-head too
+M2,1,SG90 9 g servo,TowerPro SG90 or clone,1.5,probe arm
+"M3,M4",2,MG90S 9 g metal-gear servo,TowerPro MG90S or clone,3.0,stand pan/tilt (SG90 works)
+SW1,1,lever microswitch,"KW11-3Z / SS-5GL type, use C + NO",0.3,syr_home
+SW2,1,"22 mm mushroom emergency-stop button, NC contact",LAY37 / XB2-ES542 style,3.0,estop
+W1,6,"servo extension lead, 3-pin JR/Futaba",4x 50 cm + 2x 100 cm (head runs),0.5,"22-26 AWG; the longest run is the head (ch0, ch1)"
+W2,1,Dupont jumper wires F-F 20 cm,pack of 40,2.0,"I2C, 3V3/GND, switches"
+H1,1,"powered USB 2.0 hub, 7 ports",with its own 5 V supply,18.0,"laptop -> 3018, 2x SO-101 adapter, servo hub, microscope"
+CBL1,1,USB cable for the hub board,"USB-C (S3) or micro-USB (classic), data-capable",2.0,
+R*,0,resistors,none in the base build (see README: optional sensors),0,

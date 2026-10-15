@@ -1,0 +1,9 @@
+# Workers static assets (cloud/wrangler.jsonc serves this directory): only the browser apps
+cli
+**/*.py
+**/__pycache__
+**/*.md
+.*
+**/test
+**/package.json
+**/node_modules

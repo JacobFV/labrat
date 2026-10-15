@@ -4,47 +4,98 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  server:
+  cloud:
+    name: cloud (Worker typecheck + vitest)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloud
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - name: LabRat server tests (sim, e2e, vision, RSI)
-        working-directory: server
-        run: uv run --group dev pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: cloud/package-lock.json
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Tests (vitest + @cloudflare/vitest-plugin, D1 migrations applied in setup)
+        run: npm test
 
   bridge:
+    name: bridge (pytest)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: bridge/uv.lock
       - name: USB bridge tests (mock drivers, limits, watchdog)
         working-directory: bridge
-        run: uv run --group dev pytest -q
+        run: uv run --locked --group dev pytest -q
 
-  web:
+  cli:
+    name: cli (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/cli/uv.lock
+      - name: CLI tests
+        working-directory: apps/cli
+        run: uv run --locked --group dev pytest -q
+
+  phone:
+    name: phone (node --test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/phone
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Syntax check
+        run: npm run check
+      - name: Unit tests (hub protocol, voice)
+        run: npm test
+
+  console:
+    name: console (JS syntax check)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-      - name: JS syntax check (console, phone, Tappet web UI)
-        run: for f in web/*.js phone/*.js tappet/web/*.js; do echo "$f"; node --check "$f"; done
+          node-version: "24"
+      - name: node --check every console module (parsed as ES modules)
+        run: |
+          set -euo pipefail
+          status=0
+          while IFS= read -r -d '' f; do
+            echo "$f"
+            node --input-type=module --check < "$f" || { echo "::error file=$f::syntax error"; status=1; }
+          done < <(find apps/console -name '*.js' -not -path '*/node_modules/*' -print0 | sort -z)
+          exit $status
 
-  tappet-host:
+  firmware:
+    name: firmware (servo-hub, PlatformIO)
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - name: Tappet Python tests (kinematics, simulator, bridge, calibration)
-        working-directory: tappet/host
-        run: uv run --extra dev pytest -q
-
-  tappet-firmware:
-    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firmware/servo-hub
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -53,55 +104,33 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.platformio
-          key: pio-${{ hashFiles('tappet/firmware/platformio.ini') }}
-      - run: pip install platformio
-      - name: Native unit tests
-        working-directory: tappet/firmware
+          key: pio-${{ runner.os }}-${{ hashFiles('firmware/servo-hub/platformio.ini') }}
+          restore-keys: pio-${{ runner.os }}-
+      - run: pip install platformio==6.2.0
+      - name: Native unit tests (Unity)
         run: pio test -e native
-      - name: Build ESP32-S3 firmware
-        working-directory: tappet/firmware
-        run: pio run -e esp32s3
+      - name: Build ESP32-S3 + ESP32 firmware
+        run: pio run -e esp32s3 -e esp32
       - uses: actions/upload-artifact@v4
         with:
-          name: tappet-firmware
-          path: tappet/firmware/.pio/build/esp32s3/firmware.bin
+          name: servo-hub-firmware
+          path: |
+            firmware/servo-hub/.pio/build/esp32s3/firmware.bin
+            firmware/servo-hub/.pio/build/esp32/firmware.bin
 
-  tappet-android:
+  electronics:
+    name: electronics (generated files up to date)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-python@v5
         with:
-          distribution: temurin
-          java-version: "17"
-      - name: Build + unit tests
-        working-directory: tappet/android
-        run: echo "sdk.dir=$ANDROID_HOME" > local.properties && ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
-      - uses: actions/upload-artifact@v4
-        with:
-          name: tappet-head-debug.apk
-          path: tappet/android/app/build/outputs/apk/debug/*.apk
-
-  tappet-cad:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - name: Build CAD + kinematic/interference checks
-        working-directory: tappet/hardware/cad
-        run: uv run --python 3.12 --with build123d --with trimesh --with matplotlib --with numpy python build.py
-
-  syringe-cad:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - name: Syringe head CAD, exports + coupled gear-train / sweep / machine checks (fails on any)
-        working-directory: cad/syringe
-        run: uv run --python 3.12 --with build123d==0.13.0 --with bd_warehouse==0.4.0 --with trimesh --with networkx --with lxml --with numpy --with pyyaml python -m syrhead.build --poses 13
-      - name: Deck (beaker matrix, layout, reach report; fails on any check not listed as open)
-        working-directory: cad/deck
-        run: uv run --python 3.12 --with build123d==0.13.0 --with bd_warehouse==0.4.0 --with trimesh --with numpy --with pyyaml python deck.py
-      - name: 3018 assembly with the syringe head (clearance assert, GLB)
-        working-directory: cad/cnc3018
-        run: NORENDER=1 uv run --python 3.12 --with build123d --with trimesh --with matplotlib --with numpy --with networkx --with lxml python cnc3018.py
+          python-version: "3.12"
+      - name: Regenerate pin map / BOM / power budget / wiring (cross-checks firmware pins)
+        working-directory: hardware/electronics
+        run: python3 gen_wiring.py
+      - name: Fail if generated files differ from the committed ones
+        run: |
+          git status --porcelain -- hardware/electronics
+          git diff --exit-code -- hardware/electronics
+          test -z "$(git status --porcelain -- hardware/electronics)"

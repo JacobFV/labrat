@@ -1,0 +1,50 @@
+{
+ "frame": "offset = tool point - syringe tip end, machine axes (mm); spindle = target - offset",
+ "rail_index_x": [
+  -24.0,
+  -16.0,
+  -7.5,
+  3.0,
+  11.0
+ ],
+ "tools": {
+  "pipette": {
+   "kind": "syringe",
+   "module": "head",
+   "offset": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "microscope": {
+   "kind": "usb_microscope",
+   "module": "TM-110",
+   "offset": [
+    -16.0,
+    -63.0,
+    52.0
+   ],
+   "note": "lens front; focus it on the target at this offset, then teach"
+  },
+  "probe": {
+   "kind": "cap_probe",
+   "module": "TM-120 rev B",
+   "offset": [
+    9.5,
+    -47.5,
+    0.0
+   ],
+   "note": "electrode tip when DEPLOYED; TTP223 OUT -> GRBL probe pin A5, $6=1 (active high). cnc.probe only while deployed; retract only with the electrode above the rims",
+   "servo": {
+    "ch": 1,
+    "deployed_deg": 15.0,
+    "retracted_deg": 168.0,
+    "stop_deg": 18.0,
+    "swing_deg": 150.0
+   },
+   "probe_floor_h": 23.8,
+   "probe_floor_note": "lowest electrode-tip height above the bed when probing a beaker of the matrix: the syringe tip then sits in the gap between 4 beakers, 2 mm over the holder top + labels"
+  }
+ }
+}

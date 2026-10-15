@@ -43,7 +43,11 @@ def _deep_merge(dst: dict, src: dict) -> None:
 
 
 class DeviceError(Exception):
-    pass
+    """A failed action. ``data`` (e.g. the servo hub's ``ok:false`` reply) goes back in the result's ``data``."""
+
+    def __init__(self, msg: str = "", data: dict | None = None):
+        super().__init__(msg)
+        self.data = data or {}
 
 
 class Device:
@@ -59,6 +63,8 @@ class Device:
         self.info = dict(info or {})
         self.error: str | None = None
         self._lock: asyncio.Lock | None = None
+        # set by the Bridge: callable(device_id, data) that sends {"t":"event",...} upward (thread-safe)
+        self.event_sink = None
 
     @property
     def status(self) -> str:
@@ -77,7 +83,7 @@ class Device:
         if fn is None:
             raise DeviceError(f"{self.id}: unknown action '{action}'")
         args = dict(args or {})
-        if action in self.unlocked:
+        if action == "stop" or action in self.unlocked:  # stop never queues behind a running move
             return await asyncio.to_thread(fn, **args)
         if self._lock is None:
             self._lock = asyncio.Lock()
@@ -86,6 +92,14 @@ class Device:
 
     def state(self) -> dict:
         return {}
+
+    def emit(self, data: dict) -> None:
+        """Unsolicited event to the DO (``{"t":"event","device":id,"data":data}``); dropped while offline."""
+        if self.event_sink is not None:
+            self.event_sink(self.id, data)
+
+    def on_link(self, up: bool) -> None:
+        """Called by the Bridge when the DO link comes up / drops."""
 
     def safe_stop(self) -> None:
         """Called by the watchdog when the server link is lost."""

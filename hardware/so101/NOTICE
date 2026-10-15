@@ -1,0 +1,31 @@
+LabRat - SO-101 arm hardware files
+==================================
+
+The mechanical files in this directory (stl/ and step/) are copied from
+
+  SO-ARM100 by TheRobotStudio, in collaboration with Hugging Face
+  https://github.com/TheRobotStudio/SO-ARM100
+  commit a758567c3978dfeefe282ede0500085a48fe8f78 (2026-10-06)
+
+and are licensed under the Apache License, Version 2.0 (see LICENSE in this directory, copied unchanged from upstream).
+
+What was copied:
+  - STL/SO101/Individual/*.stl (all printable parts, except "SO101 Assembly.stl")
+      -> stl/common/, stl/follower/, stl/leader/
+  - STEP/SO101/*.step, STEP/SO101/Follower_Specific/*.step, STEP/SO101/Leader_Specific/*.step
+      -> step/common/, step/follower/, step/leader/
+  - STEP/SO101/SO101 Assembly.step -> step/SO101_Assembly.step
+  - LICENSE -> LICENSE
+
+Modifications:
+  - File contents are unchanged (byte-identical to the upstream commit above).
+  - Files were regrouped into common/follower/leader folders following the upstream README's part tables, and
+    "SO101 Assembly.step" was renamed to SO101_Assembly.step (space removed).
+  - README.md in this directory is LabRat's own documentation and is not part of the upstream project.
+
+Not copied (available upstream at the same commit): the ready-to-print plate STLs (STL/SO101/Follower/,
+STL/SO101/Leader/), "STL/SO101/Individual/SO101 Assembly.stl", the printer gauges (STL/Gauges/), Optional/ add-ons,
+and the SO-100 files.
+
+The browser twin's URDF and meshes in apps/console/models/so101/ are separate, decimated copies of upstream
+Simulation/SO101/ and carry their own LICENSE there.

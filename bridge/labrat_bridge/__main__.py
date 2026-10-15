@@ -1,5 +1,6 @@
-"""python -m labrat_bridge --server wss://HOST --token labrat [--mock all|so_a,cnc] [--ports auto]
+"""python -m labrat_bridge --server wss://HOST --token labrat [--mock all|so_a,cnc,hub] [--ports auto]
 python -m labrat_bridge calibrate --device so_a [--port /dev/cu.usbmodemXXX]
+python -m labrat_bridge hub [--port /dev/ttyUSB0|mock] ['{"cmd":"hello"}' ...]   (bench console for the servo hub)
 python -m labrat_bridge scan"""
 from __future__ import annotations
 
@@ -69,13 +70,16 @@ def main(argv=None):
         fol.set_torque(False)
         lead.close(); fol.close()
         return
+    if argv and argv[0] == "hub":
+        hub_console(argv[1:])
+        return
     if argv and argv[0] == "scan":
         found = discover(argv[1] if len(argv) > 1 else "auto")
         print_table("Serial ports", [(f["device"], f["kind"], str(f["detail"]), f.get("serial") or "") for f in found],
                     ("port", "kind", "detail", "usb serial"))
         return
     ap = argparse.ArgumentParser(prog="labrat_bridge")
-    ap.add_argument("--server", default=os.environ.get("LABRAT_SERVER", "ws://localhost:8000"))
+    ap.add_argument("--server", default=os.environ.get("LABRAT_SERVER", "ws://localhost:8787"))
     ap.add_argument("--token", default=os.environ.get("LABRAT_TOKEN", "labrat"))
     ap.add_argument("--mock", default=None, help="'all' or comma list of device ids to mock")
     ap.add_argument("--ports", default="auto", help="'auto' or comma list of ports to probe")
@@ -96,6 +100,49 @@ def main(argv=None):
                 d.close()
             except Exception:
                 pass
+
+
+def hub_console(argv):
+    """Send firmware lines to the servo hub and print replies + events. Pings while it runs (watchdog stays fed)."""
+    import json as _json
+
+    from .bridge import discover
+    from .servo_hub import ServoHub
+
+    ap = argparse.ArgumentParser(prog="labrat_bridge hub")
+    ap.add_argument("--port", help="serial port, or 'mock' (default: autodetect by hello)")
+    ap.add_argument("lines", nargs="*", help="JSON lines to send; none = read them from stdin")
+    a = ap.parse_args(argv)
+    port = a.port
+    if port is None:
+        hubs = [f["device"] for f in discover("auto") if f["kind"] == "servo_hub"]
+        if not hubs:
+            sys.exit("no servo hub found (try --port)")
+        port = hubs[0]
+    hub = ServoHub("hub", mock=True) if port == "mock" else ServoHub("hub", port=port)
+    hub.event_sink = lambda _id, ev: print("event", _json.dumps(ev), flush=True)
+    hub.on_link(True)
+    print("hello", _json.dumps(hub.info), flush=True)
+
+    def send(text: str):
+        try:
+            msg = _json.loads(text)
+            print(_json.dumps(hub.a_line(msg)), flush=True)
+        except Exception as e:
+            print("error:", e, getattr(e, "data", ""), flush=True)
+
+    try:
+        if a.lines:
+            for text in a.lines:
+                send(text)
+        else:
+            for text in sys.stdin:
+                if text.strip():
+                    send(text)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        hub.close()
 
 
 if __name__ == "__main__":

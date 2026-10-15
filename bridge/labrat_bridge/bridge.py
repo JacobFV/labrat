@@ -11,11 +11,10 @@ from .common import Device, load_json, log, save_json
 from .grbl import Grbl, MockGrbl, probe_grbl
 from .so101 import So101, probe_feetech
 from .microscope import Microscope
-from .tappet import Syringe, Tappet, probe_tappet
+from .servo_hub import ServoHub, probe_hub
 
-ALL_IDS = ["so_a", "so_b", "tap_a", "tap_b", "cnc", "pipette", "microscope"]
-# extra syringe modules on the tool rail: calib/tools.json {"syringes": [{"id": "pipette2", "channel": 9}, ...]}
-DEFAULT_TOOLS = {"syringes": []}
+# docs/protocol.md §1. The pipette, probe arm and phone stand are DO devices on top of `hub` (cloud/src/devices).
+ALL_IDS = ["so_a", "so_b", "cnc", "microscope", "hub"]
 WATCHDOG_S = 3.0
 STATE_HZ = 5.0
 
@@ -41,9 +40,9 @@ def classify_port(p: dict) -> dict:
     banner = probe_grbl(port)
     if banner:
         return {**p, "kind": "grbl", "detail": banner}
-    hello = probe_tappet(port)
+    hello = probe_hub(port)
     if hello:
-        return {**p, "kind": "tappet", "detail": hello.get("fw", "tappet-fw")}
+        return {**p, "kind": "servo_hub", "detail": f"{hello.get('fw')} {hello.get('board', '')}".strip()}
     ids = probe_feetech(port)
     if ids:
         return {**p, "kind": "so101", "detail": f"ids {ids}"}
@@ -108,25 +107,14 @@ def build_devices(mock: set[str], ports: str = "auto", so_a: str | None = None, 
         make(key, (lambda k=key, p=port: So101(k, port=p) if p else _raise("not found")),
              lambda k=key: So101(k, mock=True, info={"reason": "mock"}))
 
-    taps = sorted(f["device"] for f in by_kind.get("tappet", []))
-    for i, key in enumerate(("tap_a", "tap_b")):
-        port = taps[i] if i < len(taps) else None
-        make(key, (lambda k=key, p=port: Tappet(k, port=p) if p else _raise("not found")),
-             lambda k=key: Tappet(k, mock=True))
-
     grbls = [f["device"] for f in by_kind.get("grbl", [])]
     make("cnc", lambda: Grbl(grbls[0]) if grbls else _raise("not found"), lambda: MockGrbl())
 
-    host = next((d for k, d in devs.items() if k.startswith("tap_") and isinstance(d, Tappet) and d.client), None)
-    if "pipette" in mock or host is None:
-        devs["pipette"] = Syringe("pipette", None)
-    else:
-        devs["pipette"] = Syringe("pipette", host)
-    for sy in load_json("tools.json", DEFAULT_TOOLS).get("syringes", []):   # more syringe modules, own channel + calib
-        sid = sy["id"]
-        devs[sid] = Syringe(sid, None if (sid in mock or host is None) else host, channel=int(sy["channel"]),
-                            calib=sy.get("calib", f"{sid}.json"))
     devs["microscope"] = Microscope("microscope", mock="microscope" in mock)
+
+    hubs = sorted(f["device"] for f in by_kind.get("servo_hub", []))
+    make("hub", lambda: ServoHub("hub", port=hubs[0]) if hubs else _raise("not found"),
+         lambda: ServoHub("hub", mock=True))
 
     print_table("Devices", [(d.id, d.kind, d.status, str(d.info.get("port", d.info.get("host", "")))) for d in devs.values()],
                 ("id", "kind", "status", "port/host"))
@@ -168,6 +156,38 @@ class Bridge:
         self.safe_done = False
         self._send_lock = asyncio.Lock()
         self.stop_event = asyncio.Event()
+        self._ws = None
+        self._loop: asyncio.AbstractEventLoop | None = None
+        for d in devices.values():
+            d.event_sink = self._event_from_thread
+
+    def _event_from_thread(self, dev_id: str, data: dict) -> None:
+        """Device threads call this; the event goes up as {"t":"event"} if the DO link is up, else it is dropped."""
+        loop, ws = self._loop, self._ws
+        if loop is None or ws is None or loop.is_closed():
+            return
+        msg = {"t": "event", "device": dev_id, "data": data}
+
+        def go():
+            if self._ws is ws:
+                asyncio.ensure_future(self._send_quiet(ws, msg))
+        try:
+            loop.call_soon_threadsafe(go)
+        except RuntimeError:
+            pass
+
+    async def _send_quiet(self, ws, obj):
+        try:
+            await self._send(ws, obj)
+        except Exception:
+            pass
+
+    def _set_link(self, up: bool) -> None:
+        for d in self.devices.values():
+            try:
+                d.on_link(up)
+            except Exception as e:
+                log.warning("%s on_link: %s", d.id, e)
 
     async def _send(self, ws, obj):
         async with self._send_lock:
@@ -185,7 +205,7 @@ class Bridge:
             res = {"t": "result", "id": rid, "ok": True, "data": data if isinstance(data, dict) else {"value": data}}
         except Exception as e:
             log.warning("cmd %s %s.%s failed: %s", rid, msg.get("device"), msg.get("action"), e)
-            res = {"t": "result", "id": rid, "ok": False, "data": {}, "error": str(e)}
+            res = {"t": "result", "id": rid, "ok": False, "data": getattr(e, "data", None) or {}, "error": str(e)}
         try:
             await self._send(ws, res)
         except Exception:
@@ -207,13 +227,14 @@ class Bridge:
             await asyncio.sleep(0.25)
             if not self.connected and not self.safe_done and time.monotonic() - self.last_link > WATCHDOG_S:
                 self.safe_done = True
-                log.warning("server link down > %.0fs: stopping CNC, holding arms, syringe servo to neutral", WATCHDOG_S)
+                log.warning("server link down > %.0fs: stopping CNC, holding arms, servo hub stop", WATCHDOG_S)
                 await asyncio.gather(*(asyncio.to_thread(d.safe_stop) for d in self.devices.values()),
                                      return_exceptions=True)
 
     async def run(self):
         from websockets.asyncio.client import connect
 
+        self._loop = asyncio.get_running_loop()
         wd = asyncio.create_task(self._watchdog())
         backoff = 0.5
         try:
@@ -224,6 +245,8 @@ class Bridge:
                         self.connected, self.safe_done, backoff = True, False, 0.5
                         log.info("connected to %s", self.url.split("?")[0])
                         await self._send(ws, {"t": "hello", "devices": [d.describe() for d in self.devices.values()]})
+                        self._ws = ws
+                        self._set_link(True)
                         state_task = asyncio.create_task(self._state_loop(ws))
                         async for raw in ws:
                             self.last_link = time.monotonic()
@@ -236,6 +259,8 @@ class Bridge:
                 except Exception as e:
                     log.warning("link error: %s", e)
                 finally:
+                    self._ws = None
+                    self._set_link(False)  # e.g. the hub stops pinging: its firmware watchdog relaxes the servos
                     if self.connected:
                         self.last_link = time.monotonic()
                     self.connected = False

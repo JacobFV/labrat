@@ -1,0 +1,29 @@
+pn,qty,unit,name,kind,process,material,vendor,vendor_pn,unit_cost_usd,notes
+PS-100,1.0,ea,"base: steel-shot ballast pocket, 2020 socket, tongue under the 3018 front plate",make,fdm_print,PETG,,,,"flat; 4 walls, 15% infill"
+PS-101,1.0,ea,"base lid (lead groove, engraved name)",make,fdm_print,PETG,,,,flat
+PS-110,1.0,ea,"pan housing: pan servo pocket, thrust face, rim, 2020 socket",make,fdm_print,PETG,,,,"upright, socket down; 5 walls"
+PS-111,1.0,ea,turntable retainer ring,make,fdm_print,PETG,,,,flat
+PS-120,1.0,ea,"yoke: turntable disc, neck, U arms (tilt servo, 623ZZ)",make,fdm_print,PETG,,,,"upright, disc down; 5 walls, 25% infill"
+PS-130,1.0,ea,"cradle: phone rest bars, dovetail jaw channel, spring lanes, tilt ears",make,fdm_print,PETG,,,,on its back
+PS-131,2.0,ea,"clamp jaw (rack, V lip, spring posts) - same part left and right",make,fdm_print,PETG,,,,on its back; 100% infill
+PS-132,1.0,ea,pinion m1 14T (centres the jaws),make,fdm_print,PETG,,,,flat; 100% infill
+PS-133,1.0,ea,idler spacer 5.5/3.2,make,fdm_print,PETG,,,,on end
+PS-134,1.0,ea,"pinion sleeve, cut 4.0 from 4 x 0.45 brass tube",make,cut,brass_c360,K&S Precision Metals,9220 (4 mm x 0.45 brass tube),0.2,
+LIB-INS-M3,9.0,ea,"M3 heat-set insert, 4.0 OD x 5.7",buy,purchased,brass,Ruthex / CNC Kitchen,M3 x 5.7,0.05,
+LIB-M2.5x12-PAN,4.0,ea,"ISO 7045 M2.5x12 pan head (spring posts, self-tap into the jaw)",buy,purchased,steel,McMaster-Carr / Bossard,ISO 7045 M2.5x12,0.05,
+LIB-M3-W433,1.0,ea,"DIN 433 M3 washer (6 OD, bears on the 623 inner ring)",buy,purchased,steel,McMaster-Carr / Bossard,DIN 433 M3,0.02,
+LIB-M3x16-SHCS,1.0,ea,ISO 4762 M3x16 (tilt idler axle),buy,purchased,steel,McMaster-Carr / Bossard,ISO 4762 M3x16,0.08,
+LIB-M3x8-BH,8.0,ea,"ISO 7380 M3x8 button head (retainer, lid, pinion)",buy,purchased,steel,McMaster-Carr / Bossard,ISO 7380 M3x8,0.06,
+LIB-M5x12-CSK,1.0,ea,"ISO 10642 M5x12 countersunk, base -> post end",buy,purchased,steel,McMaster-Carr / Bossard,ISO 10642 M5x12,0.1,
+LIB-M5x20-BH,1.0,ea,"ISO 7380 M5x20 button head, housing -> post end",buy,purchased,steel,McMaster-Carr / Bossard,ISO 7380 M5x20,0.12,
+LIB-PHONE,1.0,ea,"phone placeholder (not supplied): 71.6 x 147.6 x 7.8, 230 g",buy,purchased,,,,,"any phone 60-85 wide, <= 9.5 thick (camera bump free), ~230 g"
+PS-200,2.0,ea,"MG90S metal-gear micro servo (SG90 case; SG90 also fits), with horns + screws",buy,purchased,,TowerPro / generic,MG90S,3.5,
+PS-201,1.0,ea,"2020 B-type aluminium extrusion (6 mm slot), cut 250, tap M5 both ends",buy,purchased,aluminum_6063_t5,Misumi / generic,HFS5-2020-250,2.5,
+PS-202,1.0,ea,623ZZ ball bearing 3 x 10 x 4,buy,purchased,steel,generic,623ZZ,0.4,
+PS-203,2.0,ea,"extension spring OD 5, wire 0.6, 60 mm inside hooks, ~0.15 N/mm, ~2 N initial tension",buy,purchased,music_wire,assortment / Lee Spring,OD 5 x 0.6 wire x 60 (assortment box),0.3,
+PS-204,1.5,kg,"steel shot / 4.5 mm steel BBs, ballast (fills the base pocket)",buy,purchased,steel,generic,4.5 mm steel BB,4.0,
+PS-205,4.0,ea,"silicone anti-slip pad, 16 x 1 mm (cut from 1 mm sheet)",buy,purchased,silicone,generic,1 mm adhesive silicone sheet,0.05,
+PS-206,1.0,ea,"2020 slot cover strip (holds the servo leads), cut 206",buy,purchased,pvc,generic,6 mm slot cover,0.3,
+PS-207,2,ea,"servo extension lead 3-way 2.54, 300 mm (stand -> hub)",buy,purchased,,generic,JR/Futaba servo extension 30 cm,0.5,
+PS-208,2,ea,1 mm silicone pad tape for the jaw faces (2x 22 x 6),buy,purchased,silicone,generic,1 mm adhesive silicone sheet,0.05,
+PS-209,4,ea,cable tie 2.5 x 100,buy,purchased,pa66,generic,,0.02,
