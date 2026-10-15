@@ -20,8 +20,6 @@ TICKS_PER_REV, CENTER = 4096, 2048
 RATE_HZ = 50
 
 POSES = ["home", "ready", "rest"]
-# Old pose names from when the phone rode on so_a. Kept so stale clients/calib files don't crash; they map to `ready`.
-POSE_ALIASES = {"look_deck": "ready", "look_user": "ready", "look_plate": "ready"}
 DEFAULT_CALIB = {
     "joints": {
         "shoulder_pan": {"offset": 0, "sign": 1, "min": -110, "max": 110},
@@ -252,9 +250,6 @@ class So101(Device):
 
     def a_pose(self, name: str, ms: float = 1500):
         poses = self.calib.get("poses", {})
-        if name not in poses and POSE_ALIASES.get(name) in poses:
-            log.info("%s: pose '%s' is a legacy alias for '%s'", self.id, name, POSE_ALIASES[name])
-            name = POSE_ALIASES[name]
         if name not in poses:
             raise DeviceError(f"unknown pose '{name}' (have {sorted(poses)})")
         return {"pose": name, **self.move_to(poses[name], ms)}

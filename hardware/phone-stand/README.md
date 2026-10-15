@@ -7,8 +7,8 @@ and turns it with two 9 g servos on the servo hub: **pan about Z (ch 2)** and **
 it at the deck to take photos and at the operator while it talks.
 
 The design is parametric **build123d** in [`pstand/`](pstand). Every file below is generated from it with one
-command (see [Rebuild](#rebuild)). The build also checks the design and fails if a check fails:
-[`report.json`](report.json).
+command (see [Rebuild](#rebuild)). The build also checks the design and fails if a check fails
+(`build/report.json`).
 
 ## How it works
 
@@ -56,7 +56,7 @@ stack (bench up)                         z (mm above the bench)
 | tilt | camera elevation −95° (beyond straight down) … +40° (screen tipped down); the servo spans −130 … +50° |
 | mass | 2.42 kg total, of which ~1.49 kg is steel shot; pan group 399 g; tilt group (with phone) 303 g |
 
-## Checks (from `report.json`)
+## Checks
 
 | check | result |
 |---|---|
@@ -82,7 +82,7 @@ parallel to the bed are teardrops. Downward faces are 45° chamfers, flares, pyr
 
 | part | prints | notes |
 |---|---|---|
-| `PS-100` base | flat | ballast pocket, 2020 socket (40 deep, 45° lead-in), M5 countersink from below, 4× M3 inserts, 45° ramp + 4 mm tongue. 164 × 212: alone on `plate_1` |
+| `PS-100` base | flat | ballast pocket, 2020 socket (40 deep, 45° lead-in), M5 countersink from below, 4× M3 inserts, 45° ramp + 4 mm tongue. 164 × 212: prints alone |
 | `PS-101` lid | flat | lead groove from the post to the right edge, engraved name |
 | `PS-110` pan housing | upright, socket down | 45° pyramid over the post end (the post's edges seat on it), pan-servo pocket (case toward +x), pointed-roof lead tunnel (fits the 3-way connector), thrust face, rim with 3× M3 inserts |
 | `PS-111` retainer | flat | |
@@ -92,7 +92,7 @@ parallel to the bed are teardrops. Downward faces are 45° chamfers, flares, pyr
 | `PS-132` pinion | flat | m1 14T, bore 4.15 for the brass sleeve |
 | `PS-133` spacer | on end | |
 
-The `plate_1..3.3mf` files pack all of these onto 220 × 220 beds. `stl/` holds each part alone, already in its print
+Build plates and G-code: [`../print`](../print). `stl/` holds each part alone, already in its print
 orientation. `step/` holds the editable solids (design frame) and `phone_stand_assembly.step`.
 
 **Buy** (the full list is in [`bom.csv`](bom.csv)):
@@ -186,21 +186,9 @@ a fixed-point iteration that puts the target on the camera axis.
 | `stand.json` | kinematics in the stand frame S, the bench three frame and the cloud's deck coords. Covers pan/tilt pivots and axes, the camera offset in the tilt frame, servo zero/direction conventions, limits, the deck/operator reference aims, `cloud_cal_stand`, and an arm keep-out |
 | `../../apps/console/models/phone_stand/phone_stand.glb` | twin model (three.js frame, Y up, mm). Nodes: `phone_stand` (root) → `stand_base`, `pan` (origin on the pan pivot) → `tilt` (origin on the tilt axis) → `phone` (placeholder), `clamp` → `clamp_jaw_l/r`. Each printed part is its own mesh node with glTF extras `{pn, print_up, material, layer_mm}`; `print_up` is the layer normal in that node's frame |
 | `../../apps/console/models/phone_stand/rig.json` | `{pan:{node,axis,pivot}, tilt:{node,axis,pivot}, zero, limits, clamp, cameras}` in the stand root's three frame. Place the root at `(0, 0, -225)` |
-| `report.json`, `bom.csv`, `step/`, `stl/`, `plate_*.3mf`, `renders/` | outputs |
+| `bom.csv`, `step/`, `stl/`, `renders/` | outputs (`build/report.json` is the check report, not tracked) |
 
-Twin hookup (not wired into `twin.js` yet):
-
-```js
-const root = (await new GLTFLoader().loadAsync('./models/phone_stand/phone_stand.glb')).scene;
-const rig = await (await fetch('./models/phone_stand/rig.json')).json();
-root.position.set(...rig.place.position); this.stage.add(root);
-const pan = root.getObjectByName('pan'), tilt = root.getObjectByName('tilt'), d2r = Math.PI / 180;
-// protocol angles (aim {pan, tilt}) -> nodes
-setStand = ({ pan: p, tilt: t }) => {
-  pan.rotation.y = (p + rig.zero.pan) * d2r;            // axis +Y
-  tilt.rotation.x = -(t + rig.zero.tilt) * d2r;         // axis -X
-};
-```
+The console twin loads both through `apps/console/twin/rigs.js` (`loadPhoneStand`).
 
 ## Rebuild
 
@@ -230,9 +218,7 @@ GPU (`--gpu` to try anyway). It also has no OpenImageDenoise, hence 256 samples.
 
 ## Notes, limits, open points
 
-- The protocol describes aim `(0, 0)` as "looking straight down at the deck centre". A stand in front of the deck
-  cannot look straight down at the deck centre, so `(0, 0)` = **rear camera on the deck centre** (pan 5.6°, el −66.1°
-  mechanical). Straight down is tilt −23.9.
+- Aim `(0, 0)` = **rear camera on the deck centre** (pan 5.6°, el −66.1° mechanical). Straight down is tilt −23.9.
 - `look operator` turns the **screen** toward the operator (the driver already does this). The rear camera then
   points at the machine.
 - The cloud driver models the camera as one point. The best such point (near the tilt axis, in `cloud_cal_stand.pivot`)

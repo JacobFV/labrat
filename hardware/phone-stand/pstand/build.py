@@ -7,8 +7,7 @@
 Outputs (hardware/phone-stand/):
     step/PS-1xx.step, step/phone_stand_assembly.step    printed parts (design frame) + the assembly (pan 0, el 0)
     stl/PS-1xx.stl                                       printed parts in print orientation
-    plate_<n>.3mf                                        printed parts packed onto 220 x 220 plates
-    bom.csv, stand.json (kinematics + the cloud's cal:stand values), report.json (checks; fails the build)
+    bom.csv, stand.json (kinematics + the cloud's cal:stand values), build/report.json (checks; fails the build)
     ../../apps/console/models/phone_stand/phone_stand.glb + rig.json   twin model (three.js frame, Y up, mm)
 """
 from __future__ import annotations
@@ -18,7 +17,6 @@ import csv
 import hashlib
 import json
 import math
-from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -56,8 +54,6 @@ def exports():
         for f in (HERE / d).glob("*.*"):
             f.unlink()
     insts = A.instances()
-    qty = Counter(i.pn for i in insts)
-    plate = []
     for pn, fn in P.MAKERS.items():
         s = A.shape(pn)
         export_step(s, str(HERE / "step" / f"{pn}.step"))
@@ -66,13 +62,6 @@ def exports():
         m.apply_translation(-np.array([(m.bounds[0][0] + m.bounds[1][0]) / 2, (m.bounds[0][1] + m.bounds[1][1]) / 2,
                                        m.bounds[0][2]]))
         m.export(HERE / "stl" / f"{pn}.stl")
-        for k in range(qty[pn]):
-            plate.append((f"{pn}_{k + 1}", m))
-    for f in HERE.glob("plate_*.3mf"):
-        f.unlink()
-    plates = _pack(plate)
-    for k, sc in enumerate(plates, 1):
-        sc.export(HERE / f"plate_{k}.3mf")
     # assembly STEP at pan 0, el 0 (phone upright, screen to the operator)
     sol = []
     for i in insts:
@@ -81,37 +70,12 @@ def exports():
         sol.append(s)
     export_step(Compound(children=sol, label="phone_stand"), str(HERE / "step" / "phone_stand_assembly.step"))
     bom(insts)
-    return insts, len(plates)
+    return insts
 
 
 def _loc(M):
     from .geo import mat_to_loc
     return mat_to_loc(M)
-
-
-def _pack(items, bed=215.0, gap=6.0):
-    """shelf-pack (largest first) onto as many 220 x 220 plates as needed (parts centred, z = 0 on the bed)."""
-    plates = [trimesh.Scene()]
-    x = y = row_h = 0.0
-    items = sorted(items, key=lambda kv: -max(kv[1].extents[0], kv[1].extents[1]) * 1000 - kv[1].extents[1])
-    for name, g in items:
-        g = g.copy()
-        if g.extents[0] < g.extents[1] and g.extents[1] > bed - x:     # stand tall parts upright on the plate
-            pass
-        g.apply_translation(-g.bounds[0])
-        w, h = g.extents[0], g.extents[1]
-        if w > bed or h > bed:
-            raise SystemExit(f"{name}: {w:.0f} x {h:.0f} does not fit a {bed} mm bed")
-        if x + w > bed:
-            x, y, row_h = 0.0, y + row_h + gap, 0.0
-        if y + h > bed:
-            plates.append(trimesh.Scene())
-            x = y = row_h = 0.0
-        g.apply_translation([x + 2.5, y + 2.5, 0])
-        plates[-1].add_geometry(g, geom_name=name)
-        x += w + gap
-        row_h = max(row_h, h)
-    return plates
 
 
 def bom(insts):
@@ -306,7 +270,8 @@ def checks():
                            "operator_el": round(ref["operator_el"], 1), "deck_el": round(ref["el0"], 1)}})
     rep = {"src": SRC_HASH, "ok": all(r["ok"] for r in rows), "checks": rows,
            "layout": {"H_T": SP.H_T, "Z_TH": SP.Z_TH, "post_L": SP.POST_L}}
-    (HERE / "report.json").write_text(json.dumps(rep, indent=1, default=float))
+    (HERE / "build").mkdir(exist_ok=True)
+    (HERE / "build" / "report.json").write_text(json.dumps(rep, indent=1, default=float))
     for r in rows:
         print(("ok  " if r["ok"] else "FAIL"), r["check"], "|", r["name"], "|", r["value"])
     bad = [r for r in rows if not r["ok"]]
@@ -320,10 +285,10 @@ def main(argv=None):
     ap.add_argument("--checks-only", action="store_true")
     a = ap.parse_args(argv)
     if not a.checks_only:
-        insts, n = exports()
+        insts = exports()
         ref = twin(insts)
         stand_json(ref)
-        print(f"exported: {len(P.MAKERS)} printed parts, {n} plate(s), twin -> {TWIN}")
+        print(f"exported: {len(P.MAKERS)} printed parts, twin -> {TWIN}")
     if not a.no_checks:
         checks()
 

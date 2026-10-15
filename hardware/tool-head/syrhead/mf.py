@@ -67,7 +67,7 @@ JOINTS = {
                 # the FS90R's own output shaft turns in its case bore, and its horn rides 0.3 mm above the case
                 # tower: the vendor's clearances, inside the purchased product
                 ("servo_spline", "servo"), ("servo_horn", "servo"))),
-    # TM-120 rev B probe arm: deployed (0, on its hard stop) -> retracted (SWING); +angle about -X lifts the electrode
+    # TM-120 probe arm: deployed (0, on its hard stop) -> retracted (SWING); +angle about -X lifts the electrode
     # forward and up
     "probe": ("revolute", (-1, 0, 0), (PR.EX, PR.PIVOT[0], PR.PIVOT[1]), 0.0, PR.SWING,
               (("probe_arm", "mod_probe"),         # the deployed hard stop: the arm's back face on the stop block

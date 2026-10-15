@@ -7,7 +7,6 @@ import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const BASE = new URL('./models/so101/', import.meta.url).href;
 const URDF = 'so101_new_calib.urdf';
-export const SO101_JOINTS = ['shoulder_pan', 'shoulder_lift', 'elbow_flex', 'wrist_flex', 'wrist_roll', 'gripper'];
 
 const nums = (s, d = '0 0 0') => (s || d).trim().split(/\s+/).map(Number);
 function applyOrigin(obj, el) {

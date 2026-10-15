@@ -177,9 +177,9 @@ export class Twin {
     const mm = new THREE.Matrix4(), zero = new THREE.Matrix4().makeScale(0, 0, 0);
     tipXY.forEach(([k, p], i) => {
       const on = mm.clone().makeTranslation(p.x, tr.rim_h, p.z); tipInst.setMatrixAt(i, on);
-      let vis = true; // proxy keeps the old {visible} API of this.tips[k]
-      this.tips[k] = { get visible() { return vis; }, set visible(v) { v = !!v; if (v === vis) return; vis = v; tipInst.setMatrixAt(i, v ? on : zero); tipInst.instanceMatrix.needsUpdate = true; } };
+      this.tips[k] = { i, on, shown: true };
     });
+    this._tipZero = zero;
     // printed beaker matrix (DECK-001) with blind pockets + 15.3 x 50 mm screw-top glass vials; columns 1-7 mix,
     // column 8 = stocks (A8-D8 water/red/yellow/blue, E8/F8 spare, capped)
     const mx = DECK.matrix, bk = DECK.beaker, pl = DECK.plate;
@@ -355,7 +355,7 @@ export class Twin {
     const bezel = new THREE.Mesh(new THREE.ShapeGeometry(rr(W - 4, D - 4, r - 1)), new THREE.MeshStandardMaterial({ color: 0x0a0a0b, roughness: .15 }));
     bezel.position.set(0, D / 2, -6.05); bezel.rotation.y = Math.PI; lid.add(bezel);
     const scrM = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveIntensity: .95, roughness: .12 });
-    new THREE.TextureLoader().load(new URL('./models/laptop/console.jpg', import.meta.url).href, (t) => { t.colorSpace = THREE.SRGBColorSpace; scrM.emissiveMap = t; scrM.needsUpdate = true; });
+    new THREE.TextureLoader().load(new URL('./models/laptop_screen.jpg', import.meta.url).href, (t) => { t.colorSpace = THREE.SRGBColorSpace; scrM.emissiveMap = t; scrM.needsUpdate = true; });
     const scr = new THREE.Mesh(new THREE.PlaneGeometry(284, 184), scrM); scr.position.set(0, D / 2 + 3, -6.15); scr.rotation.y = Math.PI; lid.add(scr);
     this._box(6, 3, .3, 0x111111, new THREE.Vector3(0, D - 4, -6.2), lid); // camera notch
   }
@@ -487,7 +487,7 @@ export class Twin {
     this._setTipLiquid(tip ? v : 0);
     this.tipVol = v;
     if (p.pos_mm != null) this.setPlunger(+p.pos_mm, +(p.stroke_mm ?? SYR_STROKE));
-    if (typeof p.tip === 'string' && this.tips[p.tip]) this.tips[p.tip].visible = false;
+    if (typeof p.tip === 'string') this._showTip(p.tip, false);
   }
   _setTipLiquid(v) {
     const m = this.tipLiquid; if (!m) return;
@@ -529,9 +529,13 @@ export class Twin {
   resetWells() {
     for (const v of this.vials) { const res = this.reservoirs.indexOf(v); const vol = res >= 0 ? DECK.res_fill : 0, col = new THREE.Color(res >= 0 ? RES_COLORS[res] : 0xcfe8ff);
       v.vol = vol; v.liq.setLevel(vol / DECK.beaker.ul_per_mm); if (!col.equals(v.color)) { v.color.copy(col); setLiquidColor(v.liq.mesh.material, col); } }
-    for (const t of Object.values(this.tips)) t.visible = true;
+    for (const k of Object.keys(this.tips)) this._showTip(k, true);
   }
-  usedTips(list) { for (const k of list || []) if (this.tips[k]) this.tips[k].visible = false; }
+  usedTips(list) { for (const k of list || []) this._showTip(k, false); }
+  _showTip(k, shown) {
+    const t = this.tips[k]; if (!t || t.shown === shown) return;
+    t.shown = shown; this.rackTips.setMatrixAt(t.i, shown ? t.on : this._tipZero); this.rackTips.instanceMatrix.needsUpdate = true;
+  }
 
   // capacitive probe arm on the tool head (servo): {deg} or {deployed: bool}; no-op until cnc3018.glb has the node
   _rigProbe() {

@@ -56,7 +56,7 @@ is stored in D1 (`config` rows `cal:pipette`, `cal:probe`, `cal:stand`) and is e
 |---|---|---|---|
 | `pipette` | `servo_syringe` | 0 (FS90R continuous) | `home {}` (slow drive into the bottom stop; done when the `syr_home` input closes, or after the dead-reckoned overtravel if no switch is fitted), `prime {}`, `aspirate {ul}`, `dispense {ul?}`, `blowout {}`, `move {mm,speed?}`, `jog {mm}`, `drive {speed -1..1, ms}`, `zero {mm?}`, `observe {mm,conf?}`, `rest {}`, `stop {}`. Timed drives use the firmware's `pulse` with `ms` so their length does not depend on network latency. State `{pos_mm,stroke_mm,vol_ul,ul_per_mm,homed,moving}` |
 | `probe` | `servo_arm` | 1 (SG90 positional) | `deploy {}`, `retract {}`, `set {deg}`. State `{deployed,deg,moving}`. See "Probe-arm interlock" below |
-| `stand` | `pan_tilt` | 2 = pan (about Z), 3 = tilt (about X) | `aim {pan,tilt,ms?}` (deg, 0 = looking straight down at the deck centre), `look {at: deck\|operator\|home\|<beaker>\|<stock>}`, `relax {}`, `stop {}` (= relax). State `{pan,tilt,moving,at}`. Every aim waits `settle_ms` before it resolves |
+| `stand` | `pan_tilt` | 2 = pan (about Z), 3 = tilt (about X) | `aim {pan,tilt,ms?}` (deg; 0, 0 = rear camera on the deck centre), `look {at: deck\|operator\|home\|<beaker>\|<stock>}`, `relax {}`, `stop {}` (= relax). State `{pan,tilt,moving,at}`. Every aim waits `settle_ms` before it resolves |
 
 Each logical device sends its channels' `cfg` (kind, `rest_us`) to the hub before its first hub command, and again
 after anything that may have reset them: a provider announcing (or dropping) `hub`, or a hub `wd` / `boot` event. The

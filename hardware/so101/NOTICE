@@ -9,23 +9,19 @@ The mechanical files in this directory (stl/ and step/) are copied from
 
 and are licensed under the Apache License, Version 2.0 (see LICENSE in this directory, copied unchanged from upstream).
 
-What was copied:
-  - STL/SO101/Individual/*.stl (all printable parts, except "SO101 Assembly.stl")
-      -> stl/common/, stl/follower/, stl/leader/
-  - STEP/SO101/*.step, STEP/SO101/Follower_Specific/*.step, STEP/SO101/Leader_Specific/*.step
-      -> step/common/, step/follower/, step/leader/
-  - STEP/SO101/SO101 Assembly.step -> step/SO101_Assembly.step
+What was copied (the follower build only):
+  - STL/SO101/Individual/*.stl: the common parts with the WaveShare mounting plate, and the follower gripper parts
+      -> stl/common/, stl/follower/
+  - the matching STEP/SO101/*.step and STEP/SO101/Follower_Specific/*.step -> step/common/, step/follower/
   - LICENSE -> LICENSE
 
 Modifications:
   - File contents are unchanged (byte-identical to the upstream commit above).
-  - Files were regrouped into common/follower/leader folders following the upstream README's part tables, and
-    "SO101 Assembly.step" was renamed to SO101_Assembly.step (space removed).
+  - Files were grouped into common/ and follower/ folders following the upstream README's part tables.
   - README.md in this directory is LabRat's own documentation and is not part of the upstream project.
 
-Not copied (available upstream at the same commit): the ready-to-print plate STLs (STL/SO101/Follower/,
-STL/SO101/Leader/), "STL/SO101/Individual/SO101 Assembly.stl", the printer gauges (STL/Gauges/), Optional/ add-ons,
-and the SO-100 files.
+Not copied (available upstream at the same commit): the leader parts, the Seeed Studio mounting plate, the
+assemblies, the ready-to-print plate STLs, the printer gauges, Optional/ add-ons and the SO-100 files.
 
 The browser twin's URDF and meshes in apps/console/models/so101/ are separate, decimated copies of upstream
 Simulation/SO101/ and carry their own LICENSE there.

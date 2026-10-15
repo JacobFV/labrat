@@ -7,7 +7,7 @@ import * as learn from "./learn";
 import * as vision from "./vision";
 import * as sim from "./sim";
 import { Agent } from "./agent";
-import { flag, type Ctx, type Env } from "./env";
+import type { Ctx, Env } from "./env";
 import { Hub, type Attachment, type Role } from "./hub";
 import { llmAvailable, model } from "./llm";
 import { hex, now, Store } from "./store";

@@ -11,22 +11,22 @@ and the twin only has to set:
   cnc_z.position.y          =  z            (0 .. -45)
   syringe_carriage.position.y = pos_mm        (plunger height above the bottomed stopper, 0 .. stroke)
   syringe_gear_{a,b,c}.rotation.x = r_per_mm * pos_mm    (apps/console/models/syringe_rig.json, written here)
-  probe_arm: rotation about rig.probe.axis through rig.probe.pivot by (deg - modelled_deg), servo deg (TM-120 rev B)
+  probe_arm: rotation about rig.probe.axis through rig.probe.pivot by (deg - modelled_deg), servo deg
 The static head is the node syringe_head (child of cnc_z). Printed parts are one mesh node each ("syr_<instance>__<mat>")
 with glTF extras {"print_up": [x, y, z], "part": PN} (print direction in the node's local frame), for layer lines.
-The spindle motor is gone: the syringe head (hardware/tool-head, build123d) sits in the 42 mm holder, coaxial with the old
-spindle, so the commanded XY is the tip XY (deck_cal pipette_offset 0,0,0). The tip end is 55 mm above the
-deck at z=0 (twin SAFE_H). The head meshes come from hardware/tool-head/twin (python -m syrhead.build), modelled at pos 0.
+The syringe head (hardware/tool-head, build123d) sits in the 42 mm spindle holder, on the spindle axis, so the
+commanded XY is the tip XY (deck_cal pipette_offset 0,0,0). The tip end is 55 mm above the deck at z=0 (twin SAFE_H).
+The head meshes come from hardware/tool-head/twin (python -m syrhead.build), modelled at pos 0.
 
 This file models in (X = machine x - 150, Y = up, Z = machine y - 90): machine coordinates with Y/Z relabelled,
 which three.js shows mirrored (the twin's convention). The head frame (machine axes) maps by the same relabel.
 
 Run (after `python -m syrhead.build` in hardware/tool-head has written twin/), from this directory:
-      uv run --python 3.12 --with build123d --with trimesh --with matplotlib --with numpy \
+      uv run --python 3.12 --with build123d --with trimesh --with numpy \
         --with networkx --with lxml python cnc3018.py
-Writes ../../apps/console/models/cnc3018.glb + syringe_rig.json and renders/*.png (NORENDER=1 skips them).
+Writes ../../apps/console/models/cnc3018.glb + syringe_rig.json.
 """
-import json, math, os, shutil
+import json, math, os
 import numpy as np
 import trimesh
 from trimesh.transformations import rotation_matrix as rotm, translation_matrix as trm
@@ -35,7 +35,6 @@ from build123d import (Box, Cylinder, Polygon, Rectangle, Circle, SlotOverall, P
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
-REN = os.path.join(HERE, "renders"); os.makedirs(REN, exist_ok=True)
 
 # ---------------- parameters ----------------
 FLOOR = -72.0                 # feet bottom
@@ -457,7 +456,7 @@ for g in ("gear_a", "gear_b", "gear_c"):
     ROT_AXIS[SY_NODE[g]] = np.eye(3)[k]
     _rig["nodes"][SY_NODE[g]] = {"prop": "rotation." + "xyz"[k],
                                  "per_mm": -float(np.sign(ax[k])) * math.radians(RIG["groups"][g]["deg_per_mm"])}
-# probe arm (TM-120 rev B): head rig = right-handed rotation by phi about axis_h through the pivot, phi = servo deg -
+# probe arm: head rig = right-handed rotation by phi about axis_h through the pivot, phi = servo deg -
 # modelled_deg. Under the reflection Th that is a rotation by -phi about Th axis_h = +phi about -Th axis_h.
 PR_ = RIG["groups"]["probe"]
 _ax = -(Th[:3, :3] @ np.array(PR_["axis"], float))
@@ -531,89 +530,3 @@ tot = sum(len(m.faces) for m in MER.values())
 print(f"GLB {os.path.getsize(glb)/1e6:.2f} MB, {tot} tris, {len(MER)} meshes")
 allv = np.vstack([m.vertices for m in MER.values()])
 print("bounds", allv.min(0).round(1), allv.max(0).round(1))
-
-# ================= renders (matplotlib, painter's sort, simple lambert + spec) =================
-import matplotlib; matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from matplotlib.collections import PolyCollection
-
-def posed(y=90, x=150, z=0, pos=0.0, probe_deg=None):
-    """vertices posed like the twin does it; pos = plunger height above the bottomed stopper (mm); probe_deg = probe
-    servo command (None: as modelled, deployed)."""
-    off = {"cnc_base": [0, 0, 0], "cnc_y_bed": [0, 0, -(y - 90)], "cnc_x_carriage": [x - 150, 0, 0]}
-    off["cnc_z"] = [x - 150, z, 0]
-    out = []
-    for key, m in MER.items():
-        n, mat = key[0], key[1]
-        V = m.vertices
-        o = off.get(n, off["cnc_z"])
-        if n == "syringe_carriage":
-            V = V + np.array([0, pos, 0])
-        elif n.startswith("syringe_gear_"):
-            V = trimesh.transform_points(V, NODE_M[n] @ rotm(_rig["nodes"][n]["per_mm"] * pos, ROT_AXIS[n]))
-        elif n == "probe_arm":
-            P = _rig["probe"]
-            d = (P["modelled_deg"] if probe_deg is None else max(P["min"], min(P["max"], probe_deg))) - P["modelled_deg"]
-            V = trimesh.transform_points(V, NODE_M[n] @ rotm(math.radians(d), P["axis"]))
-        elif n in NODE_M and n != "syringe_head":
-            V = trimesh.transform_points(V, NODE_M[n])
-        out.append((V + np.array(o), m.faces, mat))
-    return out
-
-
-def render(path, items, azim, elev, zoom=1.0, center=None, size=(12, 9), dpi=130, fov_pad=1.05):
-    a, e = math.radians(azim), math.radians(elev)
-    # camera looks from direction d (Y up)
-    d = np.array([math.cos(e) * math.sin(a), math.sin(e), math.cos(e) * math.cos(a)])
-    right = np.cross([0, 1, 0], d); right /= np.linalg.norm(right)
-    up = np.cross(d, right)
-    light = np.array([0.35, 0.85, 0.4]); light /= np.linalg.norm(light)
-    fill = -d * 0.5 + np.array([0, 0.3, 0])
-    polys, cols, depth = [], [], []
-    for V, F, mat in items:
-        if center is not None:
-            pass
-        c, met, rough = MAT[mat]
-        base = np.array([int(c[i:i + 2], 16) for i in (1, 3, 5)]) / 255
-        tri = V[F]
-        n = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
-        ln = np.linalg.norm(n, axis=1); ok = ln > 1e-9
-        tri, n = tri[ok], n[ok] / ln[ok, None]
-        facing = (n @ d) > -0.02
-        tri, n = tri[facing], n[facing]
-        lam = np.clip(n @ light, 0, 1)
-        h = (light + d); h /= np.linalg.norm(h)
-        spec = np.clip(n @ h, 0, 1) ** (8 + 60 * (1 - rough))
-        amb = 0.38 + 0.12 * n[:, 1]
-        k = amb + 0.62 * lam
-        col = base[None] * k[:, None] * (1 - 0.35 * met) + (0.25 + 0.6 * met) * (1 - rough) * spec[:, None]
-        col += met * 0.10 * (0.6 + 0.4 * n[:, 1:2])  # fake environment for metals
-        col = np.clip(col, 0, 1)
-        P2 = np.stack([tri @ right, tri @ up], axis=-1)
-        polys.append(P2); cols.append(col); depth.append((tri @ d).mean(1))
-    P = np.concatenate(polys); C = np.concatenate(cols); D = np.concatenate(depth)
-    o = np.argsort(D)
-    fig = plt.figure(figsize=size, dpi=dpi); ax = fig.add_axes([0, 0, 1, 1])
-    fig.patch.set_facecolor("#F4F5F7"); ax.set_facecolor("#F4F5F7")
-    pc = PolyCollection(P[o], facecolors=C[o], edgecolors=C[o], linewidths=0.15, antialiaseds=True)
-    ax.add_collection(pc)
-    if center is None:
-        lo, hi = P.reshape(-1, 2).min(0), P.reshape(-1, 2).max(0); cx, cy = (lo + hi) / 2; half = max(hi - lo) / 2 * fov_pad / zoom
-    else:
-        cc = np.array(center, float); cx, cy = cc @ right, cc @ up; half = 120 / zoom
-    asp = size[0] / size[1]
-    ax.set_xlim(cx - half * asp, cx + half * asp) if asp > 1 else ax.set_xlim(cx - half, cx + half)
-    ax.set_ylim(cy - half, cy + half) if asp > 1 else ax.set_ylim(cy - half / asp, cy + half / asp)
-    ax.set_aspect("equal"); ax.axis("off")
-    fig.savefig(path, facecolor=fig.get_facecolor()); plt.close(fig)
-    print("wrote", path)
-
-if os.environ.get("NORENDER") != "1":
-    it = posed(y=60, x=110, z=-10, pos=RIG["stroke_mm"] * 0.45)
-    render(os.path.join(REN, "cnc3018_iso.png"), it, azim=-145, elev=26)
-    render(os.path.join(REN, "cnc3018_front.png"), it, azim=180, elev=8)
-    render(os.path.join(REN, "cnc3018_syringe_head.png"), it, azim=-130, elev=14, zoom=0.85,
-           center=(-40, 190, -25))
-    it = posed(y=60, x=110, z=-10, pos=RIG["stroke_mm"] * 0.45, probe_deg=_rig["probe"]["retracted_deg"])
-    render(os.path.join(REN, "cnc3018_syringe_head_probe_retracted.png"), it, azim=-130, elev=14, zoom=0.85,
-           center=(-40, 190, -25))

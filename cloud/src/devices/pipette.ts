@@ -1,13 +1,12 @@
-// Syringe pipette on hub channel 0 (FS90R continuous servo -> 12:1 gear train -> rack -> plunger), ported from the
-// bridge's dead-reckoning Syringe. A continuous servo has no position feedback: the pulse width sets SPEED. Position
-// is dead-reckoned from calibrated plunger speeds, re-zeroed by `home` (drive into the bottom stop; the firmware ends
+// Syringe pipette on hub channel 0 (FS90R continuous servo -> 12:1 gear train -> rack -> plunger). A continuous
+// servo has no position feedback: the pulse width sets SPEED. Position is dead-reckoned from calibrated plunger speeds, re-zeroed by `home` (drive into the bottom stop; the firmware ends
 // the drive early when the `syr_home` switch closes) and corrected by `observe`. Timed drives use the firmware's
 // `pulse {ch, us, ms}`, so their length does not depend on network latency; the firmware returns the channel to its
 // rest_us (neutral) when the hold ends. pos_mm = plunger height above its lowest point.
 import { CommandError } from "../hub";
 import { Logical, sleep } from "./base";
 
-// defaults for cal:pipette (formerly the bridge's calib/syringe.json)
+// defaults for cal:pipette
 export const PIPETTE_DEFAULTS = {
   ch: 0,
   neutral_us: 1500,         // servo stops here

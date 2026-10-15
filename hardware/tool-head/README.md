@@ -1,9 +1,9 @@
-# 3018 tool head (v2): 12:1 geared syringe + tool rail (microscope, servo-deployed capacitive probe), every printed part support-free
+# 3018 tool head: 12:1 geared syringe + tool rail (microscope, servo-deployed capacitive probe), every printed part support-free
 
 ![head on the 3018](renders/studio_front_left.png)
 
 This head replaces the 3018's spindle motor. A disposable 12 mL luer-slip syringe sits in the 3018's motor holder
-(Ø42.0 × 34), coaxial with the old spindle. A turned adapter carries a 200 µL tip on the syringe's luer nozzle. A
+(Ø42.0 × 34), on the spindle axis. A turned adapter carries a 200 µL tip on the syringe's luer nozzle. A
 continuous-rotation FS90R servo drives the plunger through a **12.01:1 printed gear train** and a rack on a carriage
 that **slides on its own back** against a rib right behind the mesh (no purchased guide). A **tool rail** on the front of the head takes
 interchangeable modules: a **USB microscope** and a **capacitive liquid-level probe** that a 9 g servo swings down
@@ -56,14 +56,14 @@ z-stack (bottom -> top)
 | pressure angle | 25° throughout (12T pinions mesh with 49T and the rack without undercut interference) |
 | contact ratios | 1.38 (G1/G2), 1.36 (G3/G4), 1.42 (G5/rack), including the 0.08 mm backlash centre-distance offset |
 | guide | the rack's back: a 90° V-groove on a V-ridge of gear plate 1, directly behind the mesh, 0.15 mm clearance |
-| tools | syringe (tool 0, on the spindle axis); TM-110 USB microscope (lens at x −16, y −63, **52 mm** above the tip end); TM-120 rev B capacitive probe (deployed electrode tip at x 9.5, y −47.5, level with the tip end) |
+| tools | syringe (tool 0, on the spindle axis); TM-110 USB microscope (lens at x −16, y −63, **52 mm** above the tip end); TM-120 capacitive probe (deployed electrode tip at x 9.5, y −47.5, level with the tip end) |
 | probe arm | SG90 on PCA9685 ch 1; swings **150°** about an X axis 70 mm above the electrode tip; deployed on a hard stop (servo 15°, stop met at 18°), retracted at 168° |
 | home switch | `syr_home` lever microswitch, closed by the carriage ~0.5 mm before the stopper bottoms |
 | tip height | tip end **55.0 mm** above the bed at CNC z = 0 (3.8 mm over the beaker rims of [`../deck`](../deck)) |
 | tip XY | on the spindle axis: `deck_cal` `pipette_offset` = 0, 0, 0 |
 | envelope | x −37 … +65 (servo), y −80 (microscope; −87 with the probe retracted) … +25, z −110 (tip, deployed electrode) … +134 from the holder's top face |
 
-## The probe arm (TM-120 rev B)
+## The probe arm (TM-120)
 
 | deployed | retracted |
 |---|---|
@@ -89,10 +89,9 @@ so its stray capacitance and the TTP223's baseline do not change when the arm sw
 is the **3-core silicone cable** (GND, 5 V, OUT), as a ~40 mm slack loop in front of the hub; it is not
 capacitance-sensitive. Note the TTP223 calibrates its baseline at power-up: power it with the electrode in air.
 
-**Probe position (rail index 11, electrode at x 9.5, y −47.5 from the tip).** Rev A put the electrode at (11, −42.5).
-The electrode and the syringe tip are level, so while the probe goes down into a beaker the tip goes down beside it.
-At (11, −42.5) the tip lands 1.5 mm from the next beaker's wall (it reaches only ~18 mm below the rims). At
-(9.5, −47.5) ≡ (+9.5, +9.5) mod the 19 mm pitch, the tip falls in the gap between four beakers (5.8 mm from each wall),
+**Probe position (rail index 11, electrode at x 9.5, y −47.5 from the tip).** The electrode and the syringe tip are
+level, so while the probe goes down into a beaker the tip goes down beside it. At (9.5, −47.5) ≡ (+9.5, +9.5) mod the
+19 mm pitch, the tip falls in the gap between four beakers (5.8 mm from each wall),
 or outside the matrix for rows E–F, so the probe can go down to **23.8 mm above the bed** (`tools.json`
 `probe_floor_h`: 2 mm over the holder top and labels). Liquid below that cannot be probed (it can still be pipetted).
 
@@ -114,7 +113,7 @@ The hub's pin map is in [`../electronics`](../electronics).
 ## Deck clearance (worst cases)
 
 `python -m syrhead.build` checks every head module against the deck labware of [`../deck`](../deck) (`deck` rows in
-`report.json`, 0.5 mm height maps, ≥ 2 mm required):
+`build/report.json`, 0.5 mm height maps, ≥ 2 mm required):
 
 | case | head | adapter | TM-110 microscope | TM-120 probe |
 |---|---|---|---|---|
@@ -123,10 +122,7 @@ The hub's pin map is in [`../electronics`](../electronics).
 | probing every beaker down to 23.8 above the bed | 39.2 (tip: 2.0 over the holder) | | 18.8 | 2.6 (arm over the rim; deployed) |
 | travel at CNC z 0, over the 57 mm tip rims | 54.8 | | 50.0 | 54.5 retracted / 28.0 deployed |
 
-Fixes made: the microscope was raised 27 mm (lens 25 → 52 mm above the tip end). At 25 mm its lens reached 35 mm above
-the bed with the tip at its deepest: 16 mm into the beakers whenever it was over the matrix (rows D–F), 22 mm into the
-tip rack. Rev A's fixed probe sat level with the tip: anywhere over the matrix with the tip down it went into a beaker
-or onto the holder. Both now clear by ≥ 5 mm. Still open (deck layout, [`../deck`](../deck)): the syringe tip and the
+Still open (deck layout, [`../deck`](../deck)): the syringe tip and the
 deployed electrode end 55 mm above the bed at z 0, below the 57 mm rims of the tips standing in the rack. The tip
 rack's lid as `deck.py` models it (folded back, standing 127 mm high) is taller than everything at z 0: nothing can
 pass over it, and with the tip in a column-1 beaker at z −45 the head body clears it by 0.2 mm and the microscope hits
@@ -150,12 +146,12 @@ than 45°.
 | `SYR-111` G2/G3 | G2 on the bed | G3 stands straight on G2's face (no neck); one Ø6 bore with a bearing pressed flush into each end |
 | `SYR-112` G4/G5 | G4 on the bed | G5 stands straight on G4's face (no neck); same bore |
 | `TM-110` microscope module | on its side | saddle, arm and two 90° V-cradles are one side profile; cable-tie tunnels run along X |
-| `TM-120` rev B probe bracket | on its +X face (servo plate on the bed) | saddle, SG90 plate (cut-out and tab slots along Z of the print), deployed stop; index-screw hole is a teardrop |
+| `TM-120` probe bracket | on its +X face (servo plate on the bed) | saddle, SG90 plate (cut-out and tab slots along Z of the print), deployed stop; index-screw hole is a teardrop |
 | `TM-122` probe arm | on its −X face | horn pocket and TTP223 pocket open upward, diamond (45°) electrode bore, pinch slit open at the top, teardrop pinch-screw holes |
-| `TM-121` rev B probe lid | flat | |
+| `TM-121` probe lid | flat | |
 
-PLA (or PETG), 0.2 mm layers, 0.4 mm nozzle, 6 walls on the gears and the carriage. `plate_fdm_*.3mf` hold every
-part except the body, which prints alone, packed onto 220 × 220 plates.
+PLA (or PETG), 0.2 mm layers, 0.4 mm nozzle, 6 walls on the gears and the carriage. Build plates and G-code for every
+part: [`../print`](../print).
 
 ## Parts
 This is a summary. [`bom.csv`](bom.csv) has the full list with quantities, vendors and costs.
@@ -180,12 +176,11 @@ This is a summary. [`bom.csv`](bom.csv) has the full list with quantities, vendo
   only.
 - `TM-110` **microscope module**: saddle, arm and two V-cradles for the generic Ø33 "1000x 8-LED" USB microscope,
   held by 2× 200 mm cable ties through tunnels in the arm. The lens front sits 58 mm below the holder top, which is
-  52 mm above the syringe tip (raised from 25 mm: see [Deck clearance](#deck-clearance-worst-cases)).
-- `TM-120` rev B **capacitive probe** (see [The probe arm](#the-probe-arm-tm-120-rev-b) above): `TM-120` bracket
+  52 mm above the syringe tip (see [Deck clearance](#deck-clearance-worst-cases)).
+- `TM-120` **capacitive probe** (see [The probe arm](#the-probe-arm-tm-120) above): `TM-120` bracket
   (rail saddle, SG90 plate, deployed hard stop), `TM-122` arm and `TM-121` lid. The arm carries a TTP223 touch module
   in a pocket, its pad wired (`SYR-312`, 25 mm) to a Ø2 × 48 stainless electrode (`SYR-311`) pinched in the arm's
-  foot (M2×12 across a slit). Rev A (a fixed probe hanging level with the tip) is superseded: it could not stay out
-  of the beakers while pipetting.
+  foot (M2×12 across a slit).
 - `SYR-250` **`syr_home` microswitch**: a subminiature hinge-lever switch (Omron D2F-01L class / "KW10",
   12.8 × 5.8 × 6.5, 2 × Ø2.1 holes on 6.5) on a boss at the mid body's −X edge (2× M2×10 into inserts). A finger on
   the carriage presses its lever 0.5 mm past the operating point at pos 0, so it closes about 0.5 mm before the
@@ -246,14 +241,15 @@ This is a summary. [`bom.csv`](bom.csv) has the full list with quantities, vendo
     wrap and solder the lead to its top, and fit the lid (M2×6). With the arm on the stop, slide the electrode until
     its tip is level with the syringe tip and pinch it (M2×12). Leave a 40 mm slack loop of the 3-core cable in
     front of the hub, then tie it with the servo lead on the plate's +X face (100 mm tie).
-13. **Calibrate.** Follow [`../../bridge/README.md`](../../bridge/README.md): neutral, direction, speed, backlash and
-    volume. Then teach the deck ([`../deck`](../deck)) and the tool offsets: jog the microscope or the probe over a
+13. **Calibrate.** Set the pipette's neutral, direction, speed, backlash and volume gain (`cal:pipette`) and the
+    probe's angles (`cal:probe`) through `/api/cal/{pipette|probe}` ([`docs/architecture.md`](../../docs/architecture.md#8-calibration)).
+    Then teach the deck ([`../deck`](../deck)) and the tool offsets: jog the microscope or the probe over a
     mark, then the syringe tip over the same mark (`deck_cal` `tools`).
 
 ## Checks
 The build fails if any of these checks fails.
 
-**`python -m syrhead.build`** (pure build123d; also runs in CI) writes `report.json`:
+**`python -m syrhead.build`** (pure build123d) writes `build/report.json`:
 - **spec:** tip height, ratio, mm per servo radian, stroke volume, contact ratios, rack coverage of the stroke with
   ±1.5 pitch, and jaw clearance above the flange clamp.
 - **print:** every FDM part in its print orientation needs no support (above).
@@ -270,7 +266,7 @@ The build fails if any of these checks fails.
     head's width.
 
 **microfab checks** (optional: `python -m syrhead.check_mf` with microfab's venv, or `python -m syrhead.build
---mf-checks`, which skips them when the bundle is missing; results in [`mf_checks.json`](mf_checks.json)):
+--mf-checks`, which skips them when the bundle is missing; results in `build/mf_checks.json`):
 - static interference of every pair;
 - fastener stacks: clearance, receiver tap or insert, thread engagement ≥ 1 d, head seating;
 - every hole has a fastener or a declared purpose;
@@ -291,7 +287,7 @@ The build fails if any of these checks fails.
 | path | |
 |---|---|
 | `step/` | STEP for every make part, plus `syringe_head_assembly.step` (all parts at pos 0) |
-| `stl/` | FDM parts in print orientation; `plate_fdm_*.3mf` hold them on 220 × 220 plates (the body prints alone) |
+| `stl/` | FDM parts in print orientation (packed onto plates in [`../print`](../print)) |
 | `bom.csv` | bill of materials, rolled up by product |
 | `tools.json` | tool offsets from the syringe tip (pipette, microscope, probe) + the tool-rail index positions |
 | `twin/` | meshes per motion group and finish (printed parts one mesh each, with `print_up`), and `rig.json` (pivots, motion per mm, the probe arm's axis / pivot / servo angles), for `../cnc3018` and the web twin |
@@ -317,19 +313,18 @@ $MF -m syrhead.render --quality final        # studio (probe deployed + retracte
   - Measured: barrel OD 20.2 and length 80, and the motor holder (Ø42.0 × 34).
   - To measure: bore (17.8 assumed), flange 34×24×2.2, disc Ø20×2, rod span 15, and the stopper-bottomed disc height (8).
 - **Force.** At full duty, the FS90R's stall torque × 12 ÷ 6 mm is about 280 N at the rack. That is more than the
-  printed m1 teeth (≈ 100 N for PETG, 6 mm face) or the syringe should see. The bridge homes at 12 % duty and moves at
-  25 %. Keep the servo current-limited, or add a slip clutch, before running unattended.
+  printed m1 teeth (≈ 100 N for PETG, 6 mm face) or the syringe should see. The cloud's pipette driver homes at 12 %
+  duty and moves at 25 % (`PIPETTE_DEFAULTS`). Keep the servo current-limited, or add a slip clutch, before running unattended.
 - **FDM tolerances.** Bearing bores, dowel seats and insert holes are modelled at their nominal sizes (press fits).
   Print a test coupon for your printer and adjust `parts.py` (`M2_INSERT`, `M3_INSERT`, `PIN_SLIP`, `S.brg_D`).
 - **Tip pick-up** does not fit the 3018's 45 mm of Z with a standard rack: see [`../deck`](../deck).
 - **Microscope dimensions** are a representative model of the generic "1000x 8-LED" USB microscope (Ø33 body, about
   118 mm long). Measure yours and update `tools.MIC` before printing TM-110.
 - **Probe arm, to verify on hardware:** the SG90's direction (if increasing pulse turns it the other way, mount the
-  horn so the arm hangs straight down at 162° and swap `deployed_deg` / `retracted_deg` to 165 / 12 in
-  `calib/tools.json`), the stop angle, and the TTP223 sensitivity with a 48 mm electrode and the 3-core cable
+  horn so the arm hangs straight down at 162° and set `deployed_deg` / `retracted_deg` to 165 / 12 in `cal:probe`),
+  the stop angle, and the TTP223 sensitivity with a 48 mm electrode and the 3-core cable
   (the module's sensitivity capacitor may need changing for liquids in PP beakers).
 - **syr_home switch dimensions** are a representative D2F / KW10 class; measure the hole height and operating
   point of yours and update `vendor.SW`.
 - **More modules.** A second syringe module, a light or a stirrer reuse `tools.module_plate`. Add an entry to
-  `tools.TOOLS` for its tool point. The bridge already takes extra syringes from `calib/tools.json` (id + PCA9685
-  channel).
+  `tools.TOOLS` for its tool point.

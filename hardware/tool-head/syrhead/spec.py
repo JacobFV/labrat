@@ -1,11 +1,11 @@
-"""Design parameters for the 3018 syringe head (v2) and the layout derived from them.
+"""Design parameters for the 3018 syringe head and the layout derived from them.
 
 Frame (the head frame): machine axes, millimetres. +X = machine +X (operator's right), +Y = machine +Y (toward the
 gantry / Z plate), +Z up. Origin = syringe axis on the plane of the spindle clamp's TOP face (the body's seat ring
 sits on it). The CNC moves the spindle clamp, so this frame moves with machine Z; at CNC z = 0 the clamp top is
 165 mm above the bed (hardware/cnc3018/cnc3018.py: HOLDER_Y[1]).
 
-Architecture (v2, every part printable without supports):
+Architecture (every part printable without supports):
     z-stack:  plug (Ø42 x 34, in the spindle clamp)  ->  rectangular mid body (syringe barrel inside)  ->  top section
     top section, an x-stack:  carriage + plunger | gear plate 1 (+ the rack's guide rib) | gears | gear plate 2 | servo
 Gear axes run along +X. The carriage is an L: jaw (thumb disc) + bottom arm (through a window in gear plate 1) + rack

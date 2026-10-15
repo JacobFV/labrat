@@ -1,4 +1,4 @@
-"""TM-120 rev B: servo-deployed capacitive liquid-level probe on the tool rail.
+"""TM-120: servo-deployed capacitive liquid-level probe on the tool rail.
 
 A positional SG90 (9 g) servo swings an ARM that carries the Ø2 stainless electrode and the TTP223 touch module
 between DEPLOYED (arm hanging straight down, electrode tip level with the syringe tip end) and RETRACTED (arm swung
@@ -18,9 +18,9 @@ lead that crosses the joint is the 3-core supply / output cable (GND, 5 V, OUT),
 front of the hub; it is not capacitance-sensitive.
 
 Parts (all modelled in the HEAD frame, at rail index x = 11):
-  TM-120 rev B  bracket: rail saddle + servo plate (SG90 by its tabs, 2x M2x8 + nuts) + the deployed hard stop
+  TM-120  bracket: rail saddle + servo plate (SG90 by its tabs, 2x M2x8 + nuts) + the deployed hard stop
   TM-122        probe arm: horn pocket + M2x16 to the spline, TTP223 pocket, electrode bore with an M2 pinch clamp
-  TM-121 rev B  TTP223 lid on the arm (1x M2x6 into an insert)
+  TM-121  TTP223 lid on the arm (1x M2x6 into an insert)
 
 Kinematics: the arm (motion group ``probe``) turns about machine +X through PIVOT by -phi (phi = 0 deployed .. SWING
 retracted): the electrode end swings forward (-Y) and up. Servo command deg = STOP_DEG + phi (STOP_DEG = contact).
@@ -94,7 +94,7 @@ def _yz(x, normal=+1):
 
 
 # =====================================================================================================================
-# TM-120 rev B bracket
+# TM-120 bracket
 # =====================================================================================================================
 def bracket():
     """rail saddle (x 4 .. 23.9) + servo plate and web (x 20.4 .. 23.9) + the deployed stop (x 4 .. 23.9). Head frame.
@@ -212,7 +212,7 @@ def arm_holes():
 
 
 def lid():
-    """TM-121 rev B TTP223 lid on the arm's +X face (head frame, deployed). Prints flat."""
+    """TM-121 TTP223 lid on the arm's +X face (head frame, deployed). Prints flat."""
     from .parts import chamfer_all, drill
     x0, x1 = LID["x"]
     b = chamfer_all(Solid.make_box(x1 - x0, LID["y"][1] - LID["y"][0], LID["z"][1] - LID["z"][0],

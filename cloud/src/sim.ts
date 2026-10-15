@@ -11,7 +11,7 @@ export const TIP_RACK: Grid = { name: "tip_rack", origin: [17.0, 19.25], pitch: 
 export const PLATE: Grid & { cap_ul: number } = { name: "plate", label: "beaker", origin: [153.25, 32.0], pitch: 19.0, rows: 6, cols: 7, cap_ul: 5000.0 };
 const STOCK_X = PLATE.origin[0] + 7 * PLATE.pitch;
 export const RESERVOIRS: Record<string, [number, number]> = { water: [STOCK_X, 32.0], red: [STOCK_X, 51.0], yellow: [STOCK_X, 70.0], blue: [STOCK_X, 89.0] };
-export const RES_CAP_UL = 5000.0, RES_FILL_UL = 4500.0;
+export const RES_FILL_UL = 4500.0;
 export const WASTE: [number, number] = [280.0, 170.0];
 export const EJECT_BAR: [number, number] = [10.0, 170.0];
 // Z table (spindle z, 0 = top). Tip end at z = 0 is 55 mm above the bed; beaker rims are at 51.2. Dispense 5 mm

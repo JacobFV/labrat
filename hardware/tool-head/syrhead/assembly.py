@@ -356,7 +356,7 @@ def build() -> Head:
 
 
 def tool_modules(H, buy, insert):
-    """tool rail modules: TM-110 USB microscope (tools.py) and TM-120 rev B servo-deployed capacitive probe
+    """tool rail modules: TM-110 USB microscope (tools.py) and TM-120 servo-deployed capacitive probe
     (probe.py), at their rail index; plus the syr_home microswitch on the body."""
     def mpt(x, p):
         q = TL.station_loc(x) * Location(p)
@@ -365,14 +365,14 @@ def tool_modules(H, buy, insert):
     H.add_part(PartDef("TM-110", "tool module: USB microscope cradle", "make", "petg_print", "fdm_print",
                        TL.microscope_module, "fixture", holes=tuple(TL.microscope_module_holes()),
                        notes="on its side (module +X up), no supports; slides on the tool rail, 1x M3x10 at an index"))
-    H.add_part(PartDef("TM-120", "probe bracket rev B (rail saddle + SG90 plate + deployed stop)", "make", "petg_print",
+    H.add_part(PartDef("TM-120", "probe bracket (rail saddle + SG90 plate + deployed stop)", "make", "petg_print",
                        "fdm_print", PR.bracket, "fixture", holes=tuple(PR.bracket_holes()),
-                       notes="rev B (servo-deployed arm; rev A was a fixed probe). On its +X face (servo plate on the "
+                       notes="Servo-deployed arm. On its +X face (servo plate on the "
                              "bed), no supports; slides on the tool rail, 1x M3x10 at x = 11"))
     H.add_part(PartDef("TM-122", "probe arm (electrode + TTP223, on the SG90 horn)", "make", "petg_print", "fdm_print",
                        PR.arm, "motion", finish="syr_petg_orange", holes=tuple(PR.arm_holes()),
                        notes="on its -X face (horn + TTP223 pockets up), no supports; electrode pinched by 1x M2x12"))
-    H.add_part(PartDef("TM-121", "probe lid rev B (TTP223 cover on the arm)", "make", "petg_print", "fdm_print", PR.lid,
+    H.add_part(PartDef("TM-121", "probe lid (TTP223 cover on the arm)", "make", "petg_print", "fdm_print", PR.lid,
                        "motion", finish="syr_petg_orange", notes="flat, no supports; 1x M2x6"))
     buy("SYR-300A", "USB digital microscope housing", TL.mic_body, "abs_black", "generic (Jiusion / DEPSTECH / Mustool)",
         "1000x 8-LED USB digital microscope", 18.0, category="electrical",

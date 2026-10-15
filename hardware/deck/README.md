@@ -2,7 +2,7 @@
 
 [`deck.py`](deck.py) (build123d) holds the deck layout and is the source of truth for it. It writes `deck.json`, which
 the simulator, the twin and the renders all use. It also models the printed beaker matrix and the labware, and checks
-whether the head can reach everything with the 3018's Z travel ([`report.json`](report.json)).
+whether the head can reach everything with the 3018's Z travel (`build/report.json`).
 
 ```bash
 cd hardware/deck
@@ -37,7 +37,7 @@ The tip end is 55 mm above the bed at z = 0, which is 3.8 mm above the beaker ri
 above the bed (Z travel 45). That means the tip reaches liquid only while a beaker holds about 1.23 mL or more.
 
 ## Reach report: tip pick-up does not fit
-`report.json` finds two failures with the FT-200L-RS on the bed:
+`build/report.json` finds two failures with the FT-200L-RS on the bed:
 
 - **Seating a tip** needs z = −49.5. The adapter cone is 101.3 mm above the bed at z = 0 and has to reach 5.2 mm below
   the tip rims (57 mm, assumed), but Z stops at −45.
@@ -55,7 +55,7 @@ simulator uses Z_TIP = −45 (the travel limit), and teaching `tip_rack` points 
 ## Open issue: tip-rack height (measure before the first run)
 
 `TIPRACK["rim_h"]` (57 mm, tip rims above the bed) is an assumption. With it, the tool-head build
-(`hardware/tool-head/report.json`, `deck` rows) finds the syringe tip and the deployed probe electrode 2 mm *below* the
+(`hardware/tool-head/build/report.json`, `deck` rows) finds the syringe tip and the deployed probe electrode 2 mm *below* the
 tip rims at CNC z 0, so travel over a full rack would hit tips, and the rack lid modelled upright behind the rack
 (127 mm) cannot be passed over at all. Measure the real rim height; if it is really 57 mm, lower the rack (drop its
 riser / sink it into the bed slot) or remove the lid before running, then rebuild the tool head to refresh the checks.

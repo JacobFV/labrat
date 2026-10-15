@@ -152,7 +152,6 @@ def jobs(quality):
         "studio_back": dict(pose=(-25, -12), eye=(-560, 880, H + 160), target=(0, 0, H * 0.6), lens=50),
         "detail_head": dict(pose=(30, -48), eye=(-330, -380, H + 190), target=(0, 0, H - 30), lens=60),
         "detail_tilt_servo": dict(pose=(0, -20), eye=(430, -260, H + 120), target=(40, 0, H - 30), lens=60),
-        "detail_turntable": dict(pose=(0, -20), eye=(300, -340, SP.Z_TH + 140), target=(0, 0, SP.Z_TH - 25), lens=70),
         "section_turntable": dict(pose=(0, -20), eye=(-470, -120, SP.Z_TH + 70), target=(0, 0, SP.Z_TH - 28), lens=95,
                                   section=0.0),
         "detail_clamp": dict(pose=(0, 0), eye=(-90, -260, H + 60), target=(0, 0, H), lens=60, groups=("tilt", "clamp"),

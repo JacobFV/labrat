@@ -29,7 +29,7 @@
   },
   "probe": {
    "kind": "cap_probe",
-   "module": "TM-120 rev B",
+   "module": "TM-120",
    "offset": [
     9.5,
     -47.5,

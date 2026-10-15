@@ -5,9 +5,9 @@ that tie the deck heights to the syringe head and the 3018's Z travel.
     cd hardware/deck && uv run --python 3.12 --with build123d==0.13.0 --with bd_warehouse==0.4.0 --with trimesh \
         --with numpy --with pyyaml python deck.py
 
-Writes deck.json (layout + heights, read by cloud/src/sim.ts (checked in cloud/test/sim.test.ts) and the twin), report.json (reach checks), step/, stl/.
+Writes deck.json (layout + heights, read by cloud/src/sim.ts (checked in cloud/test/sim.test.ts) and the twin), build/report.json (reach checks), step/, stl/.
 Frame: machine deck coordinates, mm. x right 0..300, y back 0..180, z up from the bed top. Grid positions are the
-commanded spindle XY (the syringe head is coaxial with the old spindle: deck_cal pipette_offset 0, 0, 0).
+commanded spindle XY (the syringe tip is on the spindle axis: deck_cal pipette_offset 0, 0, 0).
 """
 from __future__ import annotations
 
@@ -261,7 +261,8 @@ def main():
     }
     (HERE / "deck.json").write_text(json.dumps(layout, indent=1))
     rows = reach_checks()
-    (HERE / "report.json").write_text(json.dumps({"checks": rows, "holder_volume_cm3": round(part.volume / 1000, 1)},
+    (HERE / "build").mkdir(exist_ok=True)
+    (HERE / "build" / "report.json").write_text(json.dumps({"checks": rows, "holder_volume_cm3": round(part.volume / 1000, 1)},
                                                  indent=1))
     for r in rows:
         print(("ok  " if r["ok"] else "OPEN" if r["open"] else "FAIL"), r["name"], "|", r["value"], "|", r["need"], "|",

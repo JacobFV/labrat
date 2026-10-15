@@ -49,29 +49,17 @@ def V(eye, target, lens=50.0, fstop=None):
 # head frame, mm. Operator stands at -Y; +X right.
 BENCH = {   # head on the 3018, bench context (tip rack left of the head, beaker matrix right)
     "bench_full":      V((-560, -1050, 430), (60, 60, -70), 35),
-    "bench_deck":      V((-120, -430, 60), (20, 40, -130), 35),
     "head_on_machine": V((-280, -440, 170), (15, -10, 40), 40),
-    "head_tip":        V((110, -190, -60), (0, 0, -85), 50),
 }
-STUDIO = {  # head alone (no machine): every part visible
+STUDIO = {  # head alone (no machine)
     "studio_front_left":  V((-320, -450, 170), (15, -10, 45), 40),
-    "studio_gearbox":     V((300, -330, 200), (34, -12, 88), 50),
-    "studio_servo_side":  V((420, 160, 150), (48, -10, 85), 50),
-    "studio_rear_left":   V((-300, 260, 170), (0, 0, 50), 42),
-    "studio_carriage":    V((-150, -190, 150), (0, 0, 72), 60),
-    "studio_tip":         V((70, -130, -50), (0, 0, -75), 60),
-    "studio_tool_rail":   V((150, -330, 30), (-8, -45, -35), 45),
     "studio_probe":       V((260, -210, -30), (12, -50, -72), 50),
-    "studio_home_switch": V((-150, -120, 110), (-20, -5, 46), 60),
 }
 STUDIO_RETRACTED = {   # same head, probe arm retracted (the pipetting state)
-    "studio_front_left_retracted": STUDIO["studio_front_left"],
-    "studio_tool_rail_retracted":  STUDIO["studio_tool_rail"],
     "studio_probe_retracted":      V((260, -230, 10), (12, -62, -38), 50),
 }
 BENCH_PROBING = {      # probing a beaker: arm deployed, electrode on the liquid in B8 (head frame: CNC at PROBE_CNC)
     "bench_probing": V((130, -260, -40), (9.5, -47.5, -105), 45),
-    "bench_probing_wide": V((-200, -420, 60), (0, -30, -90), 35),
 }
 PROBE_CNC = [0.0, 0.0, 0.0]
 

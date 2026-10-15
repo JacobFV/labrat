@@ -42,20 +42,8 @@ closed with 4401.
 
 ## 3. Inside the Durable Object
 
-`cloud/src/`:
-
-| file | what |
-|---|---|
-| `do.ts` | the `Lab` DO: hibernatable WebSockets tagged `ui` / `phone` / `bridge`, the REST route table, boot (deck cal, colour model, logical-device cal and state, agent history, event trim), device events (e-stop, watchdog) |
-| `hub.ts` | providers, routing each command to the provider that announced the device most recently, pending commands with timeouts, UI / phone broadcast (devices throttled to 5 Hz), the latest phone frame, and the probe-arm interlock |
-| `devices/` | logical devices built on the provider's `hub` (§4) |
-| `agent.ts`, `llm.ts` | the agent (§5) and the Messages API over `fetch` |
-| `lab.ts` | experiments: create / edit / dry run / repeat, run (approval, step execution, abort), results, measure, CSV |
-| `sim.ts` | the digital twin (§6) |
-| `learn.ts` | the colour model (§7) |
-| `vision.ts` | camera homography, beaker sampling of phone JPEGs (`jpeg-js`), Claude-vision fallback; measures every beaker of a plate |
-| `deck_cal.ts`, `tooling.ts` | taught deck points and tool offsets; tool-rail moves (pipette / microscope / probe) |
-| `store.ts` | D1 access; `linalg.ts` small dense solver; `env.ts` `Env` and the shared `Ctx` |
+Source map: [`cloud/README.md`](../cloud/README.md). Requests reach the DO's route table (`do.ts`); `hub.ts` routes
+device commands to providers; `lab.ts` runs experiments on top of `sim.ts`, `learn.ts` and `vision.ts`.
 
 ### Providers
 
@@ -96,8 +84,16 @@ raw `line` passthrough). The DO adds three logical devices on top of `hub` (`clo
 after every action, and turns a firmware `ok:false` into an error. Calibration defaults live in the source and are
 overridden by the D1 `cal:<id>` rows (`/api/cal/{id}`).
 
-Safety rules enforced in `hub.cmd` (details in [protocol.md](protocol.md)): `cnc.probe` only with the probe arm
-deployed, the arm retracted after every probe and before any CNC command that can go below safe Z.
+Rules enforced in `hub.cmd` (details in [protocol.md](protocol.md)):
+
+- `cnc.probe` is refused unless the probe arm is deployed; the arm is retracted after every probe cycle.
+- Before any CNC command that can go below safe Z (`move` with `z < 0`, `jog` with `dz < 0`, any `gcode`) the arm is
+  retracted unless it is known to be retracted.
+- An experiment's photo step parks the head, runs `stand.look {at: "deck"}` (when a hub is connected), sends
+  `{"t":"snap"}` to the phones and waits for a frame newer than that.
+- A hub `estop` event aborts everything; `wd` / `boot` events make the drivers resend their channel `cfg`.
+
+`stand.look operator` turns the phone's screen (its face) toward the operator, so the camera points away from it.
 
 ## 5. Agent
 
@@ -186,6 +182,12 @@ empty beaker) or, without a camera calibration, by asking Claude for every beake
   commands, which fails the experiment.
 - **REST jog:** CNC only, ≤ 50 mm per axis.
 
+## 10. Running and configuration
+
+Commands: the [root README](../README.md#quickstart). Worker vars and secrets: [`cloud/README.md`](../cloud/README.md#run).
+The phone needs a secure context for camera, microphone and Web Bluetooth: `localhost` works on the laptop itself; a
+phone needs HTTPS (a deployed Worker, or a tunnel to `wrangler dev`).
+
 ## Endpoints
 
 Route table: `cloud/src/do.ts` (`routeTable`), reached through `cloud/src/index.ts`. Every route except `/healthz`
@@ -214,11 +216,3 @@ WebSockets ([protocol.md](protocol.md) §1–3): `/ws/ui`, `/ws/phone`, `/ws/bri
 | GET | `/api/camera_cal` | | the camera calibration, or `{corners:null}` |
 | POST | `/api/camera_cal` | `{corners, image_w, image_h}` | the stored calibration with its homography |
 | GET | `/api/camera_frame` | | the latest phone frame `{jpeg, w, h, ts}` (404 before the first) |
-
-## 10. Running and configuration
-
-Commands are in the [root README](../README.md#quickstart) and [`cloud/README.md`](../cloud/README.md).
-Configuration is Worker vars / secrets: `LABRAT_TOKEN` (default `labrat`), `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`
-(default `claude-sonnet-5-5`), `ANTHROPIC_BASE_URL`, `LABRAT_AUTO_APPROVE` (0), `LABRAT_AUTO_OBSERVE` (1: measure the plate after a run),
-`LABRAT_PHOTO_WAIT_S` (3). The phone needs a secure context for camera, microphone and Web Bluetooth: `localhost`
-works on the laptop itself; a phone needs HTTPS (a deployed Worker, or a tunnel to `wrangler dev`).

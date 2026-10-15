@@ -35,12 +35,12 @@ Full low-voltage wiring, pin map, BOM and power budget: [`../hardware/electronic
 | SO-101 `so_a`, `so_b` | Feetech/Waveshare bus adapter USB, 1 Mbps, ids 1..6 | one supply per arm into its adapter: **5 V** for the 7.4 V STS3215 (upstream BOM), **12 V** only for the 12 V variant; never mix variants on one bus ([`../hardware/so101`](../hardware/so101)); common GND |
 | 3018 CNC `cnc` | GRBL 1.1 USB 115200 | syringe head in the spindle clamp; work zero = top-left-front, Z0 = safe height |
 | Capacitive probe (TTP223 on the tool rail) | 3018 board probe header: GND, 5 V, OUT -> probe pin (A5) | `$6=1` once (TTP223 OUT is active HIGH); `cnc.probe` runs G38.3. The DO deploys the probe arm (hub ch1) first |
-| USB microscope | laptop USB (UVC) | `uv sync --extra microscope`; `calib/microscope.json` `{"index": N}` |
+| USB microscope | laptop USB (UVC) | `uv sync --extra microscope` |
 | Servo hub `hub` | USB serial 115200 (DevKit UART port, or the S3's native USB port) | JSON lines, protocol.md §4. ch0 syringe FS90R, ch1 probe arm, ch2/ch3 stand pan/tilt. The phone can drive the same hub over BLE instead |
 
 ## Actions
-- `so_a/so_b`: `joints {q, ms}`, `pose {name: home|ready|rest, ms?}` (legacy `look_*` names alias to `ready`),
-  `gripper {open 0..1}`, `torque {on}`, `read {}`, `stop {}`. Moves interpolate (smoothstep) at 50 Hz with SYNC_WRITE
+- `so_a/so_b`: `joints {q, ms}`, `pose {name: home|ready|rest, ms?}`, `gripper {open 0..1}`,
+  `torque {on}`, `teleop {leader, on, hz?, record?}`, `read {}`, `stop {}`. Moves interpolate (smoothstep) at 50 Hz with SYNC_WRITE
   to goal position (reg 42); targets clamped to calib limits.
 - `cnc`: `home`, `move {x,y,z,f}` (Z raised first / lowered last), `jog {dx,dy,dz,f}`, `status`, `gcode {lines}`,
   `probe {dz,f,retract}` (G38.3), `stop` (feed hold `!` + soft reset 0x18), `zero`. Soft limits X 0..300, Y 0..180,
@@ -65,25 +65,34 @@ State is sent at 5 Hz.
 `syr_home` at its bottom stop, so the DO's `pipette.home` ends as it does on the bench.
 
 ## Calibration
-Files in `bridge/calib/` (defaults used when missing):
-- `so_a.json` / `so_b.json`: `joints.{name}.{offset (ticks), sign (+-1), min, max (deg)}`, `poses.{home,ready,rest}`.
-  deg = sign * (ticks - 2048 - offset) * 360/4096.
-- `ports.json`: which USB serial number is `so_a` / `so_b` (written automatically).
+Files in `bridge/calib/` (or `$LABRAT_CALIB_DIR`; defaults used when missing):
+- `so_a.json` / `so_b.json`: `joints.{name}.{offset (ticks), sign (±1), min, max (deg)}`, `poses.{home,ready,rest}`.
+  `deg = sign × (ticks − 2048 − offset) × 360 / 4096`. Without a file the bridge uses `so101.DEFAULT_CALIB`.
+- `ports.json`: which USB serial number is `so_a` / `so_b` (written automatically; `--so-a/--so-b` overrides and saves).
 - `cnc.json`: `{zero_after_home:[0,0,0], home_if_enabled:true}`.
+- `microscope.json`: `{"index": N}` (the UVC camera index).
 
-Pipette, probe and stand calibration live in the cloud (D1 `config` rows `cal:pipette`, `cal:probe`, `cal:stand`).
-Hub channel limits (`cfg`: `min_us`, `max_us`, `rest_us`, `kind`) live in the hub's flash; the DO sends them.
+Pipette, probe and stand calibration live in the cloud (D1 `cal:pipette`, `cal:probe`, `cal:stand`); hub channel
+limits (`cfg`) live in the hub's flash and the DO sends them.
 
-SO-101 steps (torque goes OFF, move by hand):
+**SO-101 arms** (torque goes **off**, so support the arm):
 ```bash
-uv run python -m labrat_bridge calibrate --device so_a --port /dev/ttyACM0
+uv run python -m labrat_bridge calibrate --device so_a --port /dev/ttyACM0     # omit --port for a mock dry run
 ```
-1. Put the arm in the centred/zero pose -> Enter (records offsets; `s` skips).
-2. Enter, sweep every joint through its safe range, Enter (records min/max deg).
-3. For each of home, ready, rest: pose the arm -> Enter.
-If a joint moves the wrong way, flip its `sign` in the JSON (and redo step 2/3).
+1. **Zero:** put the arm in the zero pose, Enter. LabRat's zero (the URDF zero the twin draws): upper arm vertical,
+   forearm horizontal toward the machine back, wrist straight, wrist roll centred, gripper half open. Records `offset`.
+2. **Limits:** Enter, sweep **every** joint through its full safe range, Enter. Records `min`/`max`.
+3. **Poses:** pose the arm as `home`, `ready`, `rest` in turn, Enter after each.
 
-Leader/follower teleop (records `calib/teleop_<follower>_<time>.json`):
+Without a TTY, one step per call: `--step zero`, `--step limits:45` (seconds to sweep), `--step pose:ready`.
+If a joint moves the wrong way in the twin, flip its `sign` and redo limits and poses. Then check that every joint
+has a plausible `min`..`max`: an unswept joint gets a near-zero span (the clamp freezes it), and a span over 360°
+means the zero or the horn is near the tick seam.
+
+**Teleop** (leader moved by hand with torque off; the follower tracks it, clamped to its own limits):
 ```bash
-uv run python -m labrat_bridge teleop --leader-port /dev/ttyACM1 --follower-port /dev/ttyACM0
+uv run python -m labrat_bridge teleop --leader so_b --follower so_a \
+    --leader-port /dev/ttyACM1 --follower-port /dev/ttyACM0 [--hz 30] [--seconds 60]
 ```
+The trajectory is saved to `calib/teleop_<follower>_<unix time>.json`. With the bridge running, the same thing is
+the `teleop {leader: "so_b", on: true}` action on the follower.

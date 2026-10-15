@@ -3,7 +3,7 @@
 
     ~/Documents/microfab_3d_atlas_bundle/.venv/bin/python -m syrhead.check_mf [--fast]
 
-Writes ../mf_checks.json and exits non-zero on any unsuppressed error. Warnings are listed with the reasons in
+Writes ../build/mf_checks.json and exits non-zero on any unsuppressed error. Warnings are listed with the reasons in
 checks.yaml (`reviewed_warnings`).
 """
 from __future__ import annotations
@@ -49,7 +49,8 @@ def main(argv=None):
     out = {"seconds": round(time.time() - t0, 1), "summary": summary, "errors": len(errors),
            "suppressed": len(rows) - len(live), "findings": live}
     if not a.only:
-        (HERE / "mf_checks.json").write_text(json.dumps(out, indent=1))
+        (HERE / "build").mkdir(exist_ok=True)
+        (HERE / "build" / "mf_checks.json").write_text(json.dumps(out, indent=1))
     for r in live:
         if r["severity"] != "info":
             print(f"{r['severity']:7s} {r['check']:17s} {r['pn']:22s} {r['message'][:120]} @ {r['local']}")

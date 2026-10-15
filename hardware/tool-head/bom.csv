@@ -39,6 +39,6 @@ SYR-311,48.0,mm,"electrode, stainless rod Ø2 cut to 48",stock,tube_cut,stainles
 SYR-312,1,ea,"sensing lead TTP223 pad -> electrode (PVC, 26 AWG, 25 mm)",buy,purchased,cable_pvc_black,generic,26 AWG hook-up wire,0.02,
 SYR-313,1,ea,"probe cable, 3 x 28 AWG silicone, Ø3 (GND, 5 V, OUT -> 3018 probe pin A5); service loop across the arm joint",buy,purchased,cable_pvc_black,generic,3-core 28 AWG silicone + 2.54 housing,0.8,
 TM-110,1,ea,tool module: USB microscope cradle,make,fdm_print,petg_print,,,,"on its side (module +X up), no supports; slides on the tool rail, 1x M3x10 at an index"
-TM-120,1,ea,probe bracket rev B (rail saddle + SG90 plate + deployed stop),make,fdm_print,petg_print,,,,"rev B (servo-deployed arm; rev A was a fixed probe). On its +X face (servo plate on the bed), no supports; slides on the tool rail, 1x M3x10 at x = 11"
-TM-121,1,ea,probe lid rev B (TTP223 cover on the arm),make,fdm_print,petg_print,,,,"flat, no supports; 1x M2x6"
+TM-120,1,ea,probe bracket (rail saddle + SG90 plate + deployed stop),make,fdm_print,petg_print,,,,"Servo-deployed arm. On its +X face (servo plate on the bed), no supports; slides on the tool rail, 1x M3x10 at x = 11"
+TM-121,1,ea,probe lid (TTP223 cover on the arm),make,fdm_print,petg_print,,,,"flat, no supports; 1x M2x6"
 TM-122,1,ea,"probe arm (electrode + TTP223, on the SG90 horn)",make,fdm_print,petg_print,,,,"on its -X face (horn + TTP223 pockets up), no supports; electrode pinched by 1x M2x12"

@@ -70,7 +70,7 @@ def build_devices(mock: set[str], ports: str = "auto", so_a: str | None = None, 
         by_kind.setdefault(f["kind"], []).append(f)
     devs: dict[str, Device] = {}
 
-    def make(dev_id, factory, mock_factory, reason="not found"):
+    def make(dev_id, factory, mock_factory):
         if dev_id in mock:
             devs[dev_id] = mock_factory()
             return

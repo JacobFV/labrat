@@ -12,7 +12,7 @@ side profile (local YZ) lies in the bed plane, and the few features that vary al
 
 Modules here:
   TM-110  USB microscope (generic "1000x 8-LED" USB microscope, SYR-300): two 90 deg V-cradles, two cable ties
-  TM-120  capacitive probe, rev B (probe.py): SG90-swung arm with the TTP223 + Ø2 electrode -> GRBL probe input
+  TM-120  capacitive probe (probe.py): SG90-swung arm with the TTP223 + Ø2 electrode -> GRBL probe input
 New modules (a second syringe, a camera, a light, a stirrer...) reuse ``module_plate`` and add a tool point to TOOLS.
 """
 from __future__ import annotations
@@ -212,7 +212,7 @@ def mic_axis():
 
 
 # =====================================================================================================================
-# TM-120 capacitive probe: rev B (servo-deployed arm) lives in probe.py; the TTP223 + electrode models stay here
+# TM-120 capacitive probe: the servo-deployed arm lives in probe.py; the TTP223 + electrode models stay here
 # =====================================================================================================================
 TTP = dict(l=15.0, w=11.0, t=1.6)                 # TTP223 mini module (red PCB, 3 wire pads)
 
@@ -349,7 +349,7 @@ def electrode_rod():
 
 def _probe_tools():
     from . import probe as PR
-    return {"kind": "cap_probe", "module": "TM-120 rev B",
+    return {"kind": "cap_probe", "module": "TM-120",
             "offset": (PR.EX, PR.EY, PR.TIP_Z - LAY.tip_end_z),
             "note": "electrode tip when DEPLOYED; TTP223 OUT -> GRBL probe pin A5, $6=1 (active high). "
                     "cnc.probe only while deployed; retract only with the electrode above the rims",

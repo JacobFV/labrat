@@ -32,7 +32,7 @@ PRINT_ORIENT = {   # part frame -> print bed frame (axis, degrees); the body and
     "SYR-103": ((1, 0, 0), -90.0),   # carriage on its back face (+Y): the rack teeth stand up
     "SYR-105": ((1, 0, 0), 180.0),   # thumb-disc cap upside down: pocket up
     "TM-110": ((0, 1, 0), -90.0),    # tool modules lie on their side (module frame +X up)
-    "TM-120": ((0, 1, 0), 90.0),     # probe bracket rev B on its +X face (the servo plate on the bed)
+    "TM-120": ((0, 1, 0), 90.0),     # probe bracket on its +X face (the servo plate on the bed)
     "TM-122": ((0, 1, 0), -90.0),    # probe arm on its -X face (horn + TTP223 pockets up)
     "TM-121": ((0, 1, 0), 90.0),     # probe lid flat, on its outer (+X) face
 }

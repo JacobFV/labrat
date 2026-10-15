@@ -11,11 +11,10 @@
 Outputs (hardware/tool-head/):
     step/<PN>.step, step/syringe_head_assembly.step   editable solids (make parts) + the assembly at pos 0
     stl/<PN>.stl                                       FDM parts in print orientation
-    plate_fdm_<n>.3mf                                  FDM parts except the body, packed onto 220 x 220 plates
     bom.csv                                            purchased + make parts, rolled up by product
     twin/*.stl + twin/rig.json                         meshes per motion group / finish for hardware/cnc3018 + the web twin
     tools.json                                         tool offsets (syringe, microscope, probe) for server/deck_cal
-    report.json                                        spec, coupled mesh/sweep and machine checks (fails the build)
+    build/report.json                                  spec, coupled mesh/sweep and machine checks (fails the build)
 """
 from __future__ import annotations
 
@@ -53,8 +52,6 @@ def exports():
             continue
         shapes[pn] = d.make()
     # make parts: STEP + STL (print orientation for FDM)
-    plate = trimesh.Scene()
-    x_cursor = 0.0
     for pn, d in H.parts.items():
         if d.kind not in ("make", "stock"):
             continue
@@ -67,18 +64,6 @@ def exports():
                 m.apply_transform(trimesh.transformations.rotation_matrix(math.radians(deg), ax))
             m.apply_translation(-np.array([m.bounds[0][0], m.bounds[0][1], m.bounds[0][2]]))
             m.export(HERE / "stl" / f"{pn}.stl")
-            if pn != "SYR-100":
-                qty = sum(1 for i in H.insts if i.pn == pn)
-                for _ in range(qty):
-                    mm = m.copy()
-                    mm.apply_translation([x_cursor, 0, 0])
-                    plate.add_geometry(mm, geom_name=f"{pn}_{_}")
-                    x_cursor += m.extents[0] + 6.0
-    # wrap the small parts into rows on a 220 x 220 bed
-    for f in HERE.glob("plate_fdm*.3mf"):
-        f.unlink()
-    for k, sc in enumerate(_pack(plate), 1):
-        sc.export(HERE / f"plate_fdm_{k}.3mf")
     # assembly STEP at pos 0 (purchased parts included, library fasteners as simple bodies)
     insts = []
     for i in H.insts:
@@ -103,29 +88,6 @@ def tools_json():
     for k, t in TL.TOOLS.items():
         out["tools"][k] = {**t, "offset": [round(v, 3) for v in t["offset"]]}
     (HERE / "tools.json").write_text(json.dumps(out, indent=1))
-
-
-def _pack(scene: trimesh.Scene, bed=215.0, gap=6.0):
-    """shelf-pack the parts (largest first) onto as many bed-sized plates as needed; returns the plates."""
-    plates = [trimesh.Scene()]
-    x = y = row_h = 0.0
-    items = sorted(scene.geometry.items(), key=lambda kv: -kv[1].extents[1])
-    for name, g in items:
-        g = g.copy()
-        g.apply_translation(-g.bounds[0])
-        w, h = g.extents[0], g.extents[1]
-        if w > bed or h > bed:
-            raise SystemExit(f"{name}: {w:.0f} x {h:.0f} does not fit a {bed} mm bed")
-        if x + w > bed:
-            x, y, row_h = 0.0, y + row_h + gap, 0.0
-        if y + h > bed:
-            plates.append(trimesh.Scene())
-            x = y = row_h = 0.0
-        g.apply_translation([x, y, 0])
-        plates[-1].add_geometry(g, geom_name=name)
-        x += w + gap
-        row_h = max(row_h, h)
-    return plates
 
 
 def bom(H):
@@ -230,7 +192,8 @@ def checks(poses):
     rep = {"src": SRC_HASH, "ok": all(r["ok"] for r in rows), "checks": rows,
            "layout": {k: (list(v) if isinstance(v, tuple) else v) for k, v in LAY.v.items() if k != "servo"},
            "gear_phases_deg": build().phases}
-    (HERE / "report.json").write_text(json.dumps(rep, indent=1, default=float))
+    (HERE / "build").mkdir(exist_ok=True)
+    (HERE / "build" / "report.json").write_text(json.dumps(rep, indent=1, default=float))
     bad = [r for r in rows if not r["ok"]]
     for r in rows:
         print(("ok  " if r["ok"] else "FAIL"), r["check"], "|", r["name"], "|", r["value"])

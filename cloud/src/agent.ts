@@ -4,8 +4,7 @@ import * as sim from "./sim";
 import * as lab from "./lab";
 import * as tooling from "./tooling";
 import type { Ctx } from "./env";
-import { sleep } from "./hub";
-import { completeText, llmAvailable, LlmRefusal, messages, model, type ContentBlock } from "./llm";
+import { llmAvailable, LlmRefusal, messages, model, type ContentBlock } from "./llm";
 import { now } from "./store";
 
 const INVENTORY = "water; food colouring (any colour); white vinegar; baking soda; borax; ammonium chloride; pink Himalayan " +
