@@ -17,10 +17,10 @@ src/
     stand.ts        phone pan/tilt on ch2/ch3 (aim, look at deck | operator | home | <beaker>)
   agent.ts        Anthropic tool-use loop + rule-based fallback
   llm.ts          Messages API over fetch
-  lab.ts          experiments, simulation orchestration, runs (approval, execution, abort)
-  sim.ts          digital twin: deck, motion timing, liquid accounting, dye mixing, checks, scoring, frames
-  learn.ts        learning loop: ridge refit in absorbance space, accept-if-better, re-score, procedural promotion
-  vision.ts       camera homography + beaker sampling of phone JPEGs (jpeg-js), Claude-vision fallback
+  lab.ts          experiments: create / edit / dry run / repeat, run (approval, execution, abort), results, CSV
+  sim.ts          digital twin: deck, samples -> steps, motion timing, liquid accounting, dye mixing, checks, frames
+  learn.ts        colour model: ridge refit in absorbance space from every result, kept only if it predicts better
+  vision.ts       camera homography + beaker sampling of phone JPEGs (jpeg-js), Claude-vision fallback (measures a plate)
   deck_cal.ts     taught deck points, pipette and tool offsets
   tooling.ts      tool-rail moves (pipette / microscope / probe)
   store.ts        D1 access          linalg.ts  small dense solver          env.ts  Env + shared context
@@ -34,7 +34,7 @@ test/             vitest in workerd (@cloudflare/vitest-plugin)
 cd cloud
 npm install
 cp .dev.vars.example .dev.vars          # LABRAT_TOKEN, optional ANTHROPIC_API_KEY
-npx wrangler d1 migrations apply labrat --local
+npx wrangler d1 migrations apply labrat --local   # schema changed? rm -rf .wrangler/state/v3/d1 first
 npx wrangler dev                        # http://localhost:8787/  (console), /phone/
 npm test                                # vitest in the Workers runtime
 npm run typecheck
@@ -51,7 +51,7 @@ Configuration (`wrangler.jsonc` vars, `.dev.vars`, or `wrangler secret put` when
 | `ANTHROPIC_API_KEY` | unset | unset: rule-based agent |
 | `ANTHROPIC_MODEL` | `claude-sonnet-5-5` | |
 | `LABRAT_AUTO_APPROVE` | `0` | start runs without human approval |
-| `LABRAT_AUTO_OBSERVE` | `1` | after a run with a photo step, estimate the target beaker's colour and feed the learning loop |
+| `LABRAT_AUTO_OBSERVE` | `1` | after a run with a photo step, measure every beaker from the photo |
 | `LABRAT_PHOTO_WAIT_S` | `3` | how long the photo step waits for a fresh phone frame |
 
 Before a deploy: `wrangler d1 create labrat`, put its id in `wrangler.jsonc`, apply the migrations with `--remote`, and
@@ -67,21 +67,9 @@ WebSockets (protocol.md §1-3): `/ws/ui`, `/ws/phone`, `/ws/bridge`. Unauthentic
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/healthz` | liveness (no token): boot error, providers, LLM on, D1 ok |
-| GET | `/api/state` | the `devices` message + UI count, LLM flag, has_frame, pending run, last 10 runs |
-| GET | `/api/experiments` | last 50 experiments (no frames) |
-| GET | `/api/experiments/{id}?frames=true` | one experiment (frames re-simulated on request) |
-| GET | `/api/experiments/{id}/variants/{vid}/frames` | sim frames + result for one variant (3D replay) |
-| POST | `/api/chat` `{text}` | one agent turn → `{reply}` |
-| POST | `/api/experiments/{id}/simulate` `{n_variants?}` | (re)simulate all variants |
-| POST | `/api/experiments/{id}/run` `{variant_id?, auto?}` | request a real run (needs a passing simulation) |
-| GET | `/api/runs?limit=` | recent runs |
-| GET | `/api/runs/{id}` | one run |
-| POST | `/api/runs/{id}/approve` | approve a pending run and start it |
-| POST | `/api/runs/{id}/observe` `{rating?, rgb?, well?, vol_ul?}` | manual observation → learning loop |
-| POST | `/api/runs/{id}/auto_observe` | vision observation of the latest frame now |
-| GET | `/api/learning` | sim_params version history and the current version |
-| POST | `/api/abort` | flag running runs, fail in-flight commands, stop cnc / arms / every servo |
-| GET | `/api/memory/search?q=&k=5&type=` | memory recall (FTS5 bm25) |
+| GET | `/api/state` | the `devices` message + UI count, LLM flag, has_frame, active experiments |
+| | `/api/experiments*`, `/api/results.csv`, `/api/dry_run`, `/api/notes`, `/api/model`, `/api/chat` | experiments, notebook, model: [`docs/experiments.md`](../docs/experiments.md#rest) |
+| POST | `/api/abort` | flag the running experiment, fail in-flight commands, stop cnc / arms / every servo |
 | GET | `/api/events?kind=&limit=` | audit log |
 | GET / POST | `/api/deck_cal` | deck calibration summary / patch (pipette offset, tools, points; `null` forgets) |
 | POST | `/api/deck_cal/teach` `{target, pos?}` | teach a target from the current CNC position (or `pos`) |
@@ -99,16 +87,14 @@ D1 (`migrations/0001_init.sql`):
 
 | table | contents |
 |---|---|
-| `experiments` | goal, status, and the full JSON document (variants with protocol, params and sim result; never frames) |
-| `runs` | status, and the JSON document (step log, predicted / observed RGB, vision result) |
-| `memories` + `memories_fts` | typed memory (`semantic`, `episodic`, `procedural`, `taxonomic`); FTS5 (porter) over text + tags, kept in sync by triggers; recall = bm25 with an optional type filter |
-| `events` | audit log (`chat`, `tool`, `run_*`, `rsi.update`, `vision.observe`, `deck_teach`, `provider_hello`, ...), trimmed to 5000 rows at DO boot |
-| `sim_params` | versioned simulator parameters; the newest accepted row is installed at DO boot |
-| `observations` | run, beaker, rating, observed RGB, composition, predicted RGB, volumes, source (`operator` / `vision`) |
+| `experiments` | title, status, and the full JSON document (samples, steps, dry-run check and predictions, run log; never frames) |
+| `results` | one beaker reading (measured RGB, rating, note, source `operator` / `camera`, what went in, prediction at the time) |
+| `notes` + `notes_fts` | lab notebook; FTS5 (porter), bm25 search |
+| `model` | colour-model versions; the newest accepted row is installed at DO boot |
+| `events` | audit log (`chat`, `tool`, `experiment_*`, `measure`, `model_refit`, `deck_teach`, `provider_hello`, ...), trimmed to 5000 rows at DO boot |
 | `config` | `deck_cal`, `camera_cal`, `cal:pipette`, `cal:probe`, `cal:stand` |
 
-Sim frames are not stored: the simulator is deterministic, so the DO re-simulates a variant when its frames are asked
-for and broadcasts fresh frames in `sim` messages. DO storage holds the agent's chat history and the logical devices'
+Replay frames are not stored: the dry run is deterministic, so `/api/experiments/{id}/replay` re-runs it. DO storage holds the agent's chat history and the logical devices'
 last state (dead-reckoned plunger position, probe and stand angles). Providers survive hibernation through their socket
 attachments (their `hello`); device state comes back with the next `state` message.
 
@@ -121,7 +107,7 @@ provider's `hub`. Their calibration defaults live in `src/devices/*.ts` (`PIPETT
 - `cnc.probe` is refused unless `probe.deployed`; the probe arm is retracted after every probe cycle.
 - Before any CNC move below safe Z (`move` with `z < 0`, `jog` with `dz < 0`, any `gcode`) the arm is retracted unless
   it is known to be retracted.
-- A run's photo step parks the head, `stand.look {at: "deck"}` (when a hub is connected), sends `{"t":"snap"}` to the
+- An experiment's photo step parks the head, `stand.look {at: "deck"}` (when a hub is connected), sends `{"t":"snap"}` to the
   phones and waits for a frame newer than that.
 - A hub `estop` event aborts everything; `wd` / `boot` events reset the drivers' channel config.
 

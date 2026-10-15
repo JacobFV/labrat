@@ -1,52 +1,62 @@
--- LabRat D1 schema. Documents whose shape evolves (experiments with their variants, runs with their step log) live
--- in a JSON `data` column next to the columns we filter and sort on.
+-- LabRat D1 schema. An experiment is one plate: its samples, steps, dry run, run log and status live in a JSON `data`
+-- column next to the columns we filter and sort on. Measurements are rows in `results`, one per beaker reading.
 
 CREATE TABLE experiments (
   id TEXT PRIMARY KEY,
-  goal TEXT NOT NULL,
-  status TEXT NOT NULL,
+  title TEXT NOT NULL,
+  status TEXT NOT NULL,      -- draft | ready | awaiting_approval | running | done | failed | aborted
   ts REAL NOT NULL,          -- last write
-  created REAL NOT NULL,
-  data TEXT NOT NULL         -- full experiment JSON incl. variants (protocol, params, sim result without frames)
-);
-CREATE INDEX experiments_created ON experiments (created DESC);
-
-CREATE TABLE runs (
-  id TEXT PRIMARY KEY,
-  experiment_id TEXT NOT NULL,
-  status TEXT NOT NULL,      -- awaiting_approval -> running -> done | failed | aborted
-  ts REAL NOT NULL,
   created REAL NOT NULL,
   data TEXT NOT NULL
 );
-CREATE INDEX runs_created ON runs (created DESC);
-CREATE INDEX runs_status ON runs (status);
+CREATE INDEX experiments_created ON experiments (created DESC);
+CREATE INDEX experiments_status ON experiments (status);
 
--- typed long-term memory; recall = FTS5 bm25 over text + tags with an optional type filter
-CREATE TABLE memories (
+-- one measured beaker; the newest row per (experiment, well) is the current reading
+CREATE TABLE results (
   id TEXT PRIMARY KEY,
-  type TEXT NOT NULL CHECK (type IN ('semantic', 'episodic', 'procedural', 'taxonomic')),
-  text TEXT NOT NULL,
-  tags TEXT NOT NULL DEFAULT '[]',
-  meta TEXT NOT NULL DEFAULT '{}',
-  source_run_id TEXT,
-  confidence REAL,
-  ts REAL NOT NULL
+  ts REAL NOT NULL,
+  experiment_id TEXT NOT NULL,
+  well TEXT NOT NULL,
+  rgb TEXT,                  -- [r,g,b] JSON or NULL
+  rating INTEGER,            -- 1..5, optional
+  note TEXT,
+  source TEXT NOT NULL,      -- operator | camera
+  comp TEXT NOT NULL,        -- what went into the beaker, {stock: uL}
+  predicted_rgb TEXT         -- the dry run's prediction at the time of the run
 );
-CREATE INDEX memories_type ON memories (type, ts DESC);
-CREATE VIRTUAL TABLE memories_fts USING fts5 (text, tags, content = 'memories', content_rowid = 'rowid', tokenize = 'porter unicode61');
-CREATE TRIGGER memories_ai AFTER INSERT ON memories BEGIN
-  INSERT INTO memories_fts (rowid, text, tags) VALUES (new.rowid, new.text, new.tags);
+CREATE INDEX results_experiment ON results (experiment_id, well, ts);
+
+-- lab notebook: free-text notes, full-text searchable, optionally tied to an experiment
+CREATE TABLE notes (
+  id TEXT PRIMARY KEY,
+  ts REAL NOT NULL,
+  text TEXT NOT NULL,
+  experiment_id TEXT,
+  source TEXT NOT NULL       -- operator | agent | auto
+);
+CREATE INDEX notes_ts ON notes (ts DESC);
+CREATE VIRTUAL TABLE notes_fts USING fts5 (text, content = 'notes', content_rowid = 'rowid', tokenize = 'porter unicode61');
+CREATE TRIGGER notes_ai AFTER INSERT ON notes BEGIN
+  INSERT INTO notes_fts (rowid, text) VALUES (new.rowid, new.text);
 END;
-CREATE TRIGGER memories_ad AFTER DELETE ON memories BEGIN
-  INSERT INTO memories_fts (memories_fts, rowid, text, tags) VALUES ('delete', old.rowid, old.text, old.tags);
-END;
-CREATE TRIGGER memories_au AFTER UPDATE ON memories BEGIN
-  INSERT INTO memories_fts (memories_fts, rowid, text, tags) VALUES ('delete', old.rowid, old.text, old.tags);
-  INSERT INTO memories_fts (rowid, text, tags) VALUES (new.rowid, new.text, new.tags);
+CREATE TRIGGER notes_ad AFTER DELETE ON notes BEGIN
+  INSERT INTO notes_fts (notes_fts, rowid, text) VALUES ('delete', old.rowid, old.text);
 END;
 
--- audit log (chat, tool, run_*, rsi.update, vision.observe, deck_teach, provider_connected, ...)
+-- colour-model versions: refitted from results; the current one is the newest accepted row
+CREATE TABLE model (
+  v INTEGER PRIMARY KEY,
+  ts REAL NOT NULL,
+  params TEXT NOT NULL,
+  error_before REAL,
+  error_after REAL,
+  n_results INTEGER NOT NULL DEFAULT 0,
+  accepted INTEGER NOT NULL,
+  experiment_id TEXT
+);
+
+-- audit log (chat, tool, experiment_*, deck_teach, calibrate, device_event, ...)
 CREATE TABLE events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ts REAL NOT NULL,
@@ -54,38 +64,6 @@ CREATE TABLE events (
   data TEXT NOT NULL DEFAULT '{}'
 );
 CREATE INDEX events_kind ON events (kind, ts DESC);
-
--- versioned simulator parameters; the current one is the newest accepted row
-CREATE TABLE sim_params (
-  v INTEGER PRIMARY KEY,
-  ts REAL NOT NULL,
-  params TEXT NOT NULL,
-  proposed_params TEXT,
-  error_before REAL,
-  error_after REAL,
-  n_runs INTEGER NOT NULL DEFAULT 0,
-  accepted INTEGER NOT NULL,
-  trigger_run_id TEXT,
-  parent_v INTEGER,
-  note TEXT
-);
-
-CREATE TABLE observations (
-  id TEXT PRIMARY KEY,
-  ts REAL NOT NULL,
-  run_id TEXT NOT NULL,
-  experiment_id TEXT,
-  variant_id TEXT,
-  well TEXT,
-  rating INTEGER,
-  rgb TEXT,                  -- [r,g,b] JSON or NULL
-  comp TEXT NOT NULL,        -- {dye: uL} JSON
-  predicted_rgb TEXT,
-  vol_ul REAL,
-  cmd_vol_ul REAL,
-  source TEXT NOT NULL       -- operator | vision
-);
-CREATE INDEX observations_run ON observations (run_id);
 
 -- small JSON documents: deck_cal, camera_cal, cal:pipette, cal:probe, cal:stand
 CREATE TABLE config (

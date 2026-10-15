@@ -3,19 +3,33 @@ import deck from "../../hardware/deck/deck.json";
 import * as sim from "../src/sim";
 
 describe("sim", () => {
-  it("simulates 20 variants fast and sanely", () => {
-    const goal = "make the most orange-looking well using red & yellow";
-    const vs = sim.generateVariants(goal, 20);
+  it("dry-runs a 20-beaker sweep fast and sanely", () => {
+    const samples = sim.placeSamples(sim.sweep("orange", 20));
+    expect(samples.map((x) => x.well).slice(0, 7)).toEqual(["A1", "B1", "C1", "D1", "E1", "F1", "A2"]);
+    const steps = sim.stepsFor(samples);
     const t0 = performance.now();
-    const rs = vs.map((v) => sim.simulate(v.protocol, goal));
+    const r = sim.simulate(steps);
     expect(performance.now() - t0).toBeLessThan(500);
-    expect(rs.filter((r) => !r.ok).map((r) => r.errors)).toEqual([]);
-    const best = rs.reduce((a, b) => (b.score > a.score ? b : a));
-    expect(best.score).toBeGreaterThan(0.85);
-    const [r, g, b] = best.predicted_rgb!;
-    expect(r > 180 && g > 60 && g < 200 && b < 60).toBe(true); // orange-ish
-    const last = best.frames!.at(-1)!;
-    for (const k of ["t", "cnc", "pipette", "wells"]) expect(last).toHaveProperty(k);
+    expect(r.errors).toEqual([]);
+    expect(r.tips_used).toEqual(["A1", "B1"]); // one tip per stock
+    expect(Object.keys(r.wells).length).toBe(20);
+    const orange = sim.parseTarget("orange")!.rgb;
+    const best = Object.values(r.wells).reduce((a, b) => (sim.colorDist(b.rgb, orange) < sim.colorDist(a.rgb, orange) ? b : a));
+    const [R, G, B] = best.rgb;
+    expect(R > 180 && G > 60 && G < 200 && B < 60).toBe(true); // orange-ish
+    for (const k of ["t", "cnc", "pipette", "wells"]) expect(r.frames!.at(-1)).toHaveProperty(k);
+  });
+
+  it("validates samples", () => {
+    expect(() => sim.placeSamples([{ green: 10 }])).toThrow(/unknown key 'green'/);
+    expect(() => sim.placeSamples([{ well: "A8", red: 10 }])).toThrow(/not a mixing beaker/);
+    expect(() => sim.placeSamples([{ well: "A1", red: 10 }, { well: "a1", blue: 5 }])).toThrow(/used twice/);
+    expect(() => sim.placeSamples([{ red: 0 }])).toThrow(/no liquid/);
+    expect(sim.placeSamples([{ red: 10 }, { well: "A1", blue: 5 }]).map((x) => x.well)).toEqual(["B1", "A1"]);
+    expect(sim.parseTarget("#ff8800")!.rgb).toEqual([255, 136, 0]);
+    expect(sim.parseTarget("rgb(1, 2, 3)")!.rgb).toEqual([1, 2, 3]);
+    expect(sim.simulate([{ op: "dispense", dst: "F1", ul: 5 }]).errors[0]).toMatch(/^step 0 \(dispense F1\):/);
+    expect(() => sim.parseTarget("chartreuse-ish")).toThrow(/unknown target/);
   });
 
   const cap = sim.PLATE.cap_ul;
@@ -37,7 +51,7 @@ describe("sim", () => {
       { op: "eject_tip" },
       { op: "pick_tip", rack_well: "A1" }, // reused tip
     ];
-    const r = sim.simulate(bad, "make orange");
+    const r = sim.simulate(bad);
     expect(r.ok).toBe(false);
     const errs = r.errors.join(" ");
     for (const frag of ["without tip", "contamination", "overflow", "already used"]) expect(errs).toContain(frag);

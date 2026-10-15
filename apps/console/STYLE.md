@@ -11,5 +11,11 @@ Taken from `src/apps/electron/src/renderer/styles.css` dark theme; re-implemente
 - **Radii**: tiny and technical — 2/3/4px. No pills-shaped buttons.
 - **Headings**: section labels are 11px, uppercase, 0.08em tracking, muted (`h2`). Pane headers 36px tall with hairline bottom border.
 - **Brand mark**: small pulsing gold dot next to the name.
-- **Layout**: instrument-console grid (chat | 3D twin | gallery), hairline dividers, dense information, mono for all measurements.
+- **Theme**: the shipped palette is the light variant of the above (tokens on `:root` in style.css); never hard-code colours.
+- **Layout**: three columns: experiment list | the selected experiment as a notebook page (tabs: Experiment, Notebook,
+  Colour model, Deck) | 3D twin over agent chat. Below 980px it stacks into one scrolling column. Hairline dividers,
+  dense information, mono for all measurements.
+- **Status chips** (`.st-<status>`): draft red, ready mint, awaiting_approval gold fill, running blue, done neutral,
+  failed/aborted red. Plate beakers are colour circles: left half predicted, right half measured; a gold ring marks the
+  one closest to the target (dashed = predicted, solid = measured).
 - Phone eyes reuse the mint glow (idle), gold (thinking/happy), blue (listening), red (alert).

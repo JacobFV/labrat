@@ -2,10 +2,9 @@
 
 **A voice-operated, simulation-first desk-lab robot that learns from its own results.**
 
-You talk to it through a phone on a pan/tilt stand (its face, eyes, ears and voice) or chat with it from the laptop
-console or a terminal. It designs an experiment, simulates many variants in a digital twin, picks the best one, asks
-for approval, runs it on real hardware, photographs the result, compares it with its prediction, refits its own
-simulator, and keeps what it learned in typed memory.
+You talk to it through a phone on a pan/tilt stand (its face, eyes, ears and voice), chat with it from the laptop
+console, or script it from Python. Every experiment is dry-run on a digital twin before it touches hardware, a human
+approves the real run, and the measured results go into a CSV, the lab notebook and the colour model.
 
 The hardware is a 3018 desktop CNC carrying a geared syringe pipette (plus a USB microscope and a capacitive
 liquid-level probe on a tool rail) in place of its spindle, a printed beaker matrix, and an SO-101 arm on each side.
@@ -20,27 +19,24 @@ LabRat started at the Harness Engineering & Model Wrangling Hackathon (SF, Octob
 
 ## How it works
 
-1. **Ask**, by voice on the phone (speech recognition and synthesis run on the phone) or by chat: "make the most
-   orange beaker from red and yellow".
-2. **Recall** related memories (D1 full-text search over semantic, episodic, procedural and taxonomic memories).
-3. **Design and simulate** N protocol variants in the twin: CNC motion timing, pipette and tip accounting, dye
-   mixing, safety checks, a score against the goal colour.
-4. **Approve.** Only a variant that passed simulation can run, and a human approves it first.
-5. **Execute.** The coordinator drives the CNC, pipette, probe arm and stand; the bridge enforces its own limits and
-   a watchdog.
-6. **Observe.** The stand aims the phone at the deck and takes a photo; the target beaker's colour is read from it
-   (or the operator rates it).
-7. **Learn.** The simulator's dye model is refitted and adopted only if prediction error drops; past variants are
-   re-scored, and a protocol that worked is promoted to procedural memory.
+An **experiment is one plate**: you say what goes into each beaker (µL of water, red, yellow, blue), LabRat dry-runs
+it on the digital twin (checks, time, predicted colour per beaker), you approve, the robot fills the plate, the phone
+photographs it and every beaker gets a measured colour next to its prediction. Results export to CSV and refit the
+colour model. Full guide: **[docs/experiments.md](docs/experiments.md)**.
 
-Claude (Anthropic API) is the agent's brain. Without an API key a rule-based agent handles the basic commands.
+Three ways in:
+
+- **Console** (`/console/`): new experiment, edit the sample table, run, approve, read the plate.
+- **Voice or chat**: "find the most orange mix of red and yellow". The agent (Claude, or simple rules without an API
+  key) writes the samples, dry-runs them and asks you to approve.
+- **Python**: `from labrat_cli import Lab`; scripts live in [`experiments/`](experiments).
 
 ## Layout
 
 ```
                       ┌──────────── cloud/ ─────────────┐
  apps/console ─ws/ui─►│ Worker ─► Lab Durable Object    │◄─ws/bridge─ bridge/ ─USB─┬─ SO-101 arms so_a, so_b
- apps/cli ─────ws/ui─►│   agent · sim · learn · vision  │                          ├─ 3018 CNC (GRBL)
+ apps/cli ─────ws/ui─►│   experiments · sim · agent     │                          ├─ 3018 CNC (GRBL)
  apps/phone ─ws/phone►│   pipette / probe / stand       │                          ├─ USB microscope
    (face, voice,      │   drivers ─► D1                 │                          └─ servo hub ─┐
     camera, BLE) ─────┼─────────────────────────────────┼──── BLE (alternative) ──────────────►│
@@ -49,15 +45,17 @@ Claude (Anthropic API) is the agent's brain. Without an API key a rule-based age
 
 | Path | What |
 |---|---|
-| [`cloud/`](cloud) | Cloudflare Worker + one Durable Object (`Lab`) + D1: WebSocket hub, REST API, agent, simulator, learning loop, vision, memory, and the pipette / probe / stand drivers on top of the servo hub. Serves the apps. [README](cloud/README.md) |
-| [`apps/console/`](apps/console) | Laptop console: chat, three.js digital twin with 3D replay, experiments, Learning and Memory tabs, approvals, deck / camera / device calibration |
+| [`cloud/`](cloud) | Cloudflare Worker + one Durable Object (`Lab`) + D1: WebSocket hub, REST API, experiments, dry-run simulator, colour model, camera measuring, notebook, agent, and the pipette / probe / stand drivers on top of the servo hub. Serves the apps. [README](cloud/README.md) |
+| [`apps/console/`](apps/console) | Laptop console: experiments (plate map, samples, run, results, CSV), chat, three.js digital twin with 3D replay, notebook, model, deck / camera / device calibration |
 | [`apps/phone/`](apps/phone) | Phone page: animated face, camera frames, on-device voice; drives the servo hub over Web Bluetooth when paired |
-| [`apps/cli/`](apps/cli) | Terminal REPL (`labrat`) over `/ws/ui` and REST |
+| [`apps/cli/`](apps/cli) | Terminal REPL (`labrat`) and the Python client (`from labrat_cli import Lab`) |
+| [`experiments/`](experiments) | Experiment scripts |
 | [`bridge/`](bridge) | Laptop USB bridge: SO-101 arms, GRBL CNC, USB microscope, servo hub over serial; every device has a mock. [README](bridge/README.md) |
 | [`firmware/servo-hub/`](firmware/servo-hub) | ESP32 / ESP32-S3 + PCA9685 firmware (PlatformIO): 16 servo channels, inputs, e-stop, watchdog, JSON lines over USB and BLE. [README](firmware/servo-hub/README.md) |
 | [`hardware/`](hardware) | Tool head, deck, 3018 model, phone stand, SO-101 parts, electronics: CAD, BOMs, renders. [Index](hardware/README.md) |
+| [`docs/experiments.md`](docs/experiments.md) | **How to run experiments**: samples, dry run, results, CSV, Python, REST |
 | [`docs/protocol.md`](docs/protocol.md) | The wire contract: providers, phone, UI, servo-hub firmware |
-| [`docs/architecture.md`](docs/architecture.md) | System design: the DO, devices, agent, simulator, learning, safety, [endpoints](docs/architecture.md#endpoints) |
+| [`docs/architecture.md`](docs/architecture.md) | System design: the DO, devices, agent, simulator, colour model, safety, [endpoints](docs/architecture.md#endpoints) |
 
 ## Quickstart
 
@@ -69,7 +67,7 @@ hub). Everything runs locally; nothing needs a Cloudflare account until you depl
 cd cloud
 npm i
 cp .dev.vars.example .dev.vars           # LABRAT_TOKEN=labrat; optionally ANTHROPIC_API_KEY
-npx wrangler d1 migrations apply labrat --local
+npx wrangler d1 migrations apply labrat --local   # schema changed? rm -rf .wrangler/state/v3/d1 first
 npx wrangler dev                         # http://127.0.0.1:8787
 ```
 

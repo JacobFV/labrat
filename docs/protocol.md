@@ -83,7 +83,7 @@ preempts a motion.
 
 A run's `photo` step: Z to safe height, park the head out of the camera's view (x 290, y 175), then `stand.look
 {at:"deck"}` if a hub is online, then `{"t":"snap"}` to every phone, then wait up to `LABRAT_PHOTO_WAIT_S` (3 s) for a
-frame newer than the moment the stand settled. Auto-observation only uses a frame captured after that point.
+frame newer than the moment the stand settled. Measuring the plate only uses a frame captured after that point.
 
 ## 2. Phone (`/ws/phone?token=…`)
 
@@ -100,8 +100,8 @@ wire.
 
 | Direction | Message |
 |---|---|
-| ui → DO | `{"t":"chat","text"}`, `{"t":"approve","run_id"}`, `{"t":"abort"}`, `{"t":"observe","run_id","rating","rgb","well"}` |
-| DO → ui | `devices {providers,devices}`, `chat {role,text,meta}`, `experiment`, `sim`, `run`, `frame`, `log`, `deck_cal`, `learning`. On connect the DO replays devices, the last 10 experiments and the last 5 runs. `approve` without a `run_id` approves the pending run |
+| ui → DO | `{"t":"chat","text"}`, `{"t":"approve","id"?}` (no `id`: the experiment awaiting approval), `{"t":"abort"}` |
+| DO → ui | `devices {providers,devices}`, `chat {role,text,meta}`, `experiment {experiment}` (on every change; shape in [experiments.md](experiments.md)), `model`, `note`, `frame`, `log`, `deck_cal`. On connect the DO replays devices and the newest 20 experiments |
 
 REST lives on the same origin (`cloud/src/index.ts` is the route table; [architecture.md](architecture.md#endpoints)
 lists it).

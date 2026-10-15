@@ -57,7 +57,7 @@ describe("deck calibration", () => {
 
   it("drives the simulator from the calibrated deck", () => {
     deckCal.update({ points: { "plate.A1": { x: 150, y: 10, z: -30 } } });
-    const r = sim.simulate(sim.protocolFromRatios(["red", "yellow"], [0.5, 0.5], 100, "A1"), "orange");
+    const r = sim.simulate(sim.stepsFor(sim.placeSamples([{ well: "A1", red: 50, yellow: 50 }])));
     expect(r.frames!.some((f) => f.cnc.x === 150 && f.cnc.y === 10)).toBe(true);
   });
 });

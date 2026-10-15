@@ -69,43 +69,35 @@ describe("vision", () => {
     expect(maxDiff(s2.rgb, target)).toBeLessThanOrEqual(12);
   });
 
-  it("auto-observes a run and feeds the learning loop", async () => {
+  it("measures every beaker of an experiment from a photo and feeds the model", async () => {
     await runInDurableObject(stub(), async (inst: Lab) => {
       const c = inst.c;
-      const e0 = await lab.createExperiment(c, "make the most orange-looking well using red & yellow", 4);
-      const e = await lab.simulateExperiment(c, e0.id);
-      const run = await c.store.putRun({ id: "run_vis1", experiment_id: e.id, variant_id: e.best_variant_id, status: "done", log: [] });
-      const [target, blank] = await vision.targetAndBlank(c, run);
-      expect(blank && blank !== target).toBeTruthy();
-      const observed = [225, 95, 25]; // the "real" result: redder than predicted
-      c.hub.latestFrame = { jpeg: toB64(synthPlate({ [target]: observed })), w: 640, h: 480, ts: 1 };
       await vision.setCal(c, CORNERS, 640, 480);
-      const res = await vision.autoObserve(c, run.id);
+      const e = await lab.create(c, { title: "two beakers", samples: [{ well: "C5", red: 100, yellow: 100 }, { well: "D2", blue: 80, yellow: 120 }] });
+      const seen = { C5: [225, 95, 25], D2: [40, 160, 70] }; // the "real" results
+      c.hub.latestFrame = { jpeg: toB64(synthPlate(seen)), w: 640, h: 480, ts: 1 };
+      const res = await lab.measure(c, e.id);
       expect(res.ok, JSON.stringify(res)).toBe(true);
-      expect(res.estimate.method).toBe("homography");
-      expect(res.estimate.well).toBe(target);
-      expect(maxDiff(res.estimate.rgb, observed)).toBeLessThanOrEqual(8);
-      const obs = (await c.store.observations()).filter((o) => o.run_id === "run_vis1");
-      expect(obs[0]?.source).toBe("vision");
-      expect(res.rsi.error_before).not.toBeNull();
-      expect((await c.store.events(10, "vision.observe")).length).toBe(1);
-      expect((await c.store.getRun("run_vis1")).vision.ok).toBe(true);
+      expect(res.method).toBe("camera_cal");
+      for (const r of res.readings) expect(maxDiff(r.rgb, (seen as any)[r.well])).toBeLessThanOrEqual(8);
+      expect(res.results.length).toBe(2);
+      expect(res.model.v).toBeGreaterThan(0);
+      const v = await lab.view(c, await lab.must(c, e.id));
+      expect(v.beakers.every((b: any) => b.source === "camera" && b.measured_rgb)).toBe(true);
       c.hub.latestFrame = null;
     });
   });
 
-  it("skips without a frame, and never uses a frame older than the photo step", async () => {
+  it("skips without a frame or without a fresh one", async () => {
     await runInDurableObject(stub(), async (inst: Lab) => {
       const c = inst.c;
-      const e0 = await lab.createExperiment(c, "make green from blue and yellow", 2);
-      const e = await lab.simulateExperiment(c, e0.id);
-      await c.store.putRun({ id: "run_vis2", experiment_id: e.id, variant_id: e.best_variant_id, status: "done", log: [] });
+      const e = await lab.create(c, { title: "green", samples: [{ blue: 100, yellow: 100 }] });
       c.hub.latestFrame = null;
-      let res = await vision.autoObserve(c, "run_vis2");
+      let res = await vision.measure(c, e);
       expect(res.ok).toBe(false);
       expect(res.skipped).toBe("no phone frame");
       c.hub.latestFrame = { jpeg: toB64(synthPlate({})), w: 640, h: 480, ts: 100 };
-      res = await vision.autoObserve(c, "run_vis2", { freshAfter: 200, waitS: 0.1 });
+      res = await vision.measure(c, e, { freshAfter: 200, waitS: 0.1 });
       expect(res.skipped).toBe("no fresh phone frame");
       c.hub.latestFrame = null;
     });

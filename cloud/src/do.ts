@@ -1,15 +1,18 @@
 // The Lab Durable Object (one instance, idFromName("lab")): WebSocket hub for /ws/ui, /ws/phone and /ws/bridge
-// (hibernatable API, tagged by role), the REST API, the agent, run execution, approvals and abort.
+// (hibernatable API, tagged by role), the REST API, the agent, experiments, approvals and abort.
 import { DurableObject } from "cloudflare:workers";
 import * as deckCal from "./deck_cal";
 import * as lab from "./lab";
 import * as learn from "./learn";
 import * as vision from "./vision";
+import * as sim from "./sim";
 import { Agent } from "./agent";
 import { flag, type Ctx, type Env } from "./env";
 import { Hub, type Attachment, type Role } from "./hub";
 import { llmAvailable, model } from "./llm";
 import { hex, now, Store } from "./store";
+
+const csv = (text: string, name: string) => new Response(text, { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="${name}.csv"` } });
 
 class HttpError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -31,7 +34,7 @@ export class Lab extends DurableObject<Env> {
     super(state, env);
     this.store = new Store(env.DB);
     this.hub = new Hub(state);
-    this.c = { env, store: this.store, hub: this.hub, runs: new Map(), pos: { x: 0, y: 0, z: 0 }, bg: (p, what = "task") => this.bg(p, what) };
+    this.c = { env, store: this.store, hub: this.hub, running: new Map(), pos: { x: 0, y: 0, z: 0 }, bg: (p, what = "task") => this.bg(p, what) };
     this.agent = new Agent(this.c, state.storage);
     this.hub.log = (level, text, src = "server") => this.hub.ui({ t: "log", src, level, text });
     this.hub.onEvent = (dev, data) => this.onDeviceEvent(dev, data);
@@ -47,7 +50,7 @@ export class Lab extends DurableObject<Env> {
       await learn.applyLatest(this.c);
       for (const l of Object.values(this.hub.logical)) l.init(await this.store.getConfig("cal:" + l.id), (await this.ctx.storage.get("dev:" + l.id)) ?? null);
       await this.agent.load();
-      this.bg(learn.seedTaxonomy(this.c), "seed taxonomy");
+      await lab.failInterrupted(this.c);
       this.bg(this.store.trimEvents(), "trim events");
     } catch (e) {
       this.bootError = (e as Error).message; // e.g. D1 migrations not applied
@@ -96,8 +99,7 @@ export class Lab extends DurableObject<Env> {
 
   private async replay(ws: WebSocket) {
     this.hub.send(ws, this.hub.devicesMsg());
-    for (const e of (await this.store.listExperiments(10)).reverse()) this.hub.send(ws, { t: "experiment", experiment: lab.strip(e) });
-    for (const r of (await this.store.listRuns(5)).reverse()) this.hub.send(ws, { t: "run", run: r });
+    for (const e of (await this.store.listExperiments(20)).reverse()) this.hub.send(ws, { t: "experiment", experiment: await lab.view(this.c, e) });
   }
 
   async webSocketMessage(ws: WebSocket, data: string | ArrayBuffer): Promise<void> {
@@ -119,9 +121,8 @@ export class Lab extends DurableObject<Env> {
     } else if (a.role === "ui") {
       const c = this.c;
       if (msg.t === "chat") this.bg(this.agent.handle(String(msg.text ?? ""), "ui"), "agent");
-      else if (msg.t === "approve") this.bg((async () => lab.approve(c, msg.run_id || (await c.store.pendingRun())?.id || ""))(), "approve");
+      else if (msg.t === "approve") this.bg(lab.approve(c, msg.id), "approve");
       else if (msg.t === "abort") this.bg(lab.abort(c), "abort");
-      else if (msg.t === "observe") this.bg(learn.observe(c, msg.run_id ?? "", { rating: msg.rating, rgb: msg.rgb, well: msg.well }), "observe");
     }
   }
 
@@ -159,7 +160,7 @@ export class Lab extends DurableObject<Env> {
   // ---------------- REST ----------------
   private async rest(req: Request, url: URL): Promise<Response> {
     let body: any = {};
-    if (req.method === "POST") {
+    if (req.method === "POST" || req.method === "PATCH") {
       const text = await req.text();
       try { body = text ? JSON.parse(text) : {}; } catch { return json({ error: "invalid JSON body" }, 400); }
     }
@@ -167,7 +168,8 @@ export class Lab extends DurableObject<Env> {
       const m = url.pathname.match(re);
       if (!m || method !== req.method) continue;
       try {
-        return json(await h(m, body ?? {}, url));
+        const out = await h(m, body ?? {}, url);
+        return out instanceof Response ? out : json(out);
       } catch (e) {
         if (e instanceof HttpError) return json({ error: e.message }, e.status);
         console.error(e);
@@ -186,35 +188,40 @@ export class Lab extends DurableObject<Env> {
       ["GET", /^\/healthz$/, async () => ({ ok: !this.bootError, error: this.bootError, bridge: hub.devicesMsg().bridge, providers: hub.providers.size, llm: llmAvailable(this.env), d1: !this.bootError })],
       ["GET", /^\/api\/state$/, async () => ({
         ...hub.devicesMsg(), uis: hub.sockets("ui").length, llm_configured: llmAvailable(this.env), has_frame: !!hub.latestFrame,
-        pending_run: await s.pendingRun(), runs: await s.listRuns(10),
+        active: (await s.listExperiments(5, lab.ACTIVE)).map((e) => ({ id: e.id, title: e.title, status: e.status, step: e.step, n_steps: e.steps.length })),
       })],
-      ["GET", /^\/api\/experiments$/, async () => (await s.listExperiments(50)).map(lab.strip)],
-      ["GET", /^\/api\/experiments\/([^/]+)$/, async (m, _b, url) => {
-        const e = await exp(m[1]);
-        if (!flag(url.searchParams.get("frames") ?? "")) return lab.strip(e);
-        for (const v of e.variants) v.frames = lab.frames(e, v);
-        return e;
-      }],
-      ["GET", /^\/api\/experiments\/([^/]+)\/variants\/([^/]+)\/frames$/, async (m) => {
-        const e = await exp(m[1]);
-        let v;
-        try { v = lab.variant(e, decodeURIComponent(m[2])); } catch (err) { throw new HttpError(404, (err as Error).message); }
-        return { experiment_id: e.id, variant_id: v.id, frames: lab.frames(e, v), variant: lab.flatVariant(v) };
+      // ---- experiments ----
+      ["GET", /^\/api\/experiments$/, async () => Promise.all((await s.listExperiments(100)).map((e) => lab.view(c, e)))],
+      ["POST", /^\/api\/experiments$/, async (_m, b) => lab.view(c, await lab.create(c, b).catch(as(400)))],
+      ["GET", /^\/api\/experiments\/([^/.]+)$/, async (m) => lab.view(c, await exp(m[1]))],
+      ["PATCH", /^\/api\/experiments\/([^/.]+)$/, async (m, b) => lab.view(c, await lab.edit(c, (await exp(m[1])).id, b).catch(as(400)))],
+      ["POST", /^\/api\/experiments\/([^/]+)\/repeat$/, async (m) => lab.view(c, await lab.repeat(c, (await exp(m[1])).id))],
+      ["POST", /^\/api\/experiments\/([^/]+)\/run$/, async (m, b) => lab.view(c, await lab.requestRun(c, (await exp(m[1])).id, !!b.auto).catch(as(400)))],
+      ["POST", /^\/api\/experiments\/([^/]+)\/approve$/, async (m) => lab.view(c, await lab.approve(c, (await exp(m[1])).id).catch(as(400)))],
+      ["POST", /^\/api\/experiments\/([^/]+)\/results$/, async (m, b) => lab.addResults(c, (await exp(m[1])).id, Array.isArray(b) ? b : b.results ?? [b]).catch(as(400))],
+      ["POST", /^\/api\/experiments\/([^/]+)\/measure$/, async (m) => lab.measure(c, (await exp(m[1])).id)],
+      ["GET", /^\/api\/experiments\/([^/]+)\/replay$/, async (m) => ({ id: m[1], frames: lab.frames(await exp(m[1])) })],
+      ["GET", /^\/api\/experiments\/([^/]+)\.csv$/, async (m) => csv(await lab.csv(c, (await exp(m[1])).id), m[1])],
+      ["GET", /^\/api\/results\.csv$/, async () => csv(await lab.csv(c), "labrat_results")],
+      // a dry run without saving anything: {samples} or {steps}
+      ["POST", /^\/api\/dry_run$/, async (_m, b) => {
+        try {
+          const samples = b.samples ? sim.placeSamples(b.samples) : [];
+          const r = sim.simulate(b.steps ?? sim.stepsFor(samples), !!b.frames);
+          return { samples, steps: b.steps ?? sim.stepsFor(samples), ...r };
+        } catch (e) { throw new HttpError(400, (e as Error).message); }
       }],
       ["POST", /^\/api\/chat$/, async (_m, b) => ({ reply: await this.agent.handle(String(b.text ?? ""), "rest") })],
-      ["POST", /^\/api\/experiments\/([^/]+)\/simulate$/, async (m, b) => lab.strip(await lab.simulateExperiment(c, decodeURIComponent(m[1]), b.n_variants).catch(as(404)))],
-      ["POST", /^\/api\/experiments\/([^/]+)\/run$/, async (m, b) => lab.requestRun(c, decodeURIComponent(m[1]), b.variant_id, !!b.auto).catch(as(400))],
-      ["GET", /^\/api\/runs$/, async (_m, _b, url) => s.listRuns(Number(url.searchParams.get("limit") ?? 20))],
-      ["GET", /^\/api\/runs\/([^/]+)$/, async (m) => (await s.getRun(decodeURIComponent(m[1]))) ?? (() => { throw new HttpError(404, "not found"); })()],
-      ["POST", /^\/api\/runs\/([^/]+)\/approve$/, async (m) => lab.approve(c, decodeURIComponent(m[1])).catch(as(404))],
-      ["POST", /^\/api\/runs\/([^/]+)\/observe$/, async (m, b) => learn.observe(c, decodeURIComponent(m[1]), { rating: b.rating, rgb: b.rgb, well: b.well, vol_ul: b.vol_ul }).catch(as(404))],
-      ["POST", /^\/api\/runs\/([^/]+)\/auto_observe$/, async (m) => vision.autoObserve(c, decodeURIComponent(m[1])).catch(as(404))],
-      ["GET", /^\/api\/learning$/, async () => learn.learning(c)],
       ["POST", /^\/api\/abort$/, async () => { await lab.abort(c); return { ok: true }; }],
-      ["GET", /^\/api\/memory\/search$/, async (_m, _b, url) => {
-        const q = url.searchParams.get("q") ?? "";
-        return { query: q, results: await s.recall(q, Number(url.searchParams.get("k") ?? 5), url.searchParams.get("type")) };
+      // ---- notebook, model, log ----
+      ["GET", /^\/api\/notes$/, async (_m, _b, url) => s.notes(url.searchParams.get("q") ?? "", Number(url.searchParams.get("k") ?? 50), url.searchParams.get("experiment") ?? undefined)],
+      ["POST", /^\/api\/notes$/, async (_m, b) => {
+        if (!String(b.text ?? "").trim()) throw new HttpError(400, "text required");
+        const n = await s.addNote(String(b.text), { experiment_id: b.experiment_id ?? null, source: "operator" });
+        hub.ui({ t: "note", note: n });
+        return n;
       }],
+      ["GET", /^\/api\/model$/, async () => learn.model(c)],
       ["GET", /^\/api\/events$/, async (_m, _b, url) => s.events(Math.min(1000, Number(url.searchParams.get("limit") ?? 100)), url.searchParams.get("kind") ?? undefined)],
       // ---- deck calibration ----
       ["GET", /^\/api\/deck_cal$/, async () => deckCal.summary()],

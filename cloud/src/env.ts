@@ -21,8 +21,8 @@ export interface Ctx {
   hub: Hub;
   /** Run a background task; errors are logged to the UIs, never thrown. */
   bg(p: Promise<unknown>, what?: string): void;
-  /** Running real runs by id; `aborted` is checked between steps. */
-  runs: Map<string, { aborted: boolean }>;
+  /** Experiments running on the hardware, by id; `aborted` is checked between steps. */
+  running: Map<string, { aborted: boolean }>;
   /** Last commanded CNC position (spindle, mm). */
   pos: { x: number; y: number; z: number };
 }

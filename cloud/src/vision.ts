@@ -1,15 +1,12 @@
-// Automatic observation: phone photo -> target-beaker RGB -> learn.observe (closes the learning loop without a human).
-// Two estimators:
+// Measuring a plate from a phone photo: every beaker that holds liquid -> RGB. Two estimators:
 //  1. Calibrated: a camera->deck homography from 4 clicked beaker centres (the mixing grid's corners A1, A7, F7, F1),
 //     stored as config `camera_cal`. Sample a small disk at the projected target-beaker centre (median), white-balanced
 //     against an empty beaker.
 //  2. LLM vision: ask Claude for the target beaker's RGB as JSON.
-// Neither available -> skip (the operator can still rate/observe manually).
+// Neither available -> skip (the operator can still enter results by hand).
 import jpeg from "jpeg-js";
 import * as sim from "./sim";
 import type { Ctx } from "./env";
-import { variant } from "./lab";
-import * as learn from "./learn";
 import { completeText, llmAvailable } from "./llm";
 import { solve } from "./linalg";
 import { now } from "./store";
@@ -111,62 +108,34 @@ export async function setCal(c: Ctx, corners: number[][], imageW: number, imageH
 }
 
 // ---------------- LLM fallback ----------------
-async function llmRgb(c: Ctx, jpegB64: string, well: string): Promise<number[] | null> {
+async function llmRgb(c: Ctx, jpegB64: string, wells: string[]): Promise<{ well: string; rgb: number[] }[] | null> {
   if (!llmAvailable(c.env)) return null;
-  const prompt = `This photo shows a lab deck with a printed rack of small clear beakers in 6 rows (A-F, front to back) and 8 columns (1-8, left to right; column 8 holds the stock dyes). Estimate the colour of the liquid in beaker ${well} as seen from above, white-balanced so an empty beaker reads about (245,245,245). Reply with JSON only: {"rgb":[r,g,b],"confidence":0..1}`;
-  const text = await completeText(c.env, [{ type: "image", source: { type: "base64", media_type: "image/jpeg", data: jpegB64 } }, { type: "text", text: prompt }], 300);
+  const prompt = `This photo shows a lab deck with a printed rack of small clear beakers in 6 rows (A-F, front to back) and 8 columns (1-8, left to right; column 8 holds the stock dyes). Estimate the colour of the liquid in beakers ${wells.join(", ")} as seen from above, white-balanced so an empty beaker reads about (245,245,245). Reply with JSON only: {"A1":[r,g,b], ...}`;
+  const text = await completeText(c.env, [{ type: "image", source: { type: "base64", media_type: "image/jpeg", data: jpegB64 } }, { type: "text", text: prompt }], 800);
   const m = /\{[\s\S]*\}/.exec(text);
   if (!m) return null;
-  const rgb = JSON.parse(m[0]).rgb;
-  return Array.isArray(rgb) && rgb.length === 3 ? rgb.map((v: number) => Math.min(255, Math.max(0, Math.trunc(Number(v))))) : null;
+  const j = JSON.parse(m[0]);
+  const out = wells.filter((w) => Array.isArray(j[w]) && j[w].length === 3).map((w) => ({ well: w, rgb: j[w].map((v: number) => Math.min(255, Math.max(0, Math.trunc(Number(v))))) }));
+  return out.length ? out : null;
 }
 
-// ---------------- the hook ----------------
-export async function targetAndBlank(c: Ctx, run: any): Promise<[string, string | null]> {
-  const e = await c.store.getExperiment(run.experiment_id);
-  const v = variant(e, run.variant_id);
-  const base = sim.simulate(v.protocol, e.goal, false);
-  const target = (base.best_well || "A1").toUpperCase();
-  const used = new Set(Object.entries(base.wells).filter(([, w]) => (w?.vol ?? 0) > 0).map(([k]) => k.toUpperCase()));
-  return [target, BLANK_PREF.find((b) => !used.has(b) && b !== target) ?? null];
-}
-
-export async function estimate(c: Ctx, run: any, jpegB64: string) {
-  const [target, blank] = await targetAndBlank(c, run);
-  const cal = await getCal(c);
-  if (cal) return { method: "homography", target, ...sampleWell(decode(jpegB64), cal, target, blank) };
-  const rgb = await llmRgb(c, jpegB64, target);
-  return rgb ? { method: "llm", target, well: target, rgb } : null;
-}
-
-/** Grab a phone frame (newer than `freshAfter` if given), estimate the target RGB, feed learn.observe(source=vision). */
-export async function autoObserve(c: Ctx, runId: string, o: { freshAfter?: number | null; waitS?: number; rating?: number | null } = {}) {
-  const run = await c.store.getRun(runId);
-  if (!run) throw new Error(`no run ${runId}`);
-  const t0 = now();
+/** Read every beaker of `e` that holds liquid from a phone frame (newer than `freshAfter` if given). Never throws. */
+export async function measure(c: Ctx, e: any, o: { freshAfter?: number | null; waitS?: number } = {}): Promise<any> {
+  const wells = Object.keys(e.predicted ?? {});
   if (o.freshAfter != null) c.hub.phone({ t: "snap" });
   const frame = o.freshAfter != null ? await c.hub.waitFrame(o.freshAfter, o.waitS ?? Number(c.env.LABRAT_PHOTO_WAIT_S ?? 3)) : c.hub.latestFrame;
-  let res: any;
-  if (!frame?.jpeg) res = { ok: false, skipped: o.freshAfter == null ? "no phone frame" : "no fresh phone frame" };
-  else {
-    try {
-      const est = await estimate(c, run, frame.jpeg);
-      if (!est) res = { ok: false, skipped: "no camera_cal and no vision LLM" };
-      else {
-        const out = await learn.observe(c, runId, { rating: o.rating ?? null, rgb: est.rgb, well: est.well, source: "vision" });
-        res = { ok: true, estimate: est, rsi: Object.fromEntries(["v", "accepted", "error_before", "error_after", "run_error_before", "run_error_after", "promoted_procedure"].map((k) => [k, (out as any)[k]])) };
-      }
-    } catch (e) {
-      res = { ok: false, error: (e as Error).message };
+  if (!frame?.jpeg) return { ok: false, skipped: o.freshAfter == null ? "no phone frame" : "no fresh phone frame" };
+  try {
+    const cal = await getCal(c);
+    if (cal) {
+      const img = decode(frame.jpeg);
+      const blank = BLANK_PREF.find((b) => !wells.includes(b)) ?? null;
+      return { ok: true, method: "camera_cal", frame_ts: frame.ts, readings: wells.map((w) => sampleWell(img, cal, w, blank)) };
     }
+    const readings = await llmRgb(c, frame.jpeg, wells);
+    if (readings) return { ok: true, method: "llm", frame_ts: frame.ts, readings };
+    return { ok: false, skipped: "no camera calibration and no vision LLM" };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
   }
-  Object.assign(res, { run_id: runId, frame_ts: frame?.ts ?? null, dt: Math.round((now() - t0) * 100) / 100 });
-  const fresh = (await c.store.getRun(runId)) ?? run; // learn.observe may have updated the run
-  fresh.vision = res;
-  await c.store.putRun(fresh);
-  const { rsi: _r, ...ev } = res;
-  await c.store.event("vision.observe", ev);
-  c.hub.ui({ t: "log", src: "vision", level: res.ok ? "info" : "warn",
-    text: res.ok ? `vision: saw ${res.estimate.well} rgb(${res.estimate.rgb.join(", ")}) via ${res.estimate.method}` : `vision: auto-observe skipped: ${res.skipped ?? res.error}` });
-  return res;
 }

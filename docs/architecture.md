@@ -8,10 +8,10 @@ page does not repeat them.
 
 | Piece | Code | Runs on | Role |
 |---|---|---|---|
-| **Coordinator** | [`cloud/`](../cloud): one Cloudflare Worker, one Durable Object (`Lab`, a single instance named `lab`), one D1 database | Cloudflare (or `wrangler dev` on the laptop) | WebSocket hub, REST API, agent, simulator, learning loop, memory, run execution, the logical devices (pipette, probe arm, phone stand). Also serves the browser apps as static assets |
-| **Console** | [`apps/console/`](../apps/console) (`app.js`, `twin.js` + `twin/`, `deck.js`, `camera_cal.js`) | laptop browser, `/console/` | chat, three.js digital twin with 3D replay of simulated variants, experiment gallery, Learning and Memory tabs, device status, run approval, deck / camera / device calibration |
+| **Coordinator** | [`cloud/`](../cloud): one Cloudflare Worker, one Durable Object (`Lab`, a single instance named `lab`), one D1 database | Cloudflare (or `wrangler dev` on the laptop) | WebSocket hub, REST API, experiments (dry run, run, results), agent, colour model, notebook, the logical devices (pipette, probe arm, phone stand). Also serves the browser apps as static assets |
+| **Console** | [`apps/console/`](../apps/console) (`app.js`, `twin.js` + `twin/`, `deck.js`, `camera_cal.js`) | laptop browser, `/console/` | experiments (plate map, sample table, run, approve, results, CSV), chat, three.js digital twin with 3D replay, notebook, model, deck / camera / device calibration |
 | **Phone** | [`apps/phone/`](../apps/phone) (`phone.js`, `face.js`, `voice.js`, `hub_ble.js`, `hub_proto.js`) | phone on the pan/tilt stand, `/phone/` | animated face, camera frames, on-device voice (Web Speech recognition and synthesis). With the servo hub paired over Web Bluetooth it is also a device provider |
-| **CLI** | [`apps/cli/`](../apps/cli) (`uv run labrat`) | terminal | REPL over `/ws/ui` and REST: chat, `/sim`, `/run`, `/approve`, `/abort`, `/mem`, `/learning`, `/jog`, `/cal` |
+| **CLI + Python** | [`apps/cli/`](../apps/cli) (`uv run labrat`, `from labrat_cli import Lab`) | terminal, scripts | REPL over `/ws/ui` and REST, and a small Python client for experiment scripts ([`experiments/`](../experiments)) |
 | **Bridge** | [`bridge/`](../bridge) (`python -m labrat_bridge`) | laptop with the USB devices | dials out to `/ws/bridge`, drives the SO-101 arms, the GRBL CNC, the USB microscope and the servo hub over serial, with local limits and a watchdog. Every device has a mock |
 | **Servo hub firmware** | [`firmware/servo-hub/`](../firmware/servo-hub) (PlatformIO) | ESP32 / ESP32-S3 + PCA9685 | a generic 16-channel servo and input hub speaking JSON lines over USB serial and BLE. It knows nothing about pipettes or stands |
 | **Hardware** | [`hardware/`](../hardware) | | tool head, deck, 3018 model, phone stand, SO-101 parts, electronics |
@@ -29,7 +29,7 @@ falls back to the calibrated sampler only.
    face, voice, camera,          │  + D1                                   ├─ cnc         3018 GRBL 1.1
    optional BLE → hub            │                                         ├─ microscope  UVC
                                  ├─ Anthropic Messages API                 └─ hub ── USB serial ─┐
-                                 │  (agent, LLM variant design,                                  │
+                                 │  (agent,                                                      │
                                  │   vision fallback)                 servo hub (ESP32 + PCA9685)◄┘ (or BLE from the phone)
                                                                        ch0 syringe, ch1 probe arm, ch2/3 stand pan/tilt
 ```
@@ -46,14 +46,14 @@ closed with 4401.
 
 | file | what |
 |---|---|
-| `do.ts` | the `Lab` DO: hibernatable WebSockets tagged `ui` / `phone` / `bridge`, the REST route table, boot (deck cal, sim params, logical-device cal and state, agent history, taxonomy seed, event trim), device events (e-stop, watchdog) |
+| `do.ts` | the `Lab` DO: hibernatable WebSockets tagged `ui` / `phone` / `bridge`, the REST route table, boot (deck cal, colour model, logical-device cal and state, agent history, event trim), device events (e-stop, watchdog) |
 | `hub.ts` | providers, routing each command to the provider that announced the device most recently, pending commands with timeouts, UI / phone broadcast (devices throttled to 5 Hz), the latest phone frame, and the probe-arm interlock |
 | `devices/` | logical devices built on the provider's `hub` (§4) |
 | `agent.ts`, `llm.ts` | the agent (§5) and the Messages API over `fetch` |
-| `lab.ts` | experiments, simulation orchestration, runs: approval, step execution, abort |
+| `lab.ts` | experiments: create / edit / dry run / repeat, run (approval, step execution, abort), results, measure, CSV |
 | `sim.ts` | the digital twin (§6) |
-| `learn.ts` | the learning loop (§7) |
-| `vision.ts` | camera homography, beaker sampling of phone JPEGs (`jpeg-js`), Claude-vision fallback, auto-observe |
+| `learn.ts` | the colour model (§7) |
+| `vision.ts` | camera homography, beaker sampling of phone JPEGs (`jpeg-js`), Claude-vision fallback; measures every beaker of a plate |
 | `deck_cal.ts`, `tooling.ts` | taught deck points and tool offsets; tool-rail moves (pipette / microscope / probe) |
 | `store.ts` | D1 access; `linalg.ts` small dense solver; `env.ts` `Env` and the shared `Ctx` |
 
@@ -70,12 +70,11 @@ D1 (`cloud/migrations/0001_init.sql`):
 
 | table | contents |
 |---|---|
-| `experiments` | goal, status and the full JSON document (variants with protocol, params and sim result; never frames) |
-| `runs` | status and the JSON document (step log, predicted / observed RGB, vision result) |
-| `memories` + `memories_fts` | typed memory (`semantic`, `episodic`, `procedural`, `taxonomic`); FTS5 (porter) over text and tags, kept in sync by triggers. Recall is bm25-ranked with an optional type filter |
-| `events` | audit log (`chat`, `tool`, `run_*`, `rsi.update`, `vision.observe`, `deck_teach`, `calibrate`, `device_event`, `provider_hello`, ...), trimmed to 5000 rows at boot |
-| `sim_params` | versioned simulator parameters; the newest accepted row is installed at boot |
-| `observations` | run, beaker, rating, observed RGB, composition, predicted RGB, volumes, source (`operator` / `vision`) |
+| `experiments` | title, status and the full JSON document (samples, steps, dry-run check and predictions, run log; never frames). See [experiments.md](experiments.md) |
+| `results` | one beaker reading: experiment, well, measured RGB, rating, note, source (`operator` / `camera`), what went in, the prediction at the time |
+| `notes` + `notes_fts` | the lab notebook; FTS5 (porter), bm25-ranked search. Results write an auto-note |
+| `model` | colour-model versions; the newest accepted row is installed at boot |
+| `events` | audit log (`chat`, `tool`, `experiment_*`, `measure`, `model_refit`, `deck_teach`, `calibrate`, `device_event`, `provider_hello`, ...), trimmed to 5000 rows at boot |
 | `config` | `deck_cal`, `camera_cal`, `cal:pipette`, `cal:probe`, `cal:stand` |
 
 DO storage holds the agent's chat history and each logical device's last state (dead-reckoned plunger position, probe
@@ -105,21 +104,19 @@ deployed, the arm retracted after every probe and before any CNC command that ca
 `agent.ts`. One turn at a time (serialised); input comes from the phone (`{"t":"text"}`, recognised on the device),
 the console or CLI (`{"t":"chat"}`), or `POST /api/chat`.
 
-- **LLM loop.** With a key: the Messages API with the system prompt (bench layout, deck, reagents, simulation-first
-  rules) and 14 tools: `list_devices`, `look`, `recall`, `design_experiment`, `simulate`, `select_variant`,
-  `run_variant`, `move_arm`, `cnc_move`, `tool`, `pipette`, `stand`, `say`, `remember`. Up to 10 tool rounds per turn;
-  the last 12 history turns are sent. `look` returns the phone frame as an image block. Model: `ANTHROPIC_MODEL`
-  (default `claude-sonnet-5-5`).
-- **Variant design.** `design_experiment` asks the LLM for dye / ratio / volume variants as JSON and builds the
-  protocols deterministically; without a key, or on any failure, a seeded deterministic generator is used.
-- **Rule fallback.** No key, or an LLM error for this turn: regex rules cover make / mix a colour, simulate, run,
-  approve, abort, home, look, status, remember and recall.
+- **LLM loop.** With a key: the Messages API with the system prompt (bench layout, deck, reagents, how experiments
+  work) and tools: `list_devices`, `look`, `search_notes`, `add_note`, `list_experiments`, `get_experiment`,
+  `new_experiment` (the model writes the samples itself), `run_experiment`, `move_arm`, `cnc_move`, `tool`, `pipette`,
+  `stand`, `say`. Up to 10 tool rounds per turn; the last 12 history turns are sent. `look` returns the phone frame as
+  an image block. Model: `ANTHROPIC_MODEL` (default `claude-sonnet-5-5`).
+- **Rule fallback.** No key, or an LLM error for this turn: regex rules cover make / mix a colour (a ratio sweep),
+  run, approve, abort, home, look, status, note and recall.
 - **Output.** The reply goes to the UIs as `chat`, to the phone as `transcript` and `say` (the phone speaks it with
   speech synthesis), and the face goes thinking → speaking → idle.
 
 ## 6. Simulator and digital twin
 
-`sim.ts`, deterministic, used for every variant before anything moves:
+`sim.ts`, deterministic; every experiment is dry-run on it before anything moves ([experiments.md](experiments.md)):
 
 - **Deck** (machine mm; source of truth [`hardware/deck/deck.json`](../hardware/deck), checked by
   `cloud/test/sim.test.ts`): FT-200L-RS tip rack 8 × 12 on 9 mm with A1 at (17, 19.25); printed beaker matrix 6 × 8 of
@@ -130,14 +127,14 @@ the console or CLI (`{"t":"chat"}`), or `POST /api/chat`.
   mix −45. Bounds X 0..300, Y 0..180, Z −45..0. The tip only reaches liquid while a beaker holds about 1.2 mL
   (`REACH_UL`). Tip pick-up does not fit the 3018's Z travel with this rack ([`hardware/deck`](../hardware/deck/README.md)),
   so `Z_TIP` is the travel limit until real `tip_rack` points are taught.
-- **Ops:** `pick_tip`, `aspirate`, `dispense`, `mix`, `eject_tip`, `photo`, `wait`.
+- **Ops:** `pick_tip`, `aspirate`, `dispense`, `mix`, `eject_tip`, `photo`, `wait`. `stepsFor(samples)` builds them: one
+  tip per stock dispensing from above, a fresh tip per mix, a photo at the end.
 - **Motion:** trapezoidal timing (400 mm/s², 3000 mm/min XY, 600 mm/min Z); the pipette at 100 µL/s.
 - **Liquid and colour:** per-beaker composition in µL per dye; colour by subtractive Beer–Lambert mixing from per-dye
   absorbance, with a pipette volume gain.
-- **Checks** (any error fails the variant): out of bounds, XY travel below safe Z, tip reuse / contamination, tip
+- **Checks** (any error makes the experiment a `draft`): out of bounds, XY travel below safe Z, tip reuse / contamination, tip
   overfill (200 µL), aspirating more than a source holds or below the reachable level, beaker overflow, liquid handling
-  without a tip. Warnings (fail only the `clean` check): skipped mixes, ending with a tip.
-- **Score:** 1 − RGB distance to the goal colour ÷ 441.7, × 0.1 if the variant failed. Frames for the 3D replay.
+  without a tip. Warnings (shown, not blocking): skipped mixes, ending with a tip.
 
 The console's twin (`apps/console/twin.js`, `twin/`) loads `models/cnc3018.glb` and `models/syringe_rig.json`
 (generated by `hardware/cnc3018/cnc3018.py` from the tool-head CAD), the upstream SO-101 URDF with decimated meshes,
@@ -145,23 +142,21 @@ and procedural labware, and is driven either by live `devices` state or by `sim`
 
 ![twin: deck and vials](images/twin_deck.png)
 
-## 7. Learning loop
+## 7. Colour model
 
-`learn.ts`, after each observation (operator rating / RGB from the console or CLI, or vision):
+`learn.ts`, after new results (typed in, or measured by the camera):
 
-1. Compare predicted and observed RGB of the target beaker.
-2. Refit dye absorbance in absorbance space by ridge-regularised least squares (λ = 0.3, pulled toward the previous
-   parameters); refit the volume gain (0.5..1.5) when volumes were measured.
-3. Store a new `sim_params` version; install it only if the mean error over all observations drops.
-4. If accepted, re-score every past variant and re-rank each experiment's best.
-5. Write a semantic memory; promote the protocol to procedural memory only if accepted, this run's own error dropped
-   and the rating is ≥ 3.
-6. Log `rsi.update` and broadcast `learning` to the UIs.
+1. Refit dye absorbance in absorbance space by ridge-regularised least squares (λ = 0.3, pulled toward the current
+   values) over every reading so far.
+2. Store a new `model` version; install it only if the mean prediction error over all readings drops.
+3. If accepted, dry-run every experiment that has not run yet again. Experiments that ran keep the prediction they
+   had, so results are always compared with what was predicted at the time.
+4. Broadcast `model` to the UIs; `lab.addResults` also writes an auto-note with the readings.
 
-**Vision** (`vision.ts`): after a run with a photo step (`LABRAT_AUTO_OBSERVE=1`), the DO takes the first phone frame
-captured after the photo step's park and estimates the target beaker's RGB, either through the camera homography
-(four clicked beaker centres A1, A7, F7, F1; median of a disk at the projected centre, white-balanced against an empty
-beaker) or, without a camera calibration, by asking Claude for the RGB. The result feeds step 1.
+**Measuring** (`vision.ts`): after a run with a photo step (`LABRAT_AUTO_OBSERVE=1`), the DO takes the first phone frame
+captured after the photo step's park and reads every beaker of the experiment, either through the camera homography
+(four clicked beaker centres A1, A7, F7, F1; median of a disk at each projected centre, white-balanced against an
+empty beaker) or, without a camera calibration, by asking Claude for every beaker's RGB.
 
 ## 8. Calibration
 
@@ -175,9 +170,9 @@ beaker) or, without a camera calibration, by asking Claude for the RGB. The resu
 
 ## 9. Safety
 
-- **No real run without a passing simulation** (`lab.requestRun`), and **human approval** unless `auto` or
-  `LABRAT_AUTO_APPROVE=1`.
-- **Abort** (`POST /api/abort`, UI `abort`, agent / rules "stop", hub e-stop button): flags every running run, fails
+- **No real run without a passing dry run** (`lab.requestRun`), **human approval** unless `auto` or
+  `LABRAT_AUTO_APPROVE=1`, and one experiment at a time.
+- **Abort** (`POST /api/abort`, UI `abort`, agent / rules "stop", hub e-stop button): flags the running experiment, fails
   every pending command, sends `stop` to `cnc`, `so_a`, `so_b` and the hub.
 - **Probe-arm interlock** in the DO (§4).
 - **Bridge limits**, enforced even if the DO is wrong: GRBL soft limits X 0..300, Y 0..180, Z −45..0; feed caps 1500 XY
@@ -188,7 +183,7 @@ beaker) or, without a camera calibration, by asking Claude for the RGB. The resu
 - **Firmware:** a normally-closed e-stop input stops every servo in the firmware first, then reports `estop`; `pulse`
   with `until` always needs a bounded `ms`.
 - **Timeouts:** every command has one (30 s default, 120 s max over REST); a provider disconnect fails its pending
-  commands, which fails the run.
+  commands, which fails the experiment.
 - **REST jog:** CNC only, ≤ 50 mm per axis.
 
 ## Endpoints
@@ -204,21 +199,10 @@ WebSockets ([protocol.md](protocol.md) §1–3): `/ws/ui`, `/ws/phone`, `/ws/bri
 | Method | Path | Body / query | Returns |
 |---|---|---|---|
 | GET | `/healthz` | | `{ok, error, bridge, providers, llm, d1}` (no token) |
-| GET | `/api/state` | | the `devices` message plus `uis`, `llm_configured`, `has_frame`, `pending_run`, `runs` (last 10) |
-| GET | `/api/experiments` | | last 50 experiments, variants flattened, no frames |
-| GET | `/api/experiments/{id}` | `?frames=true` | one experiment; with `frames` every variant is re-simulated for its frames |
-| GET | `/api/experiments/{id}/variants/{vid}/frames` | | `{experiment_id, variant_id, frames, variant}` for the 3D replay |
+| GET | `/api/state` | | the `devices` message plus `uis`, `llm_configured`, `has_frame`, `active` (experiments awaiting approval or running) |
+| | `/api/experiments*`, `/api/results.csv`, `/api/dry_run`, `/api/notes`, `/api/model` | | see [experiments.md](experiments.md#rest) |
 | POST | `/api/chat` | `{text}` | `{reply}` after one agent turn |
-| POST | `/api/experiments/{id}/simulate` | `{n_variants?}` | the re-simulated experiment (also broadcast as `experiment` + `sim`) |
-| POST | `/api/experiments/{id}/run` | `{variant_id?, auto?}` | the new run (`awaiting_approval`, or `running` if auto-approved); 400 without a passing simulation |
-| GET | `/api/runs` | `?limit=20` | recent runs |
-| GET | `/api/runs/{id}` | | one run |
-| POST | `/api/runs/{id}/approve` | | the run, started |
-| POST | `/api/runs/{id}/observe` | `{rating?, rgb?, well?, vol_ul?}` | `{observation, version, ...metrics}` from the learning loop |
-| POST | `/api/runs/{id}/auto_observe` | | vision estimate of the latest frame, fed to the learning loop |
-| GET | `/api/learning` | | `{versions, current_v}` |
 | POST | `/api/abort` | | `{ok:true}` after stopping everything |
-| GET | `/api/memory/search` | `?q=&k=5&type=` | `{query, results}` (bm25 recall) |
 | GET | `/api/events` | `?kind=&limit=100` (≤ 1000) | audit log |
 | GET | `/api/deck_cal` | | calibration summary (offset, tools, points, targets, fitted grids, spindle coordinates) |
 | POST | `/api/deck_cal` | `{pipette_offset?, tools?, points?}` (`null` point forgets it) | the summary |
@@ -235,6 +219,6 @@ WebSockets ([protocol.md](protocol.md) §1–3): `/ws/ui`, `/ws/phone`, `/ws/bri
 
 Commands are in the [root README](../README.md#quickstart) and [`cloud/README.md`](../cloud/README.md).
 Configuration is Worker vars / secrets: `LABRAT_TOKEN` (default `labrat`), `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`
-(default `claude-sonnet-5-5`), `ANTHROPIC_BASE_URL`, `LABRAT_AUTO_APPROVE` (0), `LABRAT_AUTO_OBSERVE` (1),
+(default `claude-sonnet-5-5`), `ANTHROPIC_BASE_URL`, `LABRAT_AUTO_APPROVE` (0), `LABRAT_AUTO_OBSERVE` (1: measure the plate after a run),
 `LABRAT_PHOTO_WAIT_S` (3). The phone needs a secure context for camera, microphone and Web Bluetooth: `localhost`
 works on the laptop itself; a phone needs HTTPS (a deployed Worker, or a tunnel to `wrangler dev`).

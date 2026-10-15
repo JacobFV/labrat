@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,58 +16,67 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><span class="mark"></span><h1>LabRat</h1><span class="sub mono">desk-lab agent</span></div>
+  <div class="brand"><span class="mark"></span><h1>LabRat</h1></div>
   <div id="pills" class="pills"></div>
   <div class="topright">
     <span id="conn" class="conn mono">offline</span>
-    <button id="abortBtn" class="btn danger" title="Abort all motion">Abort</button>
-    <img id="camThumb" class="cam-thumb" alt="phone camera" title="latest phone camera frame">
+    <button id="abortBtn" class="btn danger" title="Stop every motor now">Abort</button>
+    <img id="camThumb" class="cam-thumb" alt="phone camera" title="Latest phone photo (click to enlarge)">
   </div>
 </header>
 
 <main class="layout">
-  <section class="pane chat-pane">
-    <div class="pane-head"><h2>Agent</h2><span id="agentStatus" class="status mono">idle</span></div>
-    <div id="chatLog" class="chat-log"></div>
-    <form id="chatForm" class="chat-form">
-      <textarea id="chatInput" rows="2" placeholder="Ask LabRat... e.g. make the most orange-looking well using red &amp; yellow"></textarea>
-      <button class="btn accent" type="submit">Send</button>
-    </form>
+  <!-- left: the list of experiments -->
+  <aside class="pane list-pane">
+    <div class="pane-head"><h2>Experiments</h2></div>
+    <div class="list-new"><button id="newBtn" class="btn accent wide">+ New experiment</button></div>
+    <div id="expList" class="exp-list"></div>
+    <div class="list-foot"><a id="allCsv" class="link" download>Download all results (CSV)</a></div>
+  </aside>
+
+  <!-- centre: the experiment page, plus notebook / model / deck -->
+  <section class="pane page-pane">
+    <nav class="pane-head tabs">
+      <button class="tab on" data-tab="exp">Experiment</button>
+      <button class="tab" data-tab="notebook">Notebook</button>
+      <button class="tab" data-tab="model">Colour model</button>
+      <button class="tab" data-tab="deck">Deck</button>
+    </nav>
+    <div class="tabpane" data-pane="exp"><div id="page" class="page"></div></div>
+    <div class="tabpane hidden" data-pane="notebook"><div id="notebook" class="page"></div></div>
+    <div class="tabpane hidden" data-pane="model"><div id="modelBox" class="page"></div></div>
+    <div class="tabpane hidden" data-pane="deck"><div id="deckBox" class="page deck-cal"></div></div>
   </section>
 
-  <section class="pane twin-pane">
-    <div class="pane-head">
-      <h2>Digital twin</h2>
-      <span id="twinMode" class="status mono">live</span>
-      <div class="spacer"></div>
-      <button id="liveBtn" class="btn ghost">Live</button>
+  <!-- right: digital twin + agent -->
+  <aside class="pane side-pane">
+    <div class="twin-wrap">
+      <div class="pane-head">
+        <h2>Digital twin</h2>
+        <span id="twinMode" class="status mono">live</span>
+        <div class="spacer"></div>
+        <button id="liveBtn" class="btn ghost sm" title="Show the real robot again">Live</button>
+      </div>
+      <div id="twin" class="twin"></div>
+      <div id="twinInfo" class="twin-info mono"></div>
+      <div class="scrubber">
+        <button id="playBtn" class="btn ghost sm mono" title="Play / pause the replay">▶</button>
+        <input id="scrub" type="range" min="0" max="0" value="0" step="1">
+        <span id="scrubLabel" class="mono"></span>
+        <select id="speedSel" class="mono" title="Replay speed"><option value="1">1×</option><option value="4">4×</option><option value="16" selected>16×</option><option value="64">64×</option></select>
+      </div>
     </div>
-    <div id="twin" class="twin"></div>
-    <div class="scrubber">
-      <button id="playBtn" class="btn ghost mono">▶</button>
-      <input id="scrub" type="range" min="0" max="0" value="0" step="1">
-      <span id="scrubLabel" class="mono">t=0.0s</span>
-      <select id="speedSel" class="mono"><option value="1">1×</option><option value="4" selected>4×</option><option value="16">16×</option></select>
+    <div class="chat-wrap">
+      <div class="pane-head"><h2>Agent</h2><span id="agentStatus" class="status mono">idle</span></div>
+      <div id="chatLog" class="chat-log"></div>
+      <form id="chatForm" class="chat-form">
+        <textarea id="chatInput" rows="2" placeholder="Ask LabRat, e.g. find the most orange mix of red and yellow"></textarea>
+        <button class="btn accent" type="submit">Send</button>
+      </form>
     </div>
-    <div id="twinInfo" class="twin-info mono"></div>
-  </section>
-
-  <section class="pane gallery-pane">
-    <div class="pane-head tabs">
-      <button class="tab on" data-tab="exp">Experiments</button><button class="tab" data-tab="learn">Learning</button><button class="tab" data-tab="mem">Memory</button><button class="tab" data-tab="deck">Deck</button>
-      <div class="spacer"></div><button id="refreshBtn" class="btn ghost">↻</button></div>
-    <div class="tabpane" data-pane="exp">
-      <div id="expList" class="exp-list"></div>
-      <div id="expDetail" class="exp-detail"></div>
-    </div>
-    <div class="tabpane hidden" data-pane="learn"><div id="learnBox" class="exp-detail"></div></div>
-    <div class="tabpane hidden" data-pane="mem">
-      <form id="memForm" class="mem-form"><input id="memQ" placeholder="search memory… e.g. orange, tip reuse"><button class="btn">Search</button></form>
-      <div id="memBox" class="exp-detail"></div>
-    </div>
-    <div class="tabpane hidden" data-pane="deck"><div id="deckBox" class="exp-detail deck-cal"></div></div>
-  </section>
+  </aside>
 </main>
+<div id="toast" class="toast"></div>
 
 <script type="module" src="app.js"></script>
 <script type="module" src="deck.js"></script>

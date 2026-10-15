@@ -1,13 +1,20 @@
 // End-to-end through the Worker and the Lab Durable Object: fake provider sockets answer commands (cnc, arms and the
 // servo hub's firmware lines for the pipette / probe / stand drivers), a UI socket drives a full experiment.
-import { env, evictDurableObject } from "cloudflare:test";
+import { env, evictDurableObject, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { api, connect, fakeProvider, hubLines } from "./helpers";
 import { STAND_DEFAULTS as SD } from "../src/devices/stand";
 import { PROBE_DEFAULTS as PD } from "../src/devices/probe";
 
+async function fetchJson(path: string, method: string, body: unknown, expectStatus = 200) {
+  const r = await SELF.fetch(`http://lab${path}?token=labrat`, { method, body: JSON.stringify(body) });
+  const data: any = await r.json();
+  expect(r.status, JSON.stringify(data)).toBe(expectStatus);
+  return data;
+}
+
 describe("e2e", () => {
-  it("chat -> design -> simulate -> approve -> run -> observe -> learn", async () => {
+  it("new experiment -> dry run -> run -> approve -> results -> model -> csv", async () => {
     await api("/api/cal/pipette", { settle_ms: 0 }); // keep the fake run quick
     await api("/api/cal/stand", { settle_ms: 0 });
     const { p, cmds } = await fakeProvider();
@@ -15,20 +22,27 @@ describe("e2e", () => {
     const devs = await ui.next((m) => m.t === "devices" && m.bridge && m.devices.some((d: any) => d.id === "pipette" && d.status === "mock"));
     expect(devs.devices.map((d: any) => d.id)).toEqual(expect.arrayContaining(["cnc", "hub", "pipette", "probe", "stand"]));
 
-    ui.send({ t: "chat", text: "make orange" });
-    const exp = (await ui.next((m) => m.t === "experiment" && m.experiment.status === "simulated")).experiment;
-    expect(exp.best_variant_id).toBeTruthy();
-    expect(exp.sim_summary.passing).toBeGreaterThan(0);
-    expect((await ui.next((m) => m.t === "sim")).frames.length).toBeGreaterThan(0);
-    await ui.next((m) => m.t === "chat" && m.role === "agent" && m.text.includes("Simulated"));
+    // a bad sample is a draft with the dry run's reason; fixing it makes it ready
+    const bad = await api("/api/experiments", { title: "Orange sweep", target: "orange", samples: [{ red: 60, yellow: 140 }, { red: 6000 }] });
+    expect(bad.status).toBe(200);
+    expect(bad.data.status).toBe("draft");
+    expect(bad.data.check.errors.join(" ")).toMatch(/has 4500|only reaches/);
+    expect((await api(`/api/experiments/${bad.data.id}/run`, {})).status).toBe(400);
+    const samples = [{ red: 60, yellow: 140 }, { red: 100, yellow: 100 }, { red: 140, yellow: 60, label: "redder" }];
+    const fix = await fetchJson(`/api/experiments/${bad.data.id}`, "PATCH", { samples });
+    expect(fix.status).toBe("ready");
+    expect(fix.beakers.map((b: any) => [b.well, b.red, b.yellow])).toEqual([["A1", 60, 140], ["B1", 100, 100], ["C1", 140, 60]]);
+    expect(fix.beakers.every((b: any) => b.predicted_rgb && b.predicted_to_target != null)).toBe(true);
+    expect(["A1", "B1", "C1"]).toContain(fix.closest_predicted);
+    expect((await api("/api/experiments", { title: "x", samples: [{ green: 5 }] })).status).toBe(400);
 
-    const mark = ui.inbox.length;
-    ui.send({ t: "chat", text: "run best" });
-    const run = (await ui.next((m) => m.t === "run" && m.run.status === "awaiting_approval", 30000, mark)).run;
-    ui.send({ t: "approve", run_id: run.id });
-    const done = (await ui.next((m) => m.t === "run" && m.run.id === run.id && ["done", "failed", "aborted"].includes(m.run.status), 60000)).run;
+    const req = (await api(`/api/experiments/${fix.id}/run`, {})).data;
+    expect(req.status).toBe("awaiting_approval");
+    ui.send({ t: "approve" });
+    const done = (await ui.next((m) => m.t === "experiment" && m.experiment.id === fix.id && ["done", "failed", "aborted"].includes(m.experiment.status), 60000)).experiment;
     expect(done.error ?? null).toBeNull();
     expect(done.status).toBe("done");
+    expect(done.log.length).toBe(done.steps.length);
 
     const actions = new Set(cmds.map((c) => `${c.device}.${c.action}`));
     expect([...actions]).toEqual(expect.arrayContaining(["cnc.move", "hub.line"]));
@@ -42,19 +56,50 @@ describe("e2e", () => {
     expect(retract).toBeGreaterThanOrEqual(0);
     expect(retract).toBeLessThan(firstLow);
 
-    expect((await api("/api/experiments")).data.length).toBeGreaterThan(0);
-    expect((await api("/healthz")).data.ok).toBe(true);
-    expect((await api("/api/memory/search?q=orange")).data.results.length).toBeGreaterThan(0);
-    const ob = await api(`/api/runs/${done.id}/observe`, { rating: 4, rgb: [235, 120, 20] });
+    // done experiments are frozen; results come in per beaker and refit the model
+    expect((await fetchJson(`/api/experiments/${fix.id}`, "PATCH", { samples }, 400)).error).toMatch(/repeat/);
+    const ob = await api(`/api/experiments/${fix.id}/results`, { results: [{ well: "A1", rgb: [240, 170, 20] }, { well: "B1", rgb: [235, 120, 20], rating: 4 }, { well: "C1", note: "spilled" }] });
     expect(ob.status, JSON.stringify(ob.data)).toBe(200);
-    expect(ob.data.version.v).toBeGreaterThan(0);
-    const lr = (await api("/api/learning")).data;
-    expect(lr.versions.length).toBeGreaterThan(1);
-    const st = (await api("/api/state")).data;
-    expect(st.runs[0].observed_rgb).toEqual([235, 120, 20]);
-    expect((await api("/api/events?kind=rsi.update")).data.length).toBe(1);
+    expect(ob.data.model.v).toBeGreaterThan(0);
+    expect((await api(`/api/experiments/${fix.id}/results`, { well: "F7", rgb: [1, 2, 3] })).status).toBe(400);
+    const after = (await api(`/api/experiments/${fix.id}`)).data;
+    const b1 = after.beakers.find((b: any) => b.well === "B1");
+    expect(b1).toMatchObject({ measured_rgb: [235, 120, 20], rating: 4, source: "operator" });
+    await api(`/api/experiments/${fix.id}/results`, { well: "B1", rating: 2, note: "too red" }); // keeps the colour
+    const b1b = (await api(`/api/experiments/${fix.id}`)).data.beakers.find((b: any) => b.well === "B1");
+    expect(b1b).toMatchObject({ measured_rgb: [235, 120, 20], rating: 2, note: "too red" });
+    expect(b1.error).toBeGreaterThan(0);
+    expect(after.closest_measured).toBeTruthy();
+    expect((await api("/api/model")).data.versions.length).toBe(3);
+    expect((await api("/api/notes?q=orange")).data.length).toBeGreaterThan(0);
+
+    const csv = await (await SELF.fetch(`http://lab/api/experiments/${fix.id}.csv?token=labrat`)).text();
+    const rows = csv.trim().split("\n");
+    expect(rows[0]).toMatch(/^experiment,title,well,label,water_ul,red_ul,yellow_ul,blue_ul/);
+    expect(rows.length).toBe(4);
+    expect(rows[2]).toContain(",235,120,20,");
+    const all = await (await SELF.fetch("http://lab/api/results.csv?token=labrat")).text();
+    expect(all.trim().split("\n").length).toBeGreaterThanOrEqual(4);
+
+    const again = (await api(`/api/experiments/${fix.id}/repeat`, {})).data;
+    expect(again).toMatchObject({ status: "ready", title: "Orange sweep" });
+    expect(again.samples).toEqual(fix.samples);
+    expect(again.target.name).toBe("orange");
+    expect((await api(`/api/experiments/${fix.id}/replay`)).data.frames.length).toBeGreaterThan(10);
+    expect((await api("/healthz")).data.ok).toBe(true);
     ui.close();
     p.close();
+  });
+
+  it("the rule agent sets up a sweep from a sentence", async () => {
+    const ui = await connect("/ws/ui");
+    ui.send({ t: "chat", text: "make orange with 6 samples" });
+    const e = (await ui.next((m) => m.t === "experiment" && m.experiment.source === "agent")).experiment;
+    expect(e.status).toBe("ready");
+    expect(e.beakers.length).toBe(6);
+    expect(e.target.name).toBe("orange");
+    await ui.next((m) => m.t === "chat" && m.role === "agent" && m.text.includes("Dry-ran"));
+    ui.close();
   });
 
   it("rejects a bad token", async () => {
@@ -120,16 +165,16 @@ describe("e2e", () => {
     p.close();
   });
 
-  it("aborts a running run: in-flight commands fail, devices get stop", async () => {
+  it("aborts a running experiment: in-flight commands fail, devices get stop", async () => {
     const { p, cmds } = await fakeProvider("/ws/bridge", undefined, (m) => !(m.device === "cnc" && m.action === "move")); // moves hang
     const ui = await connect("/ws/ui");
-    ui.send({ t: "chat", text: "make purple" });
-    const exp = (await ui.next((m) => m.t === "experiment" && m.experiment.status === "simulated")).experiment;
-    const run = (await api(`/api/experiments/${exp.id}/run`, { auto: true })).data;
+    const e = (await api("/api/experiments", { title: "purple", samples: [{ red: 100, blue: 100 }] })).data;
+    const run = (await api(`/api/experiments/${e.id}/run`, { auto: true })).data;
     expect(run.status).toBe("running");
     for (let i = 0; i < 100 && !cmds.some((c) => c.action === "move"); i++) await new Promise((r) => setTimeout(r, 20));
+    expect((await api(`/api/experiments`, { title: "second", samples: [{ red: 10 }] })).status).toBe(200);
     expect((await api("/api/abort", {})).data.ok).toBe(true);
-    const end = (await ui.next((m) => m.t === "run" && m.run.id === run.id && ["done", "failed", "aborted"].includes(m.run.status), 10000)).run;
+    const end = (await ui.next((m) => m.t === "experiment" && m.experiment.id === e.id && ["done", "failed", "aborted"].includes(m.experiment.status), 10000)).experiment;
     expect(end.status).toBe("aborted");
     expect(cmds.some((c) => c.device === "cnc" && c.action === "stop")).toBe(true);
     expect(hubLines(cmds).some((l) => l.cmd === "stop")).toBe(true);

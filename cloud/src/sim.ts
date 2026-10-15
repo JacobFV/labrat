@@ -1,5 +1,5 @@
 // Digital twin: deck model, CNC trapezoid timing, pipette/tip/liquid accounting, subtractive dye mixing -> RGB,
-// safety checks, frames for 3D replay, and goal scoring. Deterministic: frames are re-simulated on demand.
+// safety checks and frames for 3D replay. Deterministic: frames are re-simulated on demand.
 import * as deckCal from "./deck_cal";
 
 // ---------------- deck ----------------
@@ -302,42 +302,108 @@ class Sim {
 }
 
 export interface WellResult { rgb: number[]; vol: number; comp: Record<string, number> }
+/** A dry run of a list of steps: every check, the time it takes, and what ends up in each beaker. */
 export interface SimResult {
   ok: boolean; errors: string[]; warnings: string[]; duration_s: number; travel_mm: number;
-  wells: Record<string, WellResult>; best_well: string | null; predicted_rgb: number[] | null;
-  target: { name: string; rgb: number[] } | null; score: number; frames?: Frame[]; tips_used: string[];
+  wells: Record<string, WellResult>; tips_used: string[]; frames?: Frame[];
 }
 
-export function simulate(protocol: Step[], goal = "", recordFrames = true): SimResult {
+/** Dry-run `steps` on the twin. Assumes a clean deck: empty beakers, full stocks, a full tip rack. */
+export function simulate(steps: Step[], recordFrames = true): SimResult {
   const sim = new Sim(recordFrames);
   sim.frame(-1, "start");
-  protocol.forEach((s, i) => sim.step(i, s));
+  steps.forEach((s, i) => sim.step(i, s));
   if (sim.tip) sim.warnings.push("protocol ends holding a tip");
   const wells: Record<string, WellResult> = {};
   for (const [w, st] of Object.entries(sim.wells)) {
     if (st.vol > 0) wells[w] = { rgb: mixRgb(st.comp), vol: rnd(st.vol, 1), comp: Object.fromEntries(Object.entries(st.comp).filter(([, v]) => v > 0.01).map(([k, v]) => [k, rnd(v, 1)])) };
   }
-  const tgt = goal ? targetRgb(goal) : null;
-  const names = Object.keys(wells);
-  let score = 0, best: string | null = null;
-  if (tgt && names.length) {
-    best = names.reduce((a, b) => (colorDist(wells[b].rgb, tgt[1]) < colorDist(wells[a].rgb, tgt[1]) ? b : a));
-    score = Math.max(0, 1 - colorDist(wells[best].rgb, tgt[1]) / 441.7);
-  } else if (names.length) {
-    best = names[0];
-    score = 0.5;
-  }
-  const ok = sim.errors.length === 0;
-  if (!ok) score *= 0.1;
+  // "step 12: ..." -> "step 12 (dispense F1): ..." so a person can find the beaker
+  const where = (m: string) => m.replace(/^step (\d+):/, (x, n) => {
+    const st = steps[Number(n)];
+    const at = st && (st.dst ?? st.src ?? st.well ?? st.rack_well);
+    return st ? `step ${n} (${st.op}${at ? " " + at : ""}):` : x;
+  });
   return {
-    ok, errors: sim.errors, warnings: sim.warnings, duration_s: rnd(sim.t, 1), travel_mm: rnd(sim.dist, 1),
-    wells, best_well: best, predicted_rgb: best ? wells[best].rgb : null,
-    target: tgt ? { name: tgt[0], rgb: [...tgt[1]] } : null, score: r4(score), frames: sim.frames,
-    tips_used: [...sim.usedTips].sort(),
+    ok: sim.errors.length === 0, errors: sim.errors.map(where), warnings: sim.warnings.map(where), duration_s: rnd(sim.t, 1), travel_mm: rnd(sim.dist, 1),
+    wells, tips_used: [...sim.usedTips].sort(), frames: recordFrames ? sim.frames : undefined,
   };
 }
 
-// ---------------- deterministic variant generator ----------------
+// ---------------- samples -> steps ----------------
+/** The stock beakers a sample can draw from (column 8 of the beaker matrix). */
+export const STOCKS = Object.keys(RESERVOIRS);
+/** One beaker of an experiment: µL of each stock, e.g. { well: "A1", red: 60, yellow: 140 }. */
+export interface Sample { well: string; label?: string; water?: number; red?: number; yellow?: number; blue?: number }
+
+/** Mixing beakers in fill order: down each column (A1, B1 ... F1, A2 ...). */
+export const WELLS: string[] = Array.from({ length: PLATE.rows * PLATE.cols }, (_, i) => `${ROWS[i % PLATE.rows]}${Math.floor(i / PLATE.rows) + 1}`);
+
+/** Validate samples and give the ones without a well the next free beaker. Throws on a bad sample. */
+export function placeSamples(samples: any[]): Sample[] {
+  if (!Array.isArray(samples)) throw new Error("samples must be a list, e.g. [{\"red\": 60, \"yellow\": 140}]");
+  const taken = new Set<string>();
+  const out: Sample[] = samples.map((s, i) => {
+    if (!s || typeof s !== "object") throw new Error(`sample ${i + 1} is not an object`);
+    const o: Sample = { well: "" };
+    for (const [k, v] of Object.entries(s)) {
+      if (k === "well") {
+        if (v == null || v === "") continue;
+        const w = String(v).trim().toUpperCase();
+        if (!WELLS.includes(w)) throw new Error(`sample ${i + 1}: ${w} is not a mixing beaker (A1-${WELLS.at(-1)})`);
+        if (taken.has(w)) throw new Error(`sample ${i + 1}: beaker ${w} is used twice`);
+        taken.add(w);
+        o.well = w;
+      } else if (k === "label") o.label = String(v);
+      else if (STOCKS.includes(k)) {
+        const ul = Number(v);
+        if (!(ul >= 0)) throw new Error(`sample ${i + 1}: ${k} must be a volume in µL >= 0`);
+        if (ul > 0) (o as any)[k] = rnd(ul, 1);
+      } else throw new Error(`sample ${i + 1}: unknown key '${k}' (stocks are ${STOCKS.join(", ")}; also well, label)`);
+    }
+    if (!STOCKS.some((d) => (o as any)[d] > 0)) throw new Error(`sample ${i + 1} has no liquid`);
+    return o;
+  });
+  const free = WELLS.filter((w) => !taken.has(w));
+  for (const o of out) if (!o.well) {
+    const w = free.shift();
+    if (!w) throw new Error(`more samples than mixing beakers (${WELLS.length})`);
+    o.well = w;
+  }
+  return out;
+}
+
+export const sampleUl = (s: Sample) => STOCKS.reduce((a, d) => a + Number((s as any)[d] ?? 0), 0);
+const tipName = (i: number) => `${ROWS[i % TIP_RACK.rows]}${Math.floor(i / TIP_RACK.rows) + 1}`;
+
+/**
+ * The robot's steps for a set of samples. One tip per stock: it dispenses into every beaker from above the liquid, so
+ * it never touches a sample. Beakers that hold enough for the tip to reach are then mixed, each with a fresh tip. Ends
+ * with a photo of the deck.
+ */
+export function stepsFor(samples: Sample[]): Step[] {
+  const steps: Step[] = [];
+  let tip = 0;
+  for (const d of STOCKS) {
+    const users = samples.filter((s) => Number((s as any)[d] ?? 0) > 0);
+    if (!users.length) continue;
+    steps.push({ op: "pick_tip", rack_well: tipName(tip++) });
+    for (const s of users) {
+      for (let left = Number((s as any)[d]); left > 1e-6; left -= TIP_CAP_UL) {
+        const ul = rnd(Math.min(left, TIP_CAP_UL), 1);
+        steps.push({ op: "aspirate", src: d, ul }, { op: "dispense", dst: s.well, ul });
+      }
+    }
+    steps.push({ op: "eject_tip" });
+  }
+  for (const s of samples) if (sampleUl(s) >= REACH_UL) {
+    steps.push({ op: "pick_tip", rack_well: tipName(tip++) }, { op: "mix", well: s.well, ul: 100, n: 3 }, { op: "eject_tip" });
+  }
+  steps.push({ op: "photo" });
+  return steps;
+}
+
+// ---------------- target colour ----------------
 export function dyesForGoal(goal: string): string[] {
   const g = goal.toLowerCase();
   const named = ["red", "yellow", "blue", "water"].filter((d) => new RegExp(`\\b${d}`).test(g));
@@ -349,30 +415,22 @@ export function dyesForGoal(goal: string): string[] {
   return named.length ? named : ["red", "yellow"];
 }
 
-export function protocolFromRatios(dyes: string[], ratios: number[], totalUl: number, well: string, tipStart = 0, mix = true): Step[] {
-  const steps: Step[] = [];
-  let tipI = tipStart;
-  const s = ratios.reduce((a, b) => a + b, 0) || 1;
-  const vols = ratios.map((r) => Math.round((totalUl * r) / s));
-  const active = dyes.map((d, j) => [d, vols[j]] as const).filter(([, v]) => v >= 5);
-  active.forEach(([d, v], j) => {
-    const tip = `${ROWS[tipI % 8]}${Math.floor(tipI / 8) + 1}`;
-    tipI++;
-    steps.push({ op: "pick_tip", rack_well: tip });
-    let remaining = v;
-    while (remaining > 0) {
-      const chunk = Math.min(remaining, TIP_CAP_UL);
-      steps.push({ op: "aspirate", src: d, ul: chunk }, { op: "dispense", dst: well, ul: chunk });
-      remaining -= chunk;
-    }
-    if (mix && j === active.length - 1 && totalUl >= REACH_UL) steps.push({ op: "mix", well, ul: Math.min(100, totalUl / 2), n: 3 });
-    steps.push({ op: "eject_tip" });
-  });
-  steps.push({ op: "photo", target: "plate" });
-  return steps;
+/** "orange", "#ff8800" or [255, 136, 0] -> { name, rgb }; null for no target. */
+export function parseTarget(t: unknown): { name: string; rgb: number[] } | null {
+  if (t == null || t === "") return null;
+  if (Array.isArray(t) && t.length === 3 && t.every((v) => Number.isFinite(Number(v)))) {
+    const rgb = t.map((v) => Math.max(0, Math.min(255, Math.round(Number(v)))));
+    return { name: `rgb(${rgb.join(", ")})`, rgb };
+  }
+  if (typeof t === "object" && Array.isArray((t as any).rgb)) { const r = parseTarget((t as any).rgb)!; return { name: String((t as any).name || r.name), rgb: r.rgb }; }
+  const m = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(String(t).trim());
+  if (m) return parseTarget(m.slice(1).map(Number));
+  const r = targetRgb(String(t));
+  if (!r) throw new Error(`unknown target colour '${t}': use a name (${Object.keys(TARGETS).join(", ")}), #rrggbb or [r, g, b]`);
+  return { name: r[0], rgb: [...r[1]] };
 }
 
-/** Small seeded PRNG (mulberry32), so variant sets are reproducible from a seed. */
+/** Small seeded PRNG (mulberry32), so sweeps are reproducible. */
 export function rng(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
@@ -384,31 +442,16 @@ export function rng(seed: number): () => number {
   };
 }
 
-export interface Variant { id: string; params: { dyes: string[]; ratios: number[]; total_ul: number; well: string }; protocol: Step[]; sim?: SimResult; [k: string]: any }
-
-/** Grid + seeded random over dye ratios and total volume. One well per variant. */
-export function generateVariants(goal: string, n = 12, seed = 0): Variant[] {
-  const rand = rng(seed);
-  const dyes = dyesForGoal(goal);
-  const k = dyes.length, gridN = Math.max(1, Math.floor(n / 2));
-  const out: Variant[] = [];
-  for (let i = 0; i < n; i++) {
+/** A ratio sweep toward a colour: n samples of `total` µL. Two stocks: evenly spaced ratios; more: seeded random. */
+export function sweep(goal: string, n = 12, total = 200): Omit<Sample, "well">[] {
+  const dyes = dyesForGoal(goal), rand = rng(1);
+  n = Math.max(1, Math.min(Math.trunc(n), WELLS.length));
+  return Array.from({ length: n }, (_, i) => {
     let ratios: number[];
-    if (k === 2 && i < gridN) {
-      const f = (i + 1) / (gridN + 1);
-      ratios = [f, 1 - f];
-    } else { // Dirichlet(1,...,1) = normalised exponentials
-      const e = dyes.map(() => -Math.log(1 - rand()));
-      const s = e.reduce((a, b) => a + b, 0);
-      ratios = e.map((x) => x / s);
-    }
-    const total = [120, 150, 180, 200, 240][Math.floor(rand() * 5)];
-    const well = `${ROWS[i % PLATE.rows]}${Math.floor(i / PLATE.rows) + 1}`;
-    out.push({
-      id: `v${String(i + 1).padStart(2, "0")}`,
-      params: { dyes, ratios: ratios.map((r) => rnd(r, 3)), total_ul: total, well },
-      protocol: protocolFromRatios(dyes, ratios, total, well, 0),
-    });
-  }
-  return out;
+    if (dyes.length === 2) { const f = (i + 1) / (n + 1); ratios = [f, 1 - f]; }
+    else { const e = dyes.map(() => -Math.log(1 - rand())); const s = e.reduce((a, b) => a + b, 0); ratios = e.map((x) => x / s); }
+    const out: Record<string, number> = {};
+    dyes.forEach((d, j) => { const ul = Math.round(total * ratios[j]); if (ul >= 5) out[d] = ul; });
+    return out;
+  });
 }
